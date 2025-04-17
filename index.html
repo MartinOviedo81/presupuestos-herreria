@@ -2,138 +2,165 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Presupuesto de Herrería</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presupuestos de Materiales</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h2>Agregar Nuevo Material a Firestore</h2>
+  <div class="container">
+    <h1>Presupuestador de Materiales</h1>
 
-  <form id="form-material">
-    <label>Nombre: <input type="text" id="nombre" required></label>
-    <label>Precio: <input type="number" id="precio" required></label>
-    <label>Largo: <input type="text" id="largo" value="6 mts" required></label>
-    <label>Unidad:
-      <select id="unidad">
-        <option value="barra">Barra</option>
-        <option value="kg">Kg</option>
-        <option value="unidad">Unidad</option>
-      </select>
-    </label>
-    <button type="submit">Agregar</button>
-  </form>
+    <section id="form-materiales">
+      <h2>Materiales disponibles</h2>
+      <div id="lista-materiales"></div>
+    </section>
 
-  <p id="mensaje"></p>
+    <section id="presupuesto-section">
+      <h2>Presupuesto</h2>
+      <input type="text" id="nombre-presupuesto" placeholder="Nombre del presupuesto">
+      <ul id="presupuesto"></ul>
+      <p id="total">Total: $0</p>
+      <button id="guardarPresupuesto">Guardar Presupuesto</button>
+    </section>
+  </div>
 
-  <hr>
+  <script>
+    const materiales = [
+      { nombre: 'Hierro redondo herrero', precio: 5183, unidad: 'barra', largo: 6 },
+      { nombre: 'Ángulo de hierro', precio: 6240, unidad: 'barra', largo: 6 },
+      { nombre: 'Caño estructural', precio: 7200, unidad: 'barra', largo: 6 }
+    ];
 
-  <h2>Materiales disponibles</h2>
-  <input type="text" id="buscador" placeholder="Buscar material...">
-  <div id="lista-materiales"></div>
-
-  <hr>
-
-  <h2>Presupuesto Actual</h2>
-  <ul id="presupuesto"></ul>
-  <p><strong>Total estimado: $<span id="total">0</span></strong></p>
-
-  <script type="module">
-    import { db } from './firebase-config.js';
-    import {
-      collection, addDoc, getDocs
-    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-
-    const form = document.getElementById('form-material');
-    const mensaje = document.getElementById('mensaje');
-    const listaMateriales = document.getElementById('lista-materiales');
-    const presupuestoUl = document.getElementById('presupuesto');
-    const totalSpan = document.getElementById('total');
-    const buscador = document.getElementById('buscador');
-
-    let materialesGlobal = [];
-    let presupuesto = [];
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const nombre = document.getElementById('nombre').value.trim();
-      const precio = parseFloat(document.getElementById('precio').value);
-      const largo = document.getElementById('largo').value.trim();
-      const unidad = document.getElementById('unidad').value;
-
-      try {
-        await addDoc(collection(db, 'materiales'), { nombre, precio, largo, unidad });
-
-        mensaje.textContent = `✅ Material "${nombre}" agregado correctamente.`;
-        mensaje.style.color = "green";
-        form.reset();
-        document.getElementById('largo').value = "6 mts";
-        cargarMateriales(); // Actualizar lista
-      } catch (error) {
-        mensaje.textContent = `❌ Error: ${error.message}`;
-        mensaje.style.color = "red";
-      }
-    });
-
-    async function cargarMateriales() {
-      const snapshot = await getDocs(collection(db, 'materiales'));
-      materialesGlobal = [];
-      listaMateriales.innerHTML = "";
-
-      snapshot.forEach(doc => {
-        const material = doc.data();
-        materialesGlobal.push(material);
-      });
-
-      mostrarMateriales(materialesGlobal);
-    }
-
-    function mostrarMateriales(lista) {
-      listaMateriales.innerHTML = "";
-      lista.forEach((mat, index) => {
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-          <strong>${mat.nombre}</strong><br>
-          Precio: $${mat.precio} | Largo: ${mat.largo} | Unidad: ${mat.unidad}
-          <br>
-          <button onclick="agregarPresupuesto(${index})">Agregar al presupuesto</button>
-        `;
-        listaMateriales.appendChild(div);
-      });
-    }
-
-    window.agregarPresupuesto = (index) => {
-      const mat = materialesGlobal[index];
-      presupuesto.push(mat);
-      renderPresupuesto();
+    const multiplicadores = {
+      'corte y soldadura': 2.5,
+      'rolado': 3.5,
+      'doblado': 1.5,
+      'enderezado': 1.2,
+      'preparado de pintura': 1.1,
+      'pintura': 2,
+      'embalaje': 1.1,
+      'envío': 1.4,
+      'instalación': 3
     };
+
+    const presupuesto = [];
+
+    function mostrarMateriales(materiales) {
+      const contenedor = document.getElementById('lista-materiales');
+      contenedor.innerHTML = '';
+
+      materiales.forEach((mat) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const trabajosCheckboxes = Object.entries(multiplicadores).map(([trabajo, mult]) => {
+          return `
+            <label>
+              <input type="checkbox" value="${trabajo}" class="trabajo-checkbox"> ${trabajo} (x${mult})
+            </label>
+          `;
+        }).join('');
+
+        card.innerHTML = `
+          <h4>${mat.nombre}</h4>
+          <p><strong>Precio:</strong> $${mat.precio} por ${mat.largo}m</p>
+          <label>Metros a usar:
+            <input type="number" min="0.1" step="0.1" value="1" class="input-metros">
+          </label>
+          <div class="trabajos-lista">
+            ${trabajosCheckboxes}
+          </div>
+          <button class="btn-agregar">Agregar al presupuesto</button>
+        `;
+
+        const btnAgregar = card.querySelector('.btn-agregar');
+        btnAgregar.addEventListener('click', () => {
+          const metros = parseFloat(card.querySelector('.input-metros').value);
+          const trabajos = Array.from(card.querySelectorAll('.trabajo-checkbox:checked')).map(cb => cb.value);
+          agregarAlPresupuesto(mat, metros, trabajos);
+        });
+
+        contenedor.appendChild(card);
+      });
+    }
+
+    function agregarAlPresupuesto(material, metros, trabajos) {
+      const precioPorMetro = material.precio / material.largo;
+      const precioBase = precioPorMetro * metros;
+
+      let multiplicadorFinal = 1;
+      trabajos.forEach(trabajo => {
+        multiplicadorFinal *= multiplicadores[trabajo];
+      });
+
+      const precioFinal = precioBase * multiplicadorFinal;
+
+      const item = {
+        ...material,
+        metros,
+        trabajos,
+        precioBase,
+        multiplicadorFinal,
+        precioFinal
+      };
+
+      presupuesto.push(item);
+      renderPresupuesto();
+    }
 
     function renderPresupuesto() {
-      presupuestoUl.innerHTML = "";
+      const ul = document.getElementById('presupuesto');
+      ul.innerHTML = '';
       let total = 0;
-      presupuesto.forEach((mat, i) => {
-        total += mat.precio;
+
+      presupuesto.forEach((item, index) => {
         const li = document.createElement('li');
-        li.innerHTML = `${mat.nombre} - $${mat.precio} <button onclick="eliminar(${i})">❌</button>`;
-        presupuestoUl.appendChild(li);
+        li.innerHTML = `
+          <div>
+            <strong>${item.nombre}</strong><br>
+            Metros usados: ${item.metros} m<br>
+            Precio base: $${item.precioBase.toFixed(2)}<br>
+            Trabajos: ${item.trabajos.join(', ')}<br>
+            Multiplicador final: x${item.multiplicadorFinal.toFixed(2)}<br>
+            <strong>Total item: $${item.precioFinal.toFixed(2)}</strong>
+          </div>
+          <button onclick="eliminarItem(${index})">❌</button>
+        `;
+        ul.appendChild(li);
+        total += item.precioFinal;
       });
-      totalSpan.textContent = total.toFixed(2);
+
+      document.getElementById('total').innerText = `Total: $${total.toFixed(2)}`;
     }
 
-    window.eliminar = (i) => {
-      presupuesto.splice(i, 1);
+    function eliminarItem(index) {
+      presupuesto.splice(index, 1);
       renderPresupuesto();
-    };
+    }
 
-    buscador.addEventListener('input', () => {
-      const texto = buscador.value.toLowerCase();
-      const filtrados = materialesGlobal.filter(m =>
-        m.nombre.toLowerCase().includes(texto)
-      );
-      mostrarMateriales(filtrados);
+    document.getElementById('guardarPresupuesto').addEventListener('click', () => {
+      const nombre = document.getElementById('nombre-presupuesto').value.trim();
+      if (!nombre) return alert('Ingresá un nombre para el presupuesto.');
+      if (!presupuesto.length) return alert('Agregá al menos un material al presupuesto.');
+
+      const fecha = new Date().toLocaleDateString();
+      const total = presupuesto.reduce((acc, item) => acc + item.precioFinal, 0);
+      const resumen = {
+        nombre,
+        fecha,
+        total: total.toFixed(2),
+        items: presupuesto
+      };
+
+      const guardados = JSON.parse(localStorage.getItem('presupuestos')) || [];
+      guardados.push(resumen);
+      localStorage.setItem('presupuestos', JSON.stringify(guardados));
+
+      alert('Presupuesto guardado correctamente.');
+      location.reload();
     });
 
-    cargarMateriales();
+    mostrarMateriales(materiales);
   </script>
 </body>
 </html>
