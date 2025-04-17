@@ -2,45 +2,55 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Agregar Materiales</title>
+  <title>Presupuesto de Herrería</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h2>Agregar Material a Firestore</h2>
+  <h2>Agregar Nuevo Material a Firestore</h2>
 
   <form id="form-material">
-    <label>Nombre:
-      <input type="text" id="nombre" required>
-    </label>
-
-    <label>Precio:
-      <input type="number" id="precio" required>
-    </label>
-
-    <label>Largo:
-      <input type="text" id="largo" value="6 mts" required>
-    </label>
-
-    <label>Unidad: 
+    <label>Nombre: <input type="text" id="nombre" required></label>
+    <label>Precio: <input type="number" id="precio" required></label>
+    <label>Largo: <input type="text" id="largo" value="6 mts" required></label>
+    <label>Unidad:
       <select id="unidad">
         <option value="barra">Barra</option>
         <option value="kg">Kg</option>
         <option value="unidad">Unidad</option>
       </select>
     </label>
-
     <button type="submit">Agregar</button>
   </form>
 
   <p id="mensaje"></p>
 
-  <!-- Firebase Config y lógica -->
+  <hr>
+
+  <h2>Materiales disponibles</h2>
+  <input type="text" id="buscador" placeholder="Buscar material...">
+  <div id="lista-materiales"></div>
+
+  <hr>
+
+  <h2>Presupuesto Actual</h2>
+  <ul id="presupuesto"></ul>
+  <p><strong>Total estimado: $<span id="total">0</span></strong></p>
+
   <script type="module">
     import { db } from './firebase-config.js';
-    import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import {
+      collection, addDoc, getDocs
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
     const form = document.getElementById('form-material');
     const mensaje = document.getElementById('mensaje');
+    const listaMateriales = document.getElementById('lista-materiales');
+    const presupuestoUl = document.getElementById('presupuesto');
+    const totalSpan = document.getElementById('total');
+    const buscador = document.getElementById('buscador');
+
+    let materialesGlobal = [];
+    let presupuesto = [];
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -51,23 +61,79 @@
       const unidad = document.getElementById('unidad').value;
 
       try {
-        await addDoc(collection(db, 'materiales'), {
-          nombre,
-          precio,
-          largo,
-          unidad
-        });
+        await addDoc(collection(db, 'materiales'), { nombre, precio, largo, unidad });
 
         mensaje.textContent = `✅ Material "${nombre}" agregado correctamente.`;
         mensaje.style.color = "green";
         form.reset();
         document.getElementById('largo').value = "6 mts";
+        cargarMateriales(); // Actualizar lista
       } catch (error) {
         mensaje.textContent = `❌ Error: ${error.message}`;
         mensaje.style.color = "red";
-        console.error(error);
       }
     });
+
+    async function cargarMateriales() {
+      const snapshot = await getDocs(collection(db, 'materiales'));
+      materialesGlobal = [];
+      listaMateriales.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const material = doc.data();
+        materialesGlobal.push(material);
+      });
+
+      mostrarMateriales(materialesGlobal);
+    }
+
+    function mostrarMateriales(lista) {
+      listaMateriales.innerHTML = "";
+      lista.forEach((mat, index) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <strong>${mat.nombre}</strong><br>
+          Precio: $${mat.precio} | Largo: ${mat.largo} | Unidad: ${mat.unidad}
+          <br>
+          <button onclick="agregarPresupuesto(${index})">Agregar al presupuesto</button>
+        `;
+        listaMateriales.appendChild(div);
+      });
+    }
+
+    window.agregarPresupuesto = (index) => {
+      const mat = materialesGlobal[index];
+      presupuesto.push(mat);
+      renderPresupuesto();
+    };
+
+    function renderPresupuesto() {
+      presupuestoUl.innerHTML = "";
+      let total = 0;
+      presupuesto.forEach((mat, i) => {
+        total += mat.precio;
+        const li = document.createElement('li');
+        li.innerHTML = `${mat.nombre} - $${mat.precio} <button onclick="eliminar(${i})">❌</button>`;
+        presupuestoUl.appendChild(li);
+      });
+      totalSpan.textContent = total.toFixed(2);
+    }
+
+    window.eliminar = (i) => {
+      presupuesto.splice(i, 1);
+      renderPresupuesto();
+    };
+
+    buscador.addEventListener('input', () => {
+      const texto = buscador.value.toLowerCase();
+      const filtrados = materialesGlobal.filter(m =>
+        m.nombre.toLowerCase().includes(texto)
+      );
+      mostrarMateriales(filtrados);
+    });
+
+    cargarMateriales();
   </script>
 </body>
 </html>
