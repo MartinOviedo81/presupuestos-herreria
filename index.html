@@ -3,20 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <title>Agregar Materiales</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <h2>Agregar Material a Firestore</h2>
+
   <form id="form-material">
-    <label>Nombre: <input type="text" id="nombre" required></label><br><br>
-    <label>Precio: <input type="number" id="precio" required></label><br><br>
-    <label>Largo: <input type="text" id="largo" value="6 mts" required></label><br><br>
+    <label>Nombre:
+      <input type="text" id="nombre" required>
+    </label>
+
+    <label>Precio:
+      <input type="number" id="precio" required>
+    </label>
+
+    <label>Largo:
+      <input type="text" id="largo" value="6 mts" required>
+    </label>
+
     <label>Unidad: 
       <select id="unidad">
         <option value="barra">Barra</option>
         <option value="kg">Kg</option>
         <option value="unidad">Unidad</option>
       </select>
-    </label><br><br>
+    </label>
+
     <button type="submit">Agregar</button>
   </form>
 
@@ -47,10 +59,12 @@
         });
 
         mensaje.textContent = `✅ Material "${nombre}" agregado correctamente.`;
+        mensaje.style.color = "green";
         form.reset();
         document.getElementById('largo').value = "6 mts";
       } catch (error) {
         mensaje.textContent = `❌ Error: ${error.message}`;
+        mensaje.style.color = "red";
         console.error(error);
       }
     });
