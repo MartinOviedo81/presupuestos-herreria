@@ -10,32 +10,27 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(to right, #f4f6f9, #dfe9f3);
   color: #333;
-  padding: 40px;
+  padding: 40px 20px;
 }
 
-/* Encabezado */
+/* Encabezados */
 h2 {
   text-align: center;
   color: #2c3e50;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
 }
 
-/* Estilos del formulario */
+/* Formulario */
 form {
   background: #ffffff;
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 30px 40px;
+  max-width: 600px;
+  margin: 0 auto 30px auto;
+  padding: 30px;
   border-radius: 15px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.6s ease-in-out;
 }
 
-form:hover {
-  transform: translateY(-3px);
-}
-
-/* Inputs y etiquetas */
 label {
   display: block;
   margin-bottom: 15px;
@@ -50,7 +45,7 @@ select {
   border: 2px solid #ccc;
   border-radius: 8px;
   font-size: 16px;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.3s;
 }
 
 input:focus,
@@ -59,17 +54,19 @@ select:focus {
   outline: none;
 }
 
-/* Botón */
+/* Botón principal */
 button {
+  display: inline-block;
   width: 100%;
   padding: 12px;
   background: #3498db;
   color: white;
   font-size: 16px;
+  font-weight: bold;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background 0.3s;
   margin-top: 10px;
 }
 
@@ -77,26 +74,124 @@ button:hover {
   background: #2980b9;
 }
 
-/* Mensajes */
 #mensaje {
   text-align: center;
   margin-top: 20px;
   font-weight: bold;
-  font-size: 16px;
 }
 
-/* Animación de entrada */
-form {
-  animation: fadeIn 1s ease-in-out;
+/* Cards de materiales */
+#lista-materiales {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  margin-top: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card button {
+  width: auto;
+  margin-top: 10px;
+  background: #2ecc71;
+}
+
+.card button:hover {
+  background: #27ae60;
+}
+
+/* Buscador */
+#buscador {
+  max-width: 400px;
+  margin: 0 auto 20px auto;
+  display: block;
+  padding: 10px;
+  border-radius: 10px;
+  border: 2px solid #ccc;
+  font-size: 16px;
+  transition: border 0.3s ease;
+}
+
+#buscador:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+/* Presupuesto */
+#presupuesto {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto 15px auto;
+  max-width: 600px;
+}
+
+#presupuesto li {
+  background: #f8f8f8;
+  margin-bottom: 10px;
+  padding: 12px 15px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#presupuesto button {
+  background: #e74c3c;
+  font-size: 14px;
+  padding: 5px 10px;
+}
+
+#presupuesto button:hover {
+  background: #c0392b;
+}
+
+#total {
+  font-size: 20px;
+  color: #2c3e50;
+  font-weight: bold;
+  display: inline-block;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(15px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  form, #buscador, #presupuesto, h2 {
+    padding: 10px;
+    text-align: center;
+  }
+
+  #lista-materiales {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    text-align: center;
+  }
+
+  #presupuesto li {
+    flex-direction: column;
+    gap: 10px;
   }
 }
