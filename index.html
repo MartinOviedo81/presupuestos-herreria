@@ -2,165 +2,193 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Presupuestos de Materiales</title>
+  <title>Presupuesto de Herrería</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Presupuestador de Materiales</h1>
+  <h2>Presupuesto de Herrería</h2>
 
-    <section id="form-materiales">
-      <h2>Materiales disponibles</h2>
-      <div id="lista-materiales"></div>
-    </section>
+  <input type="text" id="buscador" placeholder="Buscar material...">
 
-    <section id="presupuesto-section">
-      <h2>Presupuesto</h2>
-      <input type="text" id="nombre-presupuesto" placeholder="Nombre del presupuesto">
-      <ul id="presupuesto"></ul>
-      <p id="total">Total: $0</p>
-      <button id="guardarPresupuesto">Guardar Presupuesto</button>
-    </section>
+  <div id="lista-materiales"></div>
+
+  <hr>
+
+  <h2>Presupuesto Actual</h2>
+
+  <div>
+    <label>Nombre del presupuesto:
+      <input type="text" id="nombre-presupuesto" placeholder="Ej: Portón Juan">
+    </label>
+    <button id="guardar-presupuesto">💾 Guardar presupuesto</button>
   </div>
 
-  <script>
-    const materiales = [
-      { nombre: 'Hierro redondo herrero', precio: 5183, unidad: 'barra', largo: 6 },
-      { nombre: 'Ángulo de hierro', precio: 6240, unidad: 'barra', largo: 6 },
-      { nombre: 'Caño estructural', precio: 7200, unidad: 'barra', largo: 6 }
-    ];
+  <ul id="presupuesto"></ul>
+  <p><strong>Total estimado: $<span id="total">0</span></strong></p>
 
-    const multiplicadores = {
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import {
+      collection, getDocs, addDoc
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const trabajosBase = {
       'corte y soldadura': 2.5,
       'rolado': 3.5,
       'doblado': 1.5,
       'enderezado': 1.2,
-      'preparado de pintura': 1.1,
       'pintura': 2,
-      'embalaje': 1.1,
-      'envío': 1.4,
-      'instalación': 3
+      'instalación': 3,
+      'embalaje': 1.1
     };
 
-    const presupuesto = [];
+    let trabajos = { ...trabajosBase };
+    let materiales = [];
+    let presupuesto = [];
 
-    function mostrarMateriales(materiales) {
-      const contenedor = document.getElementById('lista-materiales');
-      contenedor.innerHTML = '';
+    const buscador = document.getElementById('buscador');
+    const lista = document.getElementById('lista-materiales');
+    const presupuestoUl = document.getElementById('presupuesto');
+    const totalSpan = document.getElementById('total');
+    const nombrePresupuesto = document.getElementById('nombre-presupuesto');
+    const btnGuardar = document.getElementById('guardar-presupuesto');
 
-      materiales.forEach((mat) => {
+    buscador.addEventListener('input', () => {
+      const texto = buscador.value.toLowerCase();
+      const filtrados = materiales.filter(m => m.nombre.toLowerCase().includes(texto));
+      mostrarMateriales(filtrados);
+    });
+
+    async function cargarMateriales() {
+      const snap = await getDocs(collection(db, 'materiales'));
+      materiales = [];
+      snap.forEach(doc => materiales.push(doc.data()));
+      mostrarMateriales(materiales);
+    }
+
+    function mostrarMateriales(listaMat) {
+      lista.innerHTML = '';
+
+      listaMat.forEach((mat, index) => {
         const card = document.createElement('div');
         card.className = 'card';
 
-        const trabajosCheckboxes = Object.entries(multiplicadores).map(([trabajo, mult]) => {
-          return `
-            <label>
-              <input type="checkbox" value="${trabajo}" class="trabajo-checkbox"> ${trabajo} (x${mult})
-            </label>
-          `;
-        }).join('');
+        const trabajosInputs = Object.entries(trabajos).map(([nombre, mult]) => `
+          <label>
+            <input type="checkbox" class="check-trabajo" data-nombre="${nombre}" data-index="${index}">
+            ${nombre}
+            <input type="number" value="${mult}" class="input-multiplicador" step="0.1" min="1" data-nombre="${nombre}" data-index="${index}" style="width: 60px;">×
+          </label>
+        `).join('<br>');
 
         card.innerHTML = `
           <h4>${mat.nombre}</h4>
-          <p><strong>Precio:</strong> $${mat.precio} por ${mat.largo}m</p>
+          <p>Precio barra: $${mat.precio}</p>
+          <p>Largo: ${mat.largo}</p>
+
           <label>Metros a usar:
             <input type="number" min="0.1" step="0.1" value="1" class="input-metros">
           </label>
-          <div class="trabajos-lista">
-            ${trabajosCheckboxes}
-          </div>
+
+          <details>
+            <summary>Trabajos a realizar</summary>
+            <div class="trabajos-lista">${trabajosInputs}</div>
+          </details>
+
           <button class="btn-agregar">Agregar al presupuesto</button>
         `;
 
-        const btnAgregar = card.querySelector('.btn-agregar');
-        btnAgregar.addEventListener('click', () => {
+        const btn = card.querySelector('.btn-agregar');
+        btn.addEventListener('click', () => {
           const metros = parseFloat(card.querySelector('.input-metros').value);
-          const trabajos = Array.from(card.querySelectorAll('.trabajo-checkbox:checked')).map(cb => cb.value);
-          agregarAlPresupuesto(mat, metros, trabajos);
+          const largo = parseFloat(mat.largo.split(' ')[0]); // "6 mts" → 6
+          const precioPorMetro = mat.precio / largo;
+          const checkboxes = card.querySelectorAll('.check-trabajo');
+          const multiplicadoresInputs = card.querySelectorAll('.input-multiplicador');
+
+          let multiplicadorTotal = 1;
+          let trabajosSeleccionados = [];
+
+          checkboxes.forEach((check, i) => {
+            if (check.checked) {
+              const nombre = check.dataset.nombre;
+              const mult = parseFloat(multiplicadoresInputs[i].value);
+              multiplicadorTotal *= mult;
+              trabajosSeleccionados.push(`${nombre} ×${mult}`);
+            }
+          });
+
+          const subtotal = (precioPorMetro * metros * multiplicadorTotal).toFixed(2);
+
+          presupuesto.push({
+            nombre: mat.nombre,
+            metros,
+            precioPorMetro: precioPorMetro.toFixed(2),
+            trabajos: trabajosSeleccionados,
+            multiplicadorTotal: multiplicadorTotal.toFixed(2),
+            subtotal: parseFloat(subtotal)
+          });
+
+          renderPresupuesto();
         });
 
-        contenedor.appendChild(card);
+        lista.appendChild(card);
       });
-    }
-
-    function agregarAlPresupuesto(material, metros, trabajos) {
-      const precioPorMetro = material.precio / material.largo;
-      const precioBase = precioPorMetro * metros;
-
-      let multiplicadorFinal = 1;
-      trabajos.forEach(trabajo => {
-        multiplicadorFinal *= multiplicadores[trabajo];
-      });
-
-      const precioFinal = precioBase * multiplicadorFinal;
-
-      const item = {
-        ...material,
-        metros,
-        trabajos,
-        precioBase,
-        multiplicadorFinal,
-        precioFinal
-      };
-
-      presupuesto.push(item);
-      renderPresupuesto();
     }
 
     function renderPresupuesto() {
-      const ul = document.getElementById('presupuesto');
-      ul.innerHTML = '';
+      presupuestoUl.innerHTML = '';
       let total = 0;
 
-      presupuesto.forEach((item, index) => {
+      presupuesto.forEach((item, i) => {
         const li = document.createElement('li');
         li.innerHTML = `
           <div>
             <strong>${item.nombre}</strong><br>
-            Metros usados: ${item.metros} m<br>
-            Precio base: $${item.precioBase.toFixed(2)}<br>
-            Trabajos: ${item.trabajos.join(', ')}<br>
-            Multiplicador final: x${item.multiplicadorFinal.toFixed(2)}<br>
-            <strong>Total item: $${item.precioFinal.toFixed(2)}</strong>
+            Metros: ${item.metros} m × $${item.precioPorMetro}/m<br>
+            Trabajos: ${item.trabajos.join(', ') || 'Ninguno'}<br>
+            Multiplicador total: ${item.multiplicadorTotal}<br>
+            Subtotal: $${item.subtotal}
           </div>
-          <button onclick="eliminarItem(${index})">❌</button>
+          <button onclick="eliminarItem(${i})">❌</button>
         `;
-        ul.appendChild(li);
-        total += item.precioFinal;
+        presupuestoUl.appendChild(li);
+        total += item.subtotal;
       });
 
-      document.getElementById('total').innerText = `Total: $${total.toFixed(2)}`;
+      totalSpan.textContent = total.toFixed(2);
     }
 
-    function eliminarItem(index) {
-      presupuesto.splice(index, 1);
+    window.eliminarItem = (i) => {
+      presupuesto.splice(i, 1);
       renderPresupuesto();
-    }
+    };
 
-    document.getElementById('guardarPresupuesto').addEventListener('click', () => {
-      const nombre = document.getElementById('nombre-presupuesto').value.trim();
-      if (!nombre) return alert('Ingresá un nombre para el presupuesto.');
-      if (!presupuesto.length) return alert('Agregá al menos un material al presupuesto.');
+    btnGuardar.addEventListener('click', () => {
+      const nombre = nombrePresupuesto.value.trim();
+      if (!nombre) return alert('Poné un nombre al presupuesto.');
 
-      const fecha = new Date().toLocaleDateString();
-      const total = presupuesto.reduce((acc, item) => acc + item.precioFinal, 0);
-      const resumen = {
+      const fecha = new Date().toLocaleString();
+      const total = totalSpan.textContent;
+
+      const data = {
         nombre,
         fecha,
-        total: total.toFixed(2),
+        total,
         items: presupuesto
       };
 
-      const guardados = JSON.parse(localStorage.getItem('presupuestos')) || [];
-      guardados.push(resumen);
-      localStorage.setItem('presupuestos', JSON.stringify(guardados));
+      const listaGuardados = JSON.parse(localStorage.getItem('presupuestos') || '[]');
+      listaGuardados.push(data);
+      localStorage.setItem('presupuestos', JSON.stringify(listaGuardados));
 
-      alert('Presupuesto guardado correctamente.');
-      location.reload();
+      alert(`💾 Presupuesto "${nombre}" guardado.`);
+      presupuesto = [];
+      renderPresupuesto();
+      nombrePresupuesto.value = '';
     });
 
-    mostrarMateriales(materiales);
+    cargarMateriales();
   </script>
 </body>
 </html>
