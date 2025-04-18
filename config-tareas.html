@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h2>Configuración de Tareas</h2>
+  <h2>Agregar o Editar Tarea</h2>
 
   <form id="form-tarea">
     <label>Nombre de la tarea:
@@ -25,16 +25,16 @@
     <button type="submit">💾 Guardar tarea</button>
   </form>
 
-  <hr>
-  <h2>Tareas Cargadas</h2>
-  <ul id="lista-tareas"></ul>
-
   <p id="mensaje-tareas"></p>
+
+  <hr>
+  <h2>Tareas cargadas</h2>
+  <ul id="lista-tareas"></ul>
 
   <script type="module">
     import { db } from './firebase-config.js';
     import {
-      collection, getDocs, addDoc, deleteDoc, doc
+      collection, getDocs, addDoc, deleteDoc, doc, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
     const form = document.getElementById('form-tarea');
@@ -43,6 +43,8 @@
     const multiplicador = document.getElementById('multiplicador');
     const lista = document.getElementById('lista-tareas');
     const mensaje = document.getElementById('mensaje-tareas');
+
+    let idTareaEditando = null;
 
     async function cargarTareas() {
       const snap = await getDocs(collection(db, 'tareas'));
@@ -55,23 +57,53 @@
           <strong>${t.nombre}</strong><br>
           ${t.descripcion || ''}<br>
           Multiplicador: ${t.multiplicador}<br>
-          <button onclick="eliminarTarea('${docSnap.id}')">🗑 Eliminar</button>
+          <small>Última actualización: ${t.fecha || 'Sin fecha'}</small><br>
+          <button onclick='editarTarea("${docSnap.id}", ${JSON.stringify(t).replace(/"/g, '&quot;')})'>✏️ Editar</button>
+          <button onclick='eliminarTarea("${docSnap.id}")'>🗑 Eliminar</button>
         `;
         lista.appendChild(li);
       });
     }
+
+    window.editarTarea = (id, tarea) => {
+      nombreTarea.value = tarea.nombre;
+      descripcion.value = tarea.descripcion;
+      multiplicador.value = tarea.multiplicador;
+      idTareaEditando = id;
+    };
+
+    window.eliminarTarea = async (id) => {
+      if (confirm('¿Seguro que querés eliminar esta tarea?')) {
+        try {
+          await deleteDoc(doc(db, 'tareas', id));
+          mensaje.textContent = '🗑 Tarea eliminada.';
+          cargarTareas();
+        } catch (err) {
+          console.error(err);
+          mensaje.textContent = '❌ Error al eliminar la tarea.';
+        }
+      }
+    };
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const tarea = {
         nombre: nombreTarea.value.trim(),
         descripcion: descripcion.value.trim(),
-        multiplicador: parseFloat(multiplicador.value)
+        multiplicador: parseFloat(multiplicador.value),
+        fecha: new Date().toLocaleString()
       };
 
       try {
-        await addDoc(collection(db, 'tareas'), tarea);
-        mensaje.textContent = `✅ Tarea "${tarea.nombre}" guardada.`;
+        if (idTareaEditando) {
+          await updateDoc(doc(db, 'tareas', idTareaEditando), tarea);
+          mensaje.textContent = `✏️ Tarea "${tarea.nombre}" actualizada.`;
+          idTareaEditando = null;
+        } else {
+          await addDoc(collection(db, 'tareas'), tarea);
+          mensaje.textContent = `✅ Tarea "${tarea.nombre}" guardada.`;
+        }
+
         form.reset();
         cargarTareas();
       } catch (err) {
@@ -79,17 +111,6 @@
         mensaje.textContent = '❌ Error al guardar la tarea.';
       }
     });
-
-    window.eliminarTarea = async (id) => {
-      try {
-        await deleteDoc(doc(db, 'tareas', id));
-        mensaje.textContent = '🗑 Tarea eliminada.';
-        cargarTareas();
-      } catch (err) {
-        console.error(err);
-        mensaje.textContent = '❌ Error al eliminar tarea.';
-      }
-    };
 
     cargarTareas();
   </script>
