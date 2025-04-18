@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Configurar Tareas - Linda Herrería</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>Configuración de Tareas</h2>
+
+  <form id="form-tarea">
+    <label>Nombre de la tarea:
+      <input type="text" id="nombre-tarea" required>
+    </label>
+
+    <label>Descripción:
+      <input type="text" id="descripcion-tarea" placeholder="Ej: Soldadura de estructura...">
+    </label>
+
+    <label>Multiplicador:
+      <input type="number" id="multiplicador" step="0.1" min="0.1" required>
+    </label>
+
+    <button type="submit">💾 Guardar tarea</button>
+  </form>
+
+  <hr>
+  <h2>Tareas Cargadas</h2>
+  <ul id="lista-tareas"></ul>
+
+  <p id="mensaje-tareas"></p>
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import {
+      collection, getDocs, addDoc, deleteDoc, doc
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const form = document.getElementById('form-tarea');
+    const nombreTarea = document.getElementById('nombre-tarea');
+    const descripcion = document.getElementById('descripcion-tarea');
+    const multiplicador = document.getElementById('multiplicador');
+    const lista = document.getElementById('lista-tareas');
+    const mensaje = document.getElementById('mensaje-tareas');
+
+    async function cargarTareas() {
+      const snap = await getDocs(collection(db, 'tareas'));
+      lista.innerHTML = '';
+
+      snap.forEach(docSnap => {
+        const t = docSnap.data();
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <strong>${t.nombre}</strong><br>
+          ${t.descripcion || ''}<br>
+          Multiplicador: ${t.multiplicador}<br>
+          <button onclick="eliminarTarea('${docSnap.id}')">🗑 Eliminar</button>
+        `;
+        lista.appendChild(li);
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const tarea = {
+        nombre: nombreTarea.value.trim(),
+        descripcion: descripcion.value.trim(),
+        multiplicador: parseFloat(multiplicador.value)
+      };
+
+      try {
+        await addDoc(collection(db, 'tareas'), tarea);
+        mensaje.textContent = `✅ Tarea "${tarea.nombre}" guardada.`;
+        form.reset();
+        cargarTareas();
+      } catch (err) {
+        console.error(err);
+        mensaje.textContent = '❌ Error al guardar la tarea.';
+      }
+    });
+
+    window.eliminarTarea = async (id) => {
+      try {
+        await deleteDoc(doc(db, 'tareas', id));
+        mensaje.textContent = '🗑 Tarea eliminada.';
+        cargarTareas();
+      } catch (err) {
+        console.error(err);
+        mensaje.textContent = '❌ Error al eliminar tarea.';
+      }
+    };
+
+    cargarTareas();
+  </script>
+</body>
+</html>
