@@ -31,17 +31,18 @@
   <script type="module">
     import { db } from './firebase-config.js';
     import {
-      collection, getDocs
+      collection, getDocs, addDoc, deleteDoc, doc, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
     const trabajosBase = {
       'corte y soldadura': 2.5,
-      'rolado': 3.5,
-      'doblado': 1.5,
-      'enderezado': 1.2,
-      'pintura': 2,
-      'instalación': 3,
-      'embalaje': 1.1
+      'rolado': 0.5,
+      'doblado': 0.5,
+      'enderezado': 0.5,
+      'pintura': 0.25,
+      'instalación': 0.25,
+      'embalaje': 0.1,
+      'flete': 0.3
     };
 
     let trabajos = { ...trabajosBase };
@@ -171,7 +172,7 @@
       renderPresupuesto();
     };
 
-    btnGuardar.addEventListener('click', () => {
+    btnGuardar.addEventListener('click', async () => {
       const nombre = nombrePresupuesto.value.trim();
       if (!nombre) return alert('Poné un nombre al presupuesto.');
 
@@ -179,17 +180,13 @@
       const total = totalSpan.textContent;
 
       const data = {
-        id: Date.now(),
         nombre,
         fecha,
         total,
         items: presupuesto
       };
 
-      const listaGuardados = JSON.parse(localStorage.getItem('presupuestos') || '[]');
-      listaGuardados.push(data);
-      localStorage.setItem('presupuestos', JSON.stringify(listaGuardados));
-
+      await addDoc(collection(db, 'presupuestos'), data);
       alert(`💾 Presupuesto "${nombre}" guardado.`);
       presupuesto = [];
       renderPresupuesto();
@@ -197,45 +194,55 @@
       cargarPresupuestosGuardados();
     });
 
-    function cargarPresupuestosGuardados() {
-      const listaGuardados = JSON.parse(localStorage.getItem('presupuestos') || '[]');
+    async function cargarPresupuestosGuardados() {
       const contenedor = document.getElementById('presupuestos-guardados');
+      const snap = await getDocs(collection(db, 'presupuestos'));
+      const lista = [];
+      snap.forEach(doc => lista.push({ id: doc.id, ...doc.data() }));
+
       contenedor.innerHTML = `
         <h2>Presupuestos guardados</h2>
         <ul>
-          ${listaGuardados.map(p => `
+          ${lista.map(p => `
             <li>
               <strong>${p.nombre}</strong> (${p.fecha}) - Total: $${p.total}<br>
-              <button onclick="cargarPresupuesto(${p.id})">📝 Editar</button>
-              <button onclick="compartirPresupuesto(${p.id})">📤 WhatsApp</button>
+              <button onclick="compartirPresupuesto('${p.id}')">📤 WhatsApp</button>
+              <button onclick="eliminarPresupuesto('${p.id}')">🗑 Eliminar</button>
             </li>
           `).join('')}
         </ul>
       `;
     }
 
-    window.cargarPresupuesto = (id) => {
-      const listaGuardados = JSON.parse(localStorage.getItem('presupuestos') || '[]');
-      const p = listaGuardados.find(p => p.id === id);
-      if (!p) return alert('Presupuesto no encontrado');
-
-      presupuesto = p.items;
-      nombrePresupuesto.value = p.nombre;
-      renderPresupuesto();
-
-      alert(`✏️ Editando presupuesto "${p.nombre}". No olvides hacer clic en "Guardar presupuesto" para actualizar los cambios.`);
+    window.eliminarPresupuesto = async (id) => {
+      await deleteDoc(doc(db, 'presupuestos', id));
+      alert("🗑 Presupuesto eliminado.");
+      cargarPresupuestosGuardados();
     };
 
-    window.compartirPresupuesto = (id) => {
-      const listaGuardados = JSON.parse(localStorage.getItem('presupuestos') || '[]');
-      const p = listaGuardados.find(p => p.id === id);
+    window.compartirPresupuesto = async (id) => {
+      const snap = await getDocs(collection(db, 'presupuestos'));
+      let p = null;
+      snap.forEach(doc => {
+        if (doc.id === id) p = { id: doc.id, ...doc.data() };
+      });
       if (!p) return alert('Presupuesto no encontrado');
 
-      const presupuestoTexto = p.items.map(item => 
-        `🛠 ${item.nombre}\nMetros: ${item.metros} m\nTrabajos: ${item.trabajos.join(', ')}\nSubtotal: $${item.subtotal}`
-      ).join('\n\n');
+      const texto = p.items.map(item => 
+        `🛠 ${item.nombre}
+- Metros: ${item.metros} m
+- Trabajos: ${item.trabajos.join(', ')}
+- Subtotal: $${item.subtotal}`
+      ).join('
 
-      const mensaje = `📋 *Presupuesto: ${p.nombre}*\n🗓 ${p.fecha}\n\n${presupuestoTexto}\n\n💰 Total: $${p.total}`;
+');
+
+      const mensaje = `📋 *Presupuesto: ${p.nombre}*
+🗓 ${p.fecha}
+
+${texto}
+
+💰 *Total: $${p.total}*`;
       const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
       window.open(url, '_blank');
     };
