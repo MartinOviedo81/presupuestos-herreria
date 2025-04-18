@@ -99,39 +99,38 @@
         `;
 
         const btn = card.querySelector('.btn-agregar');
-  btn.addEventListener('click', () => {
+btn.addEventListener('click', () => {
   const metros = parseFloat(card.querySelector('.input-metros').value);
   const largo = parseFloat(mat.largo.split(' ')[0]); // "6 mts" → 6
   const precioPorMetro = mat.precio / largo;
   const checkboxes = card.querySelectorAll('.check-trabajo');
   const multiplicadoresInputs = card.querySelectorAll('.input-multiplicador');
 
-  let multiplicadorTotal = 0;
+  let multiplicadorTotal = 1; // el precio base ya cuenta como 1
   let trabajosSeleccionados = [];
 
   checkboxes.forEach((check, i) => {
     if (check.checked) {
       const nombre = check.dataset.nombre;
       const mult = parseFloat(multiplicadoresInputs[i].value);
-      multiplicadorTotal += mult;
+      multiplicadorTotal += mult; // se suma directamente, sin agregar otro 1
       trabajosSeleccionados.push(`${nombre} ×${mult}`);
     }
   });
 
-  const subtotal = (precioPorMetro * metros * (1 + multiplicadorTotal)).toFixed(2); // se suma 1 al total para considerar el precio base
+  const subtotal = (precioPorMetro * metros * multiplicadorTotal).toFixed(2);
 
   presupuesto.push({
     nombre: mat.nombre,
     metros,
     precioPorMetro: precioPorMetro.toFixed(2),
     trabajos: trabajosSeleccionados,
-    multiplicadorTotal: (1 + multiplicadorTotal).toFixed(2),
+    multiplicadorTotal: multiplicadorTotal.toFixed(2),
     subtotal: parseFloat(subtotal)
   });
 
   renderPresupuesto();
 });
-
 
         lista.appendChild(card);
       });
