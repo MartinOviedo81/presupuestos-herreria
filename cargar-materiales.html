@@ -30,29 +30,9 @@
       <input type="number" id="precio" required min="1" step="1">
     </label>
 
-    <label>Tipo de fracción:
-      <select id="tipo-fraccion">
-        <option value="lineal">Lineal</option>
-        <option value="superficie">Superficie</option>
-        <option value="circulo">Círculo</option>
-      </select>
+    <label>Detalle de uso (ej: 1 x 1,5 metros + 2 de 1,60 metros):
+      <input type="text" id="detalle" placeholder="Ej: 1 x 1,5 metros + 2 de 1,60 metros" required>
     </label>
-
-    <div id="fraccion-inputs">
-      <label>Cantidad:
-        <input type="number" id="cantidad-fraccion" min="1" step="1">
-      </label>
-      <label id="lineal-label">Medida (en metros):
-        <input type="number" id="medida" step="0.01" min="0.01">
-      </label>
-      <label id="superficie-label" style="display:none;">Largo × Ancho (m):
-        <input type="number" id="largo" placeholder="Largo" step="0.01" min="0.01">
-        <input type="number" id="ancho" placeholder="Ancho" step="0.01" min="0.01">
-      </label>
-      <label id="circulo-label" style="display:none;">Diámetro del círculo (m):
-        <input type="number" id="diametro" step="0.01" min="0.01">
-      </label>
-    </div>
 
     <button type="submit">➕ Guardar material</button>
   </form>
@@ -64,54 +44,44 @@
     import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
     const form = document.getElementById('form-material');
-    const unidad = document.getElementById('unidad');
-    const tipoFraccion = document.getElementById('tipo-fraccion');
     const mensaje = document.getElementById('mensaje');
 
-    tipoFraccion.addEventListener('change', () => {
-      document.getElementById('lineal-label').style.display = tipoFraccion.value === 'lineal' ? 'block' : 'none';
-      document.getElementById('superficie-label').style.display = tipoFraccion.value === 'superficie' ? 'block' : 'none';
-      document.getElementById('circulo-label').style.display = tipoFraccion.value === 'circulo' ? 'block' : 'none';
-    });
+    function calcularTotalDesdeTexto(texto) {
+      const partes = texto.split('+').map(p => p.trim());
+      let total = 0;
+
+      for (let parte of partes) {
+        const match = parte.match(/(\d+(?:[.,]\d+)?)\s*(?:x|de)?\s*(\d+(?:[.,]\d+)?)/i);
+        if (match) {
+          const cantidad = parseFloat(match[1].replace(',', '.'));
+          const medida = parseFloat(match[2].replace(',', '.'));
+          total += cantidad * medida;
+        }
+      }
+
+      return total;
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const nombre = document.getElementById('nombre').value.trim();
-      const unidadValor = unidad.value;
+      const unidad = document.getElementById('unidad').value;
       const fraccion = parseFloat(document.getElementById('fraccion').value);
       const precio = parseFloat(document.getElementById('precio').value);
-      const cantidad = parseInt(document.getElementById('cantidad-fraccion').value) || 1;
-      const tipo = tipoFraccion.value;
+      const detalle = document.getElementById('detalle').value.trim();
 
-      let largo = 1;
-      let descripcionFraccion = '';
-
-      if (tipo === 'lineal') {
-        const medida = parseFloat(document.getElementById('medida').value);
-        largo = medida;
-        descripcionFraccion = `${cantidad} de ${medida} m`;
-      } else if (tipo === 'superficie') {
-        const largoVal = parseFloat(document.getElementById('largo').value);
-        const anchoVal = parseFloat(document.getElementById('ancho').value);
-        largo = largoVal * anchoVal;
-        descripcionFraccion = `${cantidad} de ${largoVal} x ${anchoVal} m`;
-      } else if (tipo === 'circulo') {
-        const diametro = parseFloat(document.getElementById('diametro').value);
-        largo = (diametro * Math.PI) + 0.2;
-        descripcionFraccion = `${cantidad} círculo(s) Ø ${diametro} m = ${largo.toFixed(2)} m`;
-      }
-
+      const largo = calcularTotalDesdeTexto(detalle);
       const fecha = new Date().toLocaleDateString();
 
       const data = {
         nombre,
-        unidad: unidadValor,
+        unidad,
         fraccionamiento: fraccion,
         precio,
         largo: `${largo.toFixed(2)} m`,
-        cantidad,
-        descripcionFraccion,
+        cantidad: 1,
+        descripcionFraccion: detalle,
         fecha
       };
 
