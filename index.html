@@ -63,7 +63,7 @@
     async function cargarMateriales() {
       const snap = await getDocs(collection(db, 'materiales'));
       materiales = [];
-      snap.forEach(doc => materiales.push(doc.data()));
+      snap.forEach(doc => materiales.push({ id: doc.id, ...doc.data() }));
       mostrarMateriales(materiales);
     }
 
@@ -102,8 +102,7 @@
         const trabajosInputs = Object.entries(trabajos).map(([nombre, mult]) => `
           <label>
             <input type="checkbox" class="check-trabajo" data-nombre="${nombre}" data-index="${index}">
-            ${nombre}
-            <input type="number" value="${mult}" class="input-multiplicador" step="0.1" min="0.1" data-nombre="${nombre}" data-index="${index}" style="width: 60px;">×
+            ${nombre} × ${mult}
           </label>
         `).join('<br>');
 
@@ -113,7 +112,7 @@
           <p><strong>Precio total:</strong> $${mat.precio}</p>
           <p><strong>Fracción:</strong> ${mat.fraccionamiento} ${mat.unidad}</p>
           <p><strong>Precio por unidad:</strong> $${(mat.precio / mat.fraccionamiento).toFixed(2)}</p>
-          <p><strong>Fracciones:</strong> ${mat.descripcionFraccion || 'No especificado'}</p>
+          <p><strong>Descripción:</strong> ${mat.descripcion || 'Sin descripción'}</p>
           <p><small>Actualizado: ${mat.fecha}</small></p>
 
           <label>Detalle de uso:
@@ -144,15 +143,14 @@
 
           const precioPorUnidad = mat.precio / mat.fraccionamiento;
           const checkboxes = card.querySelectorAll('.check-trabajo');
-          const multiplicadoresInputs = card.querySelectorAll('.input-multiplicador');
 
           let multiplicadorTotal = 0;
           let trabajosSeleccionados = [];
 
-          checkboxes.forEach((check, i) => {
+          checkboxes.forEach((check) => {
             if (check.checked) {
               const nombre = check.dataset.nombre;
-              const mult = parseFloat(multiplicadoresInputs[i].value);
+              const mult = trabajos[nombre];
               multiplicadorTotal += mult;
               trabajosSeleccionados.push(`${nombre} ×${mult}`);
             }
