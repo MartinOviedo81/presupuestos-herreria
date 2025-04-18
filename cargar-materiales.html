@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h2>Agregar Material</h2>
+  <h2>Agregar o Editar Material</h2>
 
   <form id="form-material">
     <label>Nombre del material:
@@ -30,17 +30,68 @@
       <input type="number" id="precio" required min="1" step="1">
     </label>
 
-    <button type="submit">➕ Guardar material</button>
+    <button type="submit">💾 Guardar material</button>
   </form>
 
   <p id="mensaje"></p>
 
+  <hr>
+  <h2>Materiales cargados</h2>
+  <ul id="lista-materiales"></ul>
+
   <script type="module">
     import { db } from './firebase-config.js';
-    import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import {
+      collection, getDocs, addDoc, deleteDoc, doc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
     const form = document.getElementById('form-material');
     const mensaje = document.getElementById('mensaje');
+    const lista = document.getElementById('lista-materiales');
+
+    let idMaterialEditando = null;
+
+    async function cargarMateriales() {
+      const snap = await getDocs(collection(db, 'materiales'));
+      lista.innerHTML = '';
+
+      snap.forEach(docSnap => {
+        const m = docSnap.data();
+        const li = document.createElement('li');
+
+        li.innerHTML = `
+          <strong>${m.nombre}</strong><br>
+          Unidad: ${m.unidad}<br>
+          Fracción: ${m.fraccionamiento}<br>
+          Precio: $${m.precio}<br>
+          <small>Última actualización: ${m.fecha || 'Sin fecha'}</small><br>
+          <button onclick="editarMaterial('${docSnap.id}', ${JSON.stringify(m).replace(/"/g, '&quot;')})">✏️ Editar</button>
+          <button onclick="eliminarMaterial('${docSnap.id}')">🗑 Eliminar</button>
+        `;
+        lista.appendChild(li);
+      });
+    }
+
+    window.editarMaterial = (id, material) => {
+      document.getElementById('nombre').value = material.nombre;
+      document.getElementById('unidad').value = material.unidad;
+      document.getElementById('fraccion').value = material.fraccionamiento;
+      document.getElementById('precio').value = material.precio;
+      idMaterialEditando = id;
+    };
+
+    window.eliminarMaterial = async (id) => {
+      if (confirm('¿Seguro que querés eliminar este material?')) {
+        try {
+          await deleteDoc(doc(db, 'materiales', id));
+          mensaje.textContent = '🗑 Material eliminado.';
+          cargarMateriales();
+        } catch (err) {
+          console.error(err);
+          mensaje.textContent = '❌ Error al eliminar el material.';
+        }
+      }
+    };
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -49,7 +100,7 @@
       const unidad = document.getElementById('unidad').value;
       const fraccion = parseFloat(document.getElementById('fraccion').value);
       const precio = parseFloat(document.getElementById('precio').value);
-      const fecha = new Date().toLocaleDateString();
+      const fecha = new Date().toLocaleString();
 
       const data = {
         nombre,
@@ -63,14 +114,23 @@
       };
 
       try {
-        await addDoc(collection(db, 'materiales'), data);
-        mensaje.textContent = `✅ Material "${nombre}" guardado correctamente.`;
+        if (idMaterialEditando) {
+          await updateDoc(doc(db, 'materiales', idMaterialEditando), data);
+          mensaje.textContent = `✏️ Material "${nombre}" actualizado.`;
+          idMaterialEditando = null;
+        } else {
+          await addDoc(collection(db, 'materiales'), data);
+          mensaje.textContent = `✅ Material "${nombre}" guardado correctamente.`;
+        }
         form.reset();
+        cargarMateriales();
       } catch (error) {
         console.error(error);
         mensaje.textContent = '❌ Error al guardar el material.';
       }
     });
+
+    cargarMateriales();
   </script>
 </body>
 </html>
