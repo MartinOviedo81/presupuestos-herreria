@@ -8,11 +8,15 @@
 </head>
 <body>
   <h2>Linda Herrería</h2>
-<div style="text-align: center; margin-bottom: 20px;">
-  <a href="cargar-materiales.html" style="text-decoration: none;">
-    <button style="width: auto; padding: 10px 20px;">➕ Cargar nuevo material</button>
-  </a>
-</div>
+
+  <div style="text-align: center; margin-bottom: 20px;">
+    <a href="cargar-materiales.html" style="text-decoration: none;">
+      <button style="width: auto; padding: 10px 20px;">➕ Cargar nuevo material</button>
+    </a>
+    <a href="config-tareas.html" style="text-decoration: none;">
+      <button style="width: auto; padding: 10px 20px;">⚙️ Configurar tareas</button>
+    </a>
+  </div>
 
   <input type="text" id="buscador" placeholder="Buscar material...">
   <div id="lista-materiales"></div>
@@ -38,18 +42,7 @@
       collection, getDocs, addDoc, deleteDoc, doc, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    const trabajosBase = {
-      'corte y soldadura': 2.5,
-      'rolado': 0.5,
-      'doblado': 0.5,
-      'enderezado': 0.5,
-      'pintura': 0.25,
-      'instalación': 0.25,
-      'embalaje': 0.1,
-      'flete': 0.3
-    };
-
-    let trabajos = { ...trabajosBase };
+    let trabajos = {};
     let materiales = [];
     let presupuesto = [];
     let presupuestoIdActual = null;
@@ -74,6 +67,15 @@
       mostrarMateriales(materiales);
     }
 
+    async function cargarTareas() {
+      const snap = await getDocs(collection(db, 'tareas'));
+      trabajos = {};
+      snap.forEach(doc => {
+        const data = doc.data();
+        trabajos[data.nombre] = data.multiplicador;
+      });
+    }
+
     function mostrarMateriales(listaMat) {
       lista.innerHTML = '';
 
@@ -91,10 +93,14 @@
 
         card.innerHTML = `
           <h4>${mat.nombre}</h4>
-          <p>Precio barra: $${mat.precio}</p>
-          <p>Largo: ${mat.largo}</p>
+          <p><strong>Unidad:</strong> ${mat.unidad}</p>
+          <p><strong>Precio total:</strong> $${mat.precio}</p>
+          <p><strong>Fracción:</strong> ${mat.fraccionamiento} ${mat.unidad}</p>
+          <p><strong>Precio por unidad:</strong> $${(mat.precio / mat.fraccionamiento).toFixed(2)}</p>
+          <p><strong>Fracciones:</strong> ${mat.descripcionFraccion || 'No especificado'}</p>
+          <p><small>Actualizado: ${mat.fecha}</small></p>
 
-          <label>Metros a usar:
+          <label>Cantidad a usar:
             <input type="number" min="0.1" step="0.1" value="1" class="input-metros">
           </label>
 
@@ -108,9 +114,8 @@
 
         const btn = card.querySelector('.btn-agregar');
         btn.addEventListener('click', () => {
-          const metros = parseFloat(card.querySelector('.input-metros').value);
-          const largo = parseFloat(mat.largo.split(' ')[0]);
-          const precioPorMetro = mat.precio / largo;
+          const cantidad = parseFloat(card.querySelector('.input-metros').value);
+          const precioPorUnidad = mat.precio / mat.fraccionamiento;
           const checkboxes = card.querySelectorAll('.check-trabajo');
           const multiplicadoresInputs = card.querySelectorAll('.input-multiplicador');
 
@@ -131,12 +136,13 @@
             return;
           }
 
-          const subtotal = (precioPorMetro * metros * multiplicadorTotal).toFixed(2);
+          const subtotal = (precioPorUnidad * cantidad * multiplicadorTotal).toFixed(2);
 
           presupuesto.push({
             nombre: mat.nombre,
-            metros,
-            precioPorMetro: precioPorMetro.toFixed(2),
+            unidad: mat.unidad,
+            cantidad,
+            precioPorUnidad: precioPorUnidad.toFixed(2),
             trabajos: trabajosSeleccionados,
             multiplicadorTotal: multiplicadorTotal.toFixed(2),
             subtotal: parseFloat(subtotal)
@@ -158,7 +164,7 @@
         li.innerHTML = `
           <div>
             <strong>${item.nombre}</strong><br>
-            Metros: ${item.metros} m × $${item.precioPorMetro}/m<br>
+            Cantidad: ${item.cantidad} × $${item.precioPorUnidad}/${item.unidad}<br>
             Trabajos: ${item.trabajos.join(', ') || 'Ninguno'}<br>
             Multiplicador total: ${item.multiplicadorTotal}<br>
             Subtotal: $${item.subtotal}
@@ -264,7 +270,9 @@
       window.open(url, '_blank');
     };
 
-    cargarMateriales();
+    // Carga inicial
+    await cargarTareas();
+    await cargarMateriales();
     cargarPresupuestosGuardados();
   </script>
 </body>
