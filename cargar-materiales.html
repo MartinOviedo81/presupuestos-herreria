@@ -30,6 +30,10 @@
       <input type="number" id="precio" required min="1" step="1">
     </label>
 
+    <label>Descripción del material:
+      <input type="text" id="descripcion" placeholder="Ej: Hierro redondo, caño cuadrado...">
+    </label>
+
     <button type="submit">💾 Guardar material</button>
   </form>
 
@@ -49,6 +53,12 @@
     const mensaje = document.getElementById('mensaje');
     const lista = document.getElementById('lista-materiales');
 
+    const nombreInput = document.getElementById('nombre');
+    const unidadInput = document.getElementById('unidad');
+    const fraccionInput = document.getElementById('fraccion');
+    const precioInput = document.getElementById('precio');
+    const descripcionInput = document.getElementById('descripcion');
+
     let idMaterialEditando = null;
 
     async function cargarMateriales() {
@@ -64,6 +74,7 @@
           Unidad: ${m.unidad}<br>
           Fracción: ${m.fraccionamiento}<br>
           Precio: $${m.precio}<br>
+          Descripción: ${m.descripcion || 'Sin descripción'}<br>
           <small>Última actualización: ${m.fecha || 'Sin fecha'}</small><br>
           <button onclick="editarMaterial('${docSnap.id}', ${JSON.stringify(m).replace(/"/g, '&quot;')})">✏️ Editar</button>
           <button onclick="eliminarMaterial('${docSnap.id}')">🗑 Eliminar</button>
@@ -73,10 +84,11 @@
     }
 
     window.editarMaterial = (id, material) => {
-      document.getElementById('nombre').value = material.nombre;
-      document.getElementById('unidad').value = material.unidad;
-      document.getElementById('fraccion').value = material.fraccionamiento;
-      document.getElementById('precio').value = material.precio;
+      nombreInput.value = material.nombre;
+      unidadInput.value = material.unidad;
+      fraccionInput.value = material.fraccionamiento;
+      precioInput.value = material.precio;
+      descripcionInput.value = material.descripcion || '';
       idMaterialEditando = id;
     };
 
@@ -96,10 +108,11 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const nombre = document.getElementById('nombre').value.trim();
-      const unidad = document.getElementById('unidad').value;
-      const fraccion = parseFloat(document.getElementById('fraccion').value);
-      const precio = parseFloat(document.getElementById('precio').value);
+      const nombre = nombreInput.value.trim();
+      const unidad = unidadInput.value;
+      const fraccion = parseFloat(fraccionInput.value);
+      const precio = parseFloat(precioInput.value);
+      const descripcion = descripcionInput.value.trim();
       const fecha = new Date().toLocaleString();
 
       const data = {
@@ -107,9 +120,7 @@
         unidad,
         fraccionamiento: fraccion,
         precio,
-        descripcionFraccion: '',
-        largo: '',
-        cantidad: 1,
+        descripcion,
         fecha
       };
 
