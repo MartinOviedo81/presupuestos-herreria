@@ -2,11 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Presupuesto de Herrería</title>
+  <title>Linda Herrería - Presupuestos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h2>Presupuesto de Herrería</h2>
+  <h2>Linda Herrería</h2>
 
   <input type="text" id="buscador" placeholder="Buscar material...">
   <div id="lista-materiales"></div>
@@ -24,7 +25,7 @@
   <ul id="presupuesto"></ul>
   <p><strong>Total estimado: $<span id="total">0</span></strong></p>
 
-  <div id="presupuestos-guardados" style="margin-top: 40px;"></div>
+  <div id="presupuestos-guardados"></div>
 
   <script type="module">
     import { db } from './firebase-config.js';
