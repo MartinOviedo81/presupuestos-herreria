@@ -30,10 +30,6 @@
       <input type="number" id="precio" required min="1" step="1">
     </label>
 
-    <label>Detalle de uso (ej: 1 x 1,5 metros + 2 de 1,60 metros):
-      <input type="text" id="detalle" placeholder="Ej: 1 x 1,5 metros + 2 de 1,60 metros" required>
-    </label>
-
     <button type="submit">➕ Guardar material</button>
   </form>
 
@@ -46,22 +42,6 @@
     const form = document.getElementById('form-material');
     const mensaje = document.getElementById('mensaje');
 
-    function calcularTotalDesdeTexto(texto) {
-      const partes = texto.split('+').map(p => p.trim());
-      let total = 0;
-
-      for (let parte of partes) {
-        const match = parte.match(/(\d+(?:[.,]\d+)?)\s*(?:x|de)?\s*(\d+(?:[.,]\d+)?)/i);
-        if (match) {
-          const cantidad = parseFloat(match[1].replace(',', '.'));
-          const medida = parseFloat(match[2].replace(',', '.'));
-          total += cantidad * medida;
-        }
-      }
-
-      return total;
-    }
-
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -69,9 +49,6 @@
       const unidad = document.getElementById('unidad').value;
       const fraccion = parseFloat(document.getElementById('fraccion').value);
       const precio = parseFloat(document.getElementById('precio').value);
-      const detalle = document.getElementById('detalle').value.trim();
-
-      const largo = calcularTotalDesdeTexto(detalle);
       const fecha = new Date().toLocaleDateString();
 
       const data = {
@@ -79,9 +56,9 @@
         unidad,
         fraccionamiento: fraccion,
         precio,
-        largo: `${largo.toFixed(2)} m`,
+        descripcionFraccion: '',
+        largo: '',
         cantidad: 1,
-        descripcionFraccion: detalle,
         fecha
       };
 
