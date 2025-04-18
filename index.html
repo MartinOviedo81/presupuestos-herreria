@@ -106,17 +106,22 @@ btn.addEventListener('click', () => {
   const checkboxes = card.querySelectorAll('.check-trabajo');
   const multiplicadoresInputs = card.querySelectorAll('.input-multiplicador');
 
-  let multiplicadorTotal = 1; // el precio base ya cuenta como 1
+  let multiplicadorTotal = 0;
   let trabajosSeleccionados = [];
 
   checkboxes.forEach((check, i) => {
     if (check.checked) {
       const nombre = check.dataset.nombre;
       const mult = parseFloat(multiplicadoresInputs[i].value);
-      multiplicadorTotal += mult; // se suma directamente, sin agregar otro 1
+      multiplicadorTotal += mult;
       trabajosSeleccionados.push(`${nombre} ×${mult}`);
     }
   });
+
+  if (multiplicadorTotal === 0) {
+    alert("⚠️ Seleccioná al menos un trabajo para agregar el material al presupuesto.");
+    return;
+  }
 
   const subtotal = (precioPorMetro * metros * multiplicadorTotal).toFixed(2);
 
