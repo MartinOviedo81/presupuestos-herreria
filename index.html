@@ -26,10 +26,12 @@
   <ul id="presupuesto"></ul>
   <p><strong>Total estimado: $<span id="total">0</span></strong></p>
 
+  <div id="presupuestos-guardados" style="margin-top: 40px;"></div>
+
   <script type="module">
     import { db } from './firebase-config.js';
     import {
-      collection, getDocs, addDoc
+      collection, getDocs
     } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
     const trabajosBase = {
@@ -77,7 +79,7 @@
           <label>
             <input type="checkbox" class="check-trabajo" data-nombre="${nombre}" data-index="${index}">
             ${nombre}
-            <input type="number" value="${mult}" class="input-multiplicador" step="0.1" min="1" data-nombre="${nombre}" data-index="${index}" style="width: 60px;">×
+            <input type="number" value="${mult}" class="input-multiplicador" step="0.1" min="0.1" data-nombre="${nombre}" data-index="${index}" style="width: 60px;">×
           </label>
         `).join('<br>');
 
@@ -99,43 +101,43 @@
         `;
 
         const btn = card.querySelector('.btn-agregar');
-btn.addEventListener('click', () => {
-  const metros = parseFloat(card.querySelector('.input-metros').value);
-  const largo = parseFloat(mat.largo.split(' ')[0]); // "6 mts" → 6
-  const precioPorMetro = mat.precio / largo;
-  const checkboxes = card.querySelectorAll('.check-trabajo');
-  const multiplicadoresInputs = card.querySelectorAll('.input-multiplicador');
+        btn.addEventListener('click', () => {
+          const metros = parseFloat(card.querySelector('.input-metros').value);
+          const largo = parseFloat(mat.largo.split(' ')[0]);
+          const precioPorMetro = mat.precio / largo;
+          const checkboxes = card.querySelectorAll('.check-trabajo');
+          const multiplicadoresInputs = card.querySelectorAll('.input-multiplicador');
 
-  let multiplicadorTotal = 0;
-  let trabajosSeleccionados = [];
+          let multiplicadorTotal = 0;
+          let trabajosSeleccionados = [];
 
-  checkboxes.forEach((check, i) => {
-    if (check.checked) {
-      const nombre = check.dataset.nombre;
-      const mult = parseFloat(multiplicadoresInputs[i].value);
-      multiplicadorTotal += mult;
-      trabajosSeleccionados.push(`${nombre} ×${mult}`);
-    }
-  });
+          checkboxes.forEach((check, i) => {
+            if (check.checked) {
+              const nombre = check.dataset.nombre;
+              const mult = parseFloat(multiplicadoresInputs[i].value);
+              multiplicadorTotal += mult;
+              trabajosSeleccionados.push(`${nombre} ×${mult}`);
+            }
+          });
 
-  if (multiplicadorTotal === 0) {
-    alert("⚠️ Seleccioná al menos un trabajo para agregar el material al presupuesto.");
-    return;
-  }
+          if (multiplicadorTotal === 0) {
+            alert("⚠️ Seleccioná al menos un trabajo para agregar el material al presupuesto.");
+            return;
+          }
 
-  const subtotal = (precioPorMetro * metros * multiplicadorTotal).toFixed(2);
+          const subtotal = (precioPorMetro * metros * multiplicadorTotal).toFixed(2);
 
-  presupuesto.push({
-    nombre: mat.nombre,
-    metros,
-    precioPorMetro: precioPorMetro.toFixed(2),
-    trabajos: trabajosSeleccionados,
-    multiplicadorTotal: multiplicadorTotal.toFixed(2),
-    subtotal: parseFloat(subtotal)
-  });
+          presupuesto.push({
+            nombre: mat.nombre,
+            metros,
+            precioPorMetro: precioPorMetro.toFixed(2),
+            trabajos: trabajosSeleccionados,
+            multiplicadorTotal: multiplicadorTotal.toFixed(2),
+            subtotal: parseFloat(subtotal)
+          });
 
-  renderPresupuesto();
-});
+          renderPresupuesto();
+        });
 
         lista.appendChild(card);
       });
@@ -177,6 +179,7 @@ btn.addEventListener('click', () => {
       const total = totalSpan.textContent;
 
       const data = {
+        id: Date.now(),
         nombre,
         fecha,
         total,
@@ -191,9 +194,54 @@ btn.addEventListener('click', () => {
       presupuesto = [];
       renderPresupuesto();
       nombrePresupuesto.value = '';
+      cargarPresupuestosGuardados();
     });
 
+    function cargarPresupuestosGuardados() {
+      const listaGuardados = JSON.parse(localStorage.getItem('presupuestos') || '[]');
+      const contenedor = document.getElementById('presupuestos-guardados');
+      contenedor.innerHTML = `
+        <h2>Presupuestos guardados</h2>
+        <ul>
+          ${listaGuardados.map(p => `
+            <li>
+              <strong>${p.nombre}</strong> (${p.fecha}) - Total: $${p.total}<br>
+              <button onclick="cargarPresupuesto(${p.id})">📝 Editar</button>
+              <button onclick="compartirPresupuesto(${p.id})">📤 WhatsApp</button>
+            </li>
+          `).join('')}
+        </ul>
+      `;
+    }
+
+    window.cargarPresupuesto = (id) => {
+      const listaGuardados = JSON.parse(localStorage.getItem('presupuestos') || '[]');
+      const p = listaGuardados.find(p => p.id === id);
+      if (!p) return alert('Presupuesto no encontrado');
+
+      presupuesto = p.items;
+      nombrePresupuesto.value = p.nombre;
+      renderPresupuesto();
+
+      alert(`✏️ Editando presupuesto "${p.nombre}". No olvides hacer clic en "Guardar presupuesto" para actualizar los cambios.`);
+    };
+
+    window.compartirPresupuesto = (id) => {
+      const listaGuardados = JSON.parse(localStorage.getItem('presupuestos') || '[]');
+      const p = listaGuardados.find(p => p.id === id);
+      if (!p) return alert('Presupuesto no encontrado');
+
+      const presupuestoTexto = p.items.map(item => 
+        `🛠 ${item.nombre}\nMetros: ${item.metros} m\nTrabajos: ${item.trabajos.join(', ')}\nSubtotal: $${item.subtotal}`
+      ).join('\n\n');
+
+      const mensaje = `📋 *Presupuesto: ${p.nombre}*\n🗓 ${p.fecha}\n\n${presupuestoTexto}\n\n💰 Total: $${p.total}`;
+      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, '_blank');
+    };
+
     cargarMateriales();
+    cargarPresupuestosGuardados();
   </script>
 </body>
 </html>
