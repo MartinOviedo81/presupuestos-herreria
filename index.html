@@ -9,11 +9,9 @@
   <h2>Presupuesto de Herrería</h2>
 
   <input type="text" id="buscador" placeholder="Buscar material...">
-
   <div id="lista-materiales"></div>
 
   <hr>
-
   <h2>Presupuesto Actual</h2>
 
   <div>
@@ -48,6 +46,7 @@
     let trabajos = { ...trabajosBase };
     let materiales = [];
     let presupuesto = [];
+    let presupuestoIdActual = null;
 
     const buscador = document.getElementById('buscador');
     const lista = document.getElementById('lista-materiales');
@@ -186,11 +185,19 @@
         items: presupuesto
       };
 
-      await addDoc(collection(db, 'presupuestos'), data);
-      alert(`💾 Presupuesto "${nombre}" guardado.`);
+      if (presupuestoIdActual) {
+        await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
+        alert(`✅ Presupuesto "${nombre}" actualizado.`);
+      } else {
+        const docRef = await addDoc(collection(db, 'presupuestos'), data);
+        presupuestoIdActual = docRef.id;
+        alert(`💾 Presupuesto "${nombre}" guardado.`);
+      }
+
       presupuesto = [];
       renderPresupuesto();
       nombrePresupuesto.value = '';
+      presupuestoIdActual = null;
       cargarPresupuestosGuardados();
     });
 
@@ -206,6 +213,7 @@
           ${lista.map(p => `
             <li>
               <strong>${p.nombre}</strong> (${p.fecha}) - Total: $${p.total}<br>
+              <button onclick="consultarPresupuesto('${p.id}')">👁 Ver / Editar</button>
               <button onclick="compartirPresupuesto('${p.id}')">📤 WhatsApp</button>
               <button onclick="eliminarPresupuesto('${p.id}')">🗑 Eliminar</button>
             </li>
@@ -213,6 +221,22 @@
         </ul>
       `;
     }
+
+    window.consultarPresupuesto = async (id) => {
+      const snap = await getDocs(collection(db, 'presupuestos'));
+      let p = null;
+      snap.forEach(doc => {
+        if (doc.id === id) p = { id: doc.id, ...doc.data() };
+      });
+      if (!p) return alert('Presupuesto no encontrado');
+
+      presupuesto = p.items;
+      nombrePresupuesto.value = p.nombre;
+      presupuestoIdActual = p.id;
+      renderPresupuesto();
+
+      alert(`✏️ Editando presupuesto "${p.nombre}". No olvides guardar los cambios.`);
+    };
 
     window.eliminarPresupuesto = async (id) => {
       await deleteDoc(doc(db, 'presupuestos', id));
@@ -228,12 +252,8 @@
       });
       if (!p) return alert('Presupuesto no encontrado');
 
-      const texto = p.items.map(item => 
-  `🛠 ${item.nombre}\n- Metros: ${item.metros} m\n- Trabajos: ${item.trabajos.join(', ')}\n- Subtotal: $${item.subtotal}`
-).join('\n\n');
-
-const mensaje = `📋 *Presupuesto: ${p.nombre}*\n🗓 ${p.fecha}\n\n${texto}\n\n💰 *Total: $${p.total}*`;
-
+      const materiales = [...new Set(p.items.map(item => item.nombre))].join(', ');
+      const mensaje = `📋 *Presupuesto: ${p.nombre}*\n🗓 ${p.fecha}\n\n🔩 Materiales: ${materiales}\n\n💰 *Total: $${p.total}*`;
       const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
       window.open(url, '_blank');
     };
