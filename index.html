@@ -77,7 +77,7 @@
     }
 
     function calcularTotalDesdeTexto(texto) {
-      const partes = texto.split('+').map(p => p.trim());
+      const partes = texto.split('+').join(',').split(/,|y/i).map(p => p.trim());
       let total = 0;
 
       for (let parte of partes) {
@@ -117,7 +117,7 @@
           <p><small>Actualizado: ${mat.fecha}</small></p>
 
           <label>Detalle de uso:
-            <input type="text" class="input-detalle" placeholder="Ej: 1 x 1,5 + 2 de 1,60">
+            <input type="text" class="input-detalle" placeholder="Ej: 2 de 3 metros y 3 de 1 metro">
           </label>
 
           <details>
