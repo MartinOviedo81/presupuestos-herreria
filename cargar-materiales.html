@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cargar Materiales - Linda Herrería</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>Agregar Material</h2>
+
+  <form id="form-material">
+    <label>Nombre del material:
+      <input type="text" id="nombre" required>
+    </label>
+
+    <label>Unidad:
+      <select id="unidad" required>
+        <option value="metro">Metro lineal</option>
+        <option value="superficie">Superficie (m²)</option>
+        <option value="unidad">Unidad</option>
+      </select>
+    </label>
+
+    <label>Fraccionamiento de compra (ej: 6, 3, 1):
+      <input type="number" id="fraccion" required min="0.1" step="0.1">
+    </label>
+
+    <label>Precio total del material:
+      <input type="number" id="precio" required min="1" step="1">
+    </label>
+
+    <label>Tipo de fracción:
+      <select id="tipo-fraccion">
+        <option value="lineal">Lineal</option>
+        <option value="superficie">Superficie</option>
+        <option value="circulo">Círculo</option>
+      </select>
+    </label>
+
+    <div id="fraccion-inputs">
+      <label>Cantidad:
+        <input type="number" id="cantidad-fraccion" min="1" step="1">
+      </label>
+      <label id="lineal-label">Medida (en metros):
+        <input type="number" id="medida" step="0.01" min="0.01">
+      </label>
+      <label id="superficie-label" style="display:none;">Largo × Ancho (m):
+        <input type="number" id="largo" placeholder="Largo" step="0.01" min="0.01">
+        <input type="number" id="ancho" placeholder="Ancho" step="0.01" min="0.01">
+      </label>
+      <label id="circulo-label" style="display:none;">Diámetro del círculo (m):
+        <input type="number" id="diametro" step="0.01" min="0.01">
+      </label>
+    </div>
+
+    <button type="submit">➕ Guardar material</button>
+  </form>
+
+  <p id="mensaje"></p>
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const form = document.getElementById('form-material');
+    const unidad = document.getElementById('unidad');
+    const tipoFraccion = document.getElementById('tipo-fraccion');
+    const mensaje = document.getElementById('mensaje');
+
+    tipoFraccion.addEventListener('change', () => {
+      document.getElementById('lineal-label').style.display = tipoFraccion.value === 'lineal' ? 'block' : 'none';
+      document.getElementById('superficie-label').style.display = tipoFraccion.value === 'superficie' ? 'block' : 'none';
+      document.getElementById('circulo-label').style.display = tipoFraccion.value === 'circulo' ? 'block' : 'none';
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const nombre = document.getElementById('nombre').value.trim();
+      const unidadValor = unidad.value;
+      const fraccion = parseFloat(document.getElementById('fraccion').value);
+      const precio = parseFloat(document.getElementById('precio').value);
+      const cantidad = parseInt(document.getElementById('cantidad-fraccion').value) || 1;
+      const tipo = tipoFraccion.value;
+
+      let largo = 1;
+      let descripcionFraccion = '';
+
+      if (tipo === 'lineal') {
+        const medida = parseFloat(document.getElementById('medida').value);
+        largo = medida;
+        descripcionFraccion = `${cantidad} de ${medida} m`;
+      } else if (tipo === 'superficie') {
+        const largoVal = parseFloat(document.getElementById('largo').value);
+        const anchoVal = parseFloat(document.getElementById('ancho').value);
+        largo = largoVal * anchoVal;
+        descripcionFraccion = `${cantidad} de ${largoVal} x ${anchoVal} m`;
+      } else if (tipo === 'circulo') {
+        const diametro = parseFloat(document.getElementById('diametro').value);
+        largo = (diametro * Math.PI) + 0.2;
+        descripcionFraccion = `${cantidad} círculo(s) Ø ${diametro} m = ${largo.toFixed(2)} m`;
+      }
+
+      const fecha = new Date().toLocaleDateString();
+
+      const data = {
+        nombre,
+        unidad: unidadValor,
+        fraccionamiento: fraccion,
+        precio,
+        largo: `${largo.toFixed(2)} m`,
+        cantidad,
+        descripcionFraccion,
+        fecha
+      };
+
+      try {
+        await addDoc(collection(db, 'materiales'), data);
+        mensaje.textContent = `✅ Material "${nombre}" guardado correctamente.`;
+        form.reset();
+      } catch (error) {
+        console.error(error);
+        mensaje.textContent = '❌ Error al guardar el material.';
+      }
+    });
+  </script>
+</body>
+</html>
