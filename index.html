@@ -229,20 +229,11 @@
       if (!p) return alert('Presupuesto no encontrado');
 
       const texto = p.items.map(item => 
-        `🛠 ${item.nombre}
-- Metros: ${item.metros} m
-- Trabajos: ${item.trabajos.join(', ')}
-- Subtotal: $${item.subtotal}`
-      ).join('
+  `🛠 ${item.nombre}\n- Metros: ${item.metros} m\n- Trabajos: ${item.trabajos.join(', ')}\n- Subtotal: $${item.subtotal}`
+).join('\n\n');
 
-');
+const mensaje = `📋 *Presupuesto: ${p.nombre}*\n🗓 ${p.fecha}\n\n${texto}\n\n💰 *Total: $${p.total}*`;
 
-      const mensaje = `📋 *Presupuesto: ${p.nombre}*
-🗓 ${p.fecha}
-
-${texto}
-
-💰 *Total: $${p.total}*`;
       const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
       window.open(url, '_blank');
     };
