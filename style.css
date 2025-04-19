@@ -77,43 +77,67 @@ select:focus {
   outline: none;
 }
 
-/* Cards de materiales */
+/* Contenedor de tarjetas */
 #lista-materiales {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-  gap: 20px;
-  max-width: 1200px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  max-width: 1300px;
   margin: 0 auto;
   margin-top: 20px;
 }
 
+/* Tarjeta compacta */
 .card {
   background: white;
-  border-radius: 14px;
-  padding: 18px;
-  box-shadow: 0 6px 12px rgba(0,0,0,0.08);
-  transition: transform 0.3s ease;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 5px 12px rgba(0,0,0,0.05);
+  transition: transform 0.2s ease;
+  font-size: 14px;
 }
 
 .card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
 }
 
+.card h4,
+.card strong {
+  color: #e06900;
+  margin-bottom: 8px;
+}
+
+.card input[type="text"] {
+  padding: 8px;
+  font-size: 14px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.card details summary {
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+
+.card details {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+/* Botones dentro de tarjetas */
 .card button {
   width: 100%;
+  font-size: 14px;
   background: #f0a147;
+  margin-top: 8px;
 }
 
 .card button:hover {
   background: #e06900;
 }
 
-.card h4 {
-  color: #e06900;
-  margin-bottom: 8px;
-}
-
-/* Presupuesto */
+/* Lista de presupuesto */
 #presupuesto {
   list-style: none;
   padding: 0;
@@ -131,12 +155,13 @@ select:focus {
   justify-content: space-between;
   align-items: center;
   gap: 15px;
+  font-size: 14px;
 }
 
 #presupuesto button {
   background: #e74c3c;
-  font-size: 14px;
-  padding: 6px 12px;
+  font-size: 13px;
+  padding: 6px 10px;
   border-radius: 8px;
 }
 
@@ -152,10 +177,10 @@ select:focus {
   display: inline-block;
 }
 
-/* Formulario */
+/* Formularios */
 label {
   display: block;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   font-weight: bold;
 }
 
@@ -210,7 +235,7 @@ label {
   }
 }
 
-/* Responsivo */
+/* Responsive */
 @media (max-width: 768px) {
   h2 {
     font-size: 20px;
@@ -218,10 +243,12 @@ label {
 
   #lista-materiales {
     grid-template-columns: 1fr;
+    padding: 0 10px;
   }
 
   .card {
     text-align: center;
+    padding: 16px;
   }
 
   #presupuesto li {
