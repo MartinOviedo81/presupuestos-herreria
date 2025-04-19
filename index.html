@@ -162,7 +162,13 @@
         });
 
         renderPresupuesto();
-        contenedorSeleccion.innerHTML = '';
+
+        // ✨ Animación al cerrar
+        contenedorSeleccion.classList.add('fade-out');
+        setTimeout(() => {
+          contenedorSeleccion.innerHTML = '';
+          contenedorSeleccion.classList.remove('fade-out');
+        }, 400);
       });
     }
 
@@ -222,89 +228,92 @@
       cargarPresupuestosGuardados();
     });
 
-   async function cargarPresupuestosGuardados() {
-  const contenedor = document.getElementById('presupuestos-guardados');
-  const snap = await getDocs(collection(db, 'presupuestos'));
-  const lista = [];
-  snap.forEach(doc => lista.push({ id: doc.id, ...doc.data() }));
+    async function cargarPresupuestosGuardados() {
+      const contenedor = document.getElementById('presupuestos-guardados');
+      const snap = await getDocs(collection(db, 'presupuestos'));
+      const lista = [];
+      snap.forEach(doc => lista.push({ id: doc.id, ...doc.data() }));
 
-  contenedor.innerHTML = `
-    <h2>Presupuestos guardados</h2>
-    <ul>
-      ${lista.map(p => `
-        <li class="item-presupuesto">
-          <div class="datos-presu">
-            <span class="nombre">${p.nombre}</span>
-            <span class="fecha">${p.fecha}</span>
-            <span class="total">Total: $${parseFloat(p.total).toFixed(2)}</span>
-          </div>
-          <div class="menu-wrapper">
-            <button class="abrir-menu" data-id="${p.id}">Opciones</button>
-            <div class="menu-acciones hidden" id="menu-${p.id}">
-              <button onclick="consultarPresupuesto('${p.id}')">Ver / Editar</button>
-              <button onclick="compartirPresupuesto('${p.id}')">Enviar por WhatsApp</button>
-              <button onclick="eliminarPresupuesto('${p.id}')">Eliminar</button>
-            </div>
-          </div>
-        </li>
-      `).join('')}
-    </ul>
-  `;
+      contenedor.innerHTML = `
+        <h2>Presupuestos guardados</h2>
+        <ul>
+          ${lista.map(p => `
+            <li class="item-presupuesto">
+              <div class="datos-presu">
+                <span class="nombre">${p.nombre}</span>
+                <span class="fecha">${p.fecha}</span>
+                <span class="total">Total: $${parseFloat(p.total).toFixed(2)}</span>
+              </div>
+              <div class="menu-wrapper">
+                <button class="abrir-menu" data-id="${p.id}">Opciones</button>
+                <div class="menu-acciones hidden" id="menu-${p.id}">
+                  <button onclick="consultarPresupuesto('${p.id}')">Ver / Editar</button>
+                  <button onclick="compartirPresupuesto('${p.id}')">Enviar por WhatsApp</button>
+                  <button onclick="eliminarPresupuesto('${p.id}')">Eliminar</button>
+                </div>
+              </div>
+            </li>
+          `).join('')}
+        </ul>
+      `;
 
-  setTimeout(() => {
-    document.querySelectorAll('.abrir-menu').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        const menu = document.getElementById(`menu-${id}`);
-        document.querySelectorAll('.menu-acciones').forEach(m => {
-          if (m !== menu) m.classList.add('hidden');
+      setTimeout(() => {
+        document.querySelectorAll('.abrir-menu').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            const menu = document.getElementById(`menu-${id}`);
+            document.querySelectorAll('.menu-acciones').forEach(m => {
+              if (m !== menu) m.classList.add('hidden');
+            });
+            menu.classList.toggle('hidden');
+          });
         });
-        menu.classList.toggle('hidden');
-      });
-    });
-  }, 0);
+      }, 0);
 
-  window.addEventListener('click', () => {
-    document.querySelectorAll('.menu-acciones').forEach(m => m.classList.add('hidden'));
-  });
-}
+      window.addEventListener('click', () => {
+        document.querySelectorAll('.menu-acciones').forEach(m => m.classList.add('hidden'));
+      });
+    }
+
+    window.consultarPresupuesto = async (id) => {
+      const snap = await getDocs(collection(db, 'presupuestos'));
+      let p = null;
+      snap.forEach(doc => {
+        if (doc.id === id) p = { id: doc.id, ...doc.data() };
+      });
+      if (!p) return alert('Presupuesto no encontrado');
+
+      presupuesto = p.items;
+      nombrePresupuesto.value = p.nombre;
+      presupuestoIdActual = p.id;
+      renderPresupuesto();
+    };
+
+    window.eliminarPresupuesto = async (id) => {
+      if (!confirm("¿Seguro que querés eliminar este presupuesto?")) return;
+      await deleteDoc(doc(db, 'presupuestos', id));
+      alert("Presupuesto eliminado.");
+      cargarPresupuestosGuardados();
+    };
+
+    window.compartirPresupuesto = async (id) => {
+      const snap = await getDocs(collection(db, 'presupuestos'));
+      let p = null;
+      snap.forEach(doc => {
+        if (doc.id === id) p = { id: doc.id, ...doc.data() };
+      });
+      if (!p) return alert('Presupuesto no encontrado');
+
+      const materiales = [...new Set(p.items.map(item => item.nombre))].join(', ');
+      const mensaje = `Presupuesto: ${p.nombre}\nFecha: ${p.fecha}\n\nMateriales: ${materiales}\nTotal: $${parseFloat(p.total).toFixed(2)}`;
+      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, '_blank');
+    };
 
     await cargarTareas();
     await cargarMateriales();
     cargarPresupuestosGuardados();
-    window.consultarPresupuesto = async (id) => {
-  const snap = await getDocs(collection(db, 'presupuestos'));
-  let p = null;
-  snap.forEach(doc => {
-    if (doc.id === id) p = { id: doc.id, ...doc.data() };
-  });
-  if (!p) return alert('Presupuesto no encontrado');
-
-  presupuesto = p.items;
-  nombrePresupuesto.value = p.nombre;
-  presupuestoIdActual = p.id;
-  renderPresupuesto();
-};
-    window.eliminarPresupuesto = async (id) => {
-  if (!confirm("¿Seguro que querés eliminar este presupuesto?")) return;
-  await deleteDoc(doc(db, 'presupuestos', id));
-  alert("Presupuesto eliminado.");
-  cargarPresupuestosGuardados();
-};
-    window.compartirPresupuesto = async (id) => {
-  const snap = await getDocs(collection(db, 'presupuestos'));
-  let p = null;
-  snap.forEach(doc => {
-    if (doc.id === id) p = { id: doc.id, ...doc.data() };
-  });
-  if (!p) return alert('Presupuesto no encontrado');
-
-  const materiales = [...new Set(p.items.map(item => item.nombre))].join(', ');
-  const mensaje = `Presupuesto: ${p.nombre}\nFecha: ${p.fecha}\n\nMateriales: ${materiales}\nTotal: $${parseFloat(p.total).toFixed(2)}`;
-  const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-  window.open(url, '_blank');
-};
   </script>
 </body>
 </html>
