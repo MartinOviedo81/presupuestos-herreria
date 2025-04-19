@@ -2,84 +2,250 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <title>Linda Herrería - Presupuestos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Materiales</title>
   <link rel="stylesheet" href="style.css" />
-  <script type="module" src="firebase-config.js"></script>
 </head>
 <body class="modo-oscuro">
-  <h1>Lista de Materiales</h1>
-  <div id="materiales-container"></div>
+  <h2>Linda Herrería</h2>
 
-  <button class="boton-celeste" onclick="location.href='cargar-materiales.html'">Cargar nuevo material</button>
-  <button class="boton-verde" onclick="location.href='config-tareas.html'">Configurar tareas</button>
+  <div class="botones-nav">
+    <a href="cargar-materiales.html"><button class="boton-celeste">➕ Cargar nuevo material</button></a>
+    <a href="config-tareas.html"><button class="boton-verde">⚙️ Configurar tareas</button></a>
+  </div>
+
+  <input type="text" id="buscador" placeholder="Buscar material...">
+
+  <div id="carrusel-materiales" class="carrusel"></div>
+  <div id="material-seleccionado"></div>
+
+  <hr />
+  <h2>Presupuesto Actual</h2>
+  <label>Nombre del presupuesto:
+    <input type="text" id="nombre-presupuesto" placeholder="Ej: Portón Juan" />
+  </label>
+  <button id="guardar-presupuesto" class="boton-naranja">Guardar presupuesto</button>
+
+  <ul id="presupuesto"></ul>
+  <p><strong>Total estimado: $<span id="total">0</span></strong></p>
+
+  <div id="presupuestos-guardados"></div>
 
   <script type="module">
     import { db } from './firebase-config.js';
-    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import {
+      collection, getDocs, addDoc, deleteDoc, doc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    const materialesContainer = document.getElementById("materiales-container");
+    let trabajos = {};
+    let materiales = [];
+    let presupuesto = [];
+    let presupuestoIdActual = null;
 
-    function agruparPorCategoria(materiales) {
-      const grupos = {};
-      materiales.forEach((mat) => {
-        if (!grupos[mat.categoria]) {
-          grupos[mat.categoria] = [];
-        }
-        grupos[mat.categoria].push(mat);
-      });
-      return grupos;
+    const buscador = document.getElementById('buscador');
+    const carrusel = document.getElementById('carrusel-materiales');
+    const contenedorSeleccion = document.getElementById('material-seleccionado');
+    const presupuestoUl = document.getElementById('presupuesto');
+    const totalSpan = document.getElementById('total');
+    const nombrePresupuesto = document.getElementById('nombre-presupuesto');
+    const btnGuardar = document.getElementById('guardar-presupuesto');
+
+    buscador.addEventListener('input', () => {
+      const texto = buscador.value.toLowerCase();
+      const filtrados = materiales.filter(m => m.nombre.toLowerCase().includes(texto));
+      renderCarrusel(filtrados);
+    });
+
+    async function cargarMateriales() {
+      const snap = await getDocs(collection(db, 'materiales'));
+      materiales = [];
+      snap.forEach(doc => materiales.push({ id: doc.id, ...doc.data() }));
+      renderCarrusel(materiales);
     }
 
-    function crearTarjeta(material) {
-      return `
-        <div class="tarjeta-material">
-          <h3>${material.nombre}</h3>
-          <p><strong>Precio:</strong> $${material.precioPorUnidad}</p>
-          <p><strong>Multiplicador:</strong> ${material.multiplicadorTotal}</p>
-          <button class="boton-rojo" onclick="eliminarMaterial('${material.id}')">Eliminar</button>
+    async function cargarTareas() {
+      const snap = await getDocs(collection(db, 'tareas'));
+      trabajos = {};
+      snap.forEach(doc => {
+        const data = doc.data();
+        trabajos[data.nombre] = data.multiplicador;
+      });
+    }
+
+    function renderCarrusel(lista) {
+      carrusel.innerHTML = '';
+      lista.forEach((mat) => {
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'tarjeta';
+        tarjeta.innerHTML = `
+          <strong>${mat.nombre}</strong>
+          <p>${mat.descripcion || ''}</p>
+        `;
+        tarjeta.addEventListener('click', () => renderSeleccion(mat));
+        carrusel.appendChild(tarjeta);
+      });
+    }
+
+    function calcularTotalDesdeTexto(texto) {
+      const partes = texto.split('+').join(',').split(/,|y/i).map(p => p.trim());
+      let total = 0;
+      for (let parte of partes) {
+        const match = parte.match(/(\d+(?:[.,]\d+)?)\s*(?:x|de)?\s*(\d+(?:[.,]\d+)?)/i);
+        if (match) {
+          const cantidad = parseFloat(match[1].replace(',', '.'));
+          const medida = parseFloat(match[2].replace(',', '.'));
+          total += cantidad * medida;
+        }
+      }
+      return total;
+    }
+
+    function renderSeleccion(mat) {
+      contenedorSeleccion.innerHTML = '';
+
+      const precioPorUnidad = mat.precio / mat.fraccionamiento;
+
+      const trabajosInputs = Object.entries(trabajos).map(([nombre, mult]) => `
+        <label>
+          <input type="checkbox" class="check-trabajo" data-nombre="${nombre}">
+          ${nombre} × ${mult}
+        </label>
+      `).join('<br>');
+
+      const html = `
+        <div class="tarjeta-expandida">
+          <h3>${mat.nombre}</h3>
+          <p>Precio total: $${precioPorUnidad.toFixed(2)} x unidad</p>
+          <p>${mat.descripcion || ''}</p>
+          <input type="text" id="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5..." />
+          <details>
+            <summary>Trabajos</summary>
+            <div class="trabajos-lista">${trabajosInputs}</div>
+          </details>
+          <button class="boton-verde" id="btn-agregar">Agregar</button>
         </div>
+      `;
+
+      contenedorSeleccion.innerHTML = html;
+
+      document.getElementById('btn-agregar').addEventListener('click', () => {
+        const texto = document.getElementById('input-detalle').value.trim();
+        if (!texto) return alert("Ingresá el detalle de uso.");
+        const cantidad = calcularTotalDesdeTexto(texto);
+        if (!cantidad || isNaN(cantidad)) return alert("No se pudo interpretar la cantidad.");
+
+        const checkboxes = contenedorSeleccion.querySelectorAll('.check-trabajo');
+        let multiplicadorTotal = 0;
+        let trabajosSeleccionados = [];
+
+        checkboxes.forEach((check) => {
+          if (check.checked) {
+            const nombre = check.dataset.nombre;
+            const mult = trabajos[nombre];
+            multiplicadorTotal += mult;
+            trabajosSeleccionados.push(`${nombre} ×${mult}`);
+          }
+        });
+
+        if (multiplicadorTotal === 0) return alert("Seleccioná al menos un trabajo.");
+
+        const subtotal = precioPorUnidad * cantidad * multiplicadorTotal;
+
+        presupuesto.push({
+          nombre: mat.nombre,
+          unidad: mat.unidad,
+          cantidad,
+          precioPorUnidad,
+          trabajos: trabajosSeleccionados,
+          multiplicadorTotal,
+          subtotal
+        });
+
+        renderPresupuesto();
+      });
+    }
+
+    function renderPresupuesto() {
+      presupuestoUl.innerHTML = '';
+      let total = 0;
+
+      presupuesto.forEach((item, i) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div>
+            <strong>${item.nombre}</strong><br>
+            Cantidad: ${item.cantidad.toFixed(2)} × $${item.precioPorUnidad.toFixed(2)}/${item.unidad}<br>
+            Trabajos: ${item.trabajos.join(', ') || 'Ninguno'}<br>
+            Subtotal: $${item.subtotal.toFixed(2)}
+          </div>
+          <button class="boton-rojo" onclick="eliminarItem(${i})">Eliminar</button>
+        `;
+        presupuestoUl.appendChild(li);
+        total += item.subtotal;
+      });
+
+      totalSpan.textContent = total.toFixed(2);
+    }
+
+    window.eliminarItem = (i) => {
+      presupuesto.splice(i, 1);
+      renderPresupuesto();
+    };
+
+    btnGuardar.addEventListener('click', async () => {
+      const nombre = nombrePresupuesto.value.trim();
+      if (!nombre) return alert('Poné un nombre al presupuesto.');
+      const fecha = new Date().toLocaleString();
+      const total = totalSpan.textContent;
+
+      const data = {
+        nombre,
+        fecha,
+        total: total.replace(/\./g, '').replace(',', '.'),
+        items: presupuesto
+      };
+
+      if (presupuestoIdActual) {
+        await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
+        alert(`Presupuesto "${nombre}" actualizado.`);
+      } else {
+        const docRef = await addDoc(collection(db, 'presupuestos'), data);
+        presupuestoIdActual = docRef.id;
+        alert(`Presupuesto "${nombre}" guardado.`);
+      }
+
+      presupuesto = [];
+      renderPresupuesto();
+      nombrePresupuesto.value = '';
+      presupuestoIdActual = null;
+      cargarPresupuestosGuardados();
+    });
+
+    async function cargarPresupuestosGuardados() {
+      const contenedor = document.getElementById('presupuestos-guardados');
+      const snap = await getDocs(collection(db, 'presupuestos'));
+      const lista = [];
+      snap.forEach(doc => lista.push({ id: doc.id, ...doc.data() }));
+
+      contenedor.innerHTML = `
+        <h2>Presupuestos guardados</h2>
+        <ul>
+          ${lista.map(p => `
+            <li class="item-presupuesto">
+              <div class="datos-presu">
+                <span class="nombre">${p.nombre}</span>
+                <span class="fecha">${p.fecha}</span>
+                <span class="total">Total: $${parseFloat(p.total).toFixed(2)}</span>
+              </div>
+            </li>
+          `).join('')}
+        </ul>
       `;
     }
 
-    function mostrarMaterialesAgrupados(materiales) {
-      const grupos = agruparPorCategoria(materiales);
-      materialesContainer.innerHTML = '';
-
-      for (const categoria in grupos) {
-        const seccion = document.createElement("section");
-        seccion.innerHTML = `<h2 class="categoria-titulo">${categoria}</h2>`;
-        
-        const carrusel = document.createElement("div");
-        carrusel.className = "carrusel-materiales";
-
-        grupos[categoria].forEach((mat) => {
-          carrusel.innerHTML += crearTarjeta(mat);
-        });
-
-        seccion.appendChild(carrusel);
-        materialesContainer.appendChild(seccion);
-      }
-    }
-
-    async function obtenerMateriales() {
-      const querySnapshot = await getDocs(collection(db, "materiales"));
-      const materiales = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      mostrarMaterialesAgrupados(materiales);
-    }
-
-    window.eliminarMaterial = async function(id) {
-      if (confirm("¿Eliminar este material?")) {
-        const { deleteDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js");
-        await deleteDoc(doc(db, "materiales", id));
-        obtenerMateriales(); // Recarga la lista
-      }
-    };
-
-    obtenerMateriales();
+    await cargarTareas();
+    await cargarMateriales();
+    cargarPresupuestosGuardados();
   </script>
 </body>
 </html>
