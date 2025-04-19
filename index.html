@@ -5,43 +5,13 @@
   <title>Linda Herrería - Presupuestos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
-  <style>
-    #lista-materiales {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1rem;
-      padding: 10px;
-    }
-    .card {
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      padding: 10px;
-      font-size: 14px;
-      background-color: #f9f9f9;
-    }
-    .card summary {
-      cursor: pointer;
-    }
-    .card input[type="text"] {
-      width: 100%;
-      margin: 5px 0;
-    }
-    .btn-agregar {
-      margin-top: 5px;
-      width: 100%;
-    }
-  </style>
 </head>
 <body>
   <h2>Linda Herrería</h2>
 
   <div style="text-align: center; margin-bottom: 20px;">
-    <a href="cargar-materiales.html" style="text-decoration: none;">
-      <button style="padding: 10px 20px;">➕ Cargar material</button>
-    </a>
-    <a href="config-tareas.html" style="text-decoration: none;">
-      <button style="padding: 10px 20px;">⚙️ Configurar tareas</button>
-    </a>
+    <a href="cargar-materiales.html"><button>➕ Cargar nuevo material</button></a>
+    <a href="config-tareas.html"><button>⚙️ Configurar tareas</button></a>
   </div>
 
   <input type="text" id="buscador" placeholder="Buscar material...">
@@ -49,13 +19,10 @@
 
   <hr>
   <h2>Presupuesto Actual</h2>
-
-  <div>
-    <label>Nombre del presupuesto:
-      <input type="text" id="nombre-presupuesto" placeholder="Ej: Portón Juan">
-    </label>
-    <button id="guardar-presupuesto">💾 Guardar presupuesto</button>
-  </div>
+  <label>Nombre del presupuesto:
+    <input type="text" id="nombre-presupuesto" placeholder="Ej: Portón Juan">
+  </label>
+  <button id="guardar-presupuesto">💾 Guardar presupuesto</button>
 
   <ul id="presupuesto"></ul>
   <p><strong>Total estimado: $<span id="total">0</span></strong></p>
@@ -105,7 +72,6 @@
     function calcularTotalDesdeTexto(texto) {
       const partes = texto.split('+').join(',').split(/,|y/i).map(p => p.trim());
       let total = 0;
-
       for (let parte of partes) {
         const match = parte.match(/(\d+(?:[.,]\d+)?)\s*(?:x|de)?\s*(\d+(?:[.,]\d+)?)/i);
         if (match) {
@@ -114,7 +80,6 @@
           total += cantidad * medida;
         }
       }
-
       return total;
     }
 
@@ -136,30 +101,20 @@
           <strong>${mat.nombre}</strong><br>
           💵 $${mat.precio} total – $${(mat.precio / mat.fraccionamiento).toFixed(2)} x unidad<br>
           📝 ${mat.descripcion || 'Sin descripción'}<br>
-
-          <input type="text" class="input-detalle" placeholder="Uso: 2 x 1,5 + 1 de 2">
-
+          <input type="text" class="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5...">
           <details>
             <summary>⚙️ Trabajos</summary>
             <div class="trabajos-lista">${trabajosInputs}</div>
           </details>
-
           <button class="btn-agregar">➕ Agregar</button>
         `;
 
         const btn = card.querySelector('.btn-agregar');
         btn.addEventListener('click', () => {
           const texto = card.querySelector('.input-detalle').value.trim();
-          if (!texto) {
-            alert("⚠️ Ingresá el detalle de uso para calcular la cantidad.");
-            return;
-          }
-
+          if (!texto) return alert("⚠️ Ingresá el detalle de uso.");
           const cantidad = calcularTotalDesdeTexto(texto);
-          if (!cantidad || isNaN(cantidad)) {
-            alert("⚠️ No se pudo interpretar la cantidad. Verificá el formato.");
-            return;
-          }
+          if (!cantidad || isNaN(cantidad)) return alert("⚠️ No se pudo interpretar la cantidad.");
 
           const precioPorUnidad = mat.precio / mat.fraccionamiento;
           const checkboxes = card.querySelectorAll('.check-trabajo');
@@ -176,10 +131,7 @@
             }
           });
 
-          if (multiplicadorTotal === 0) {
-            alert("⚠️ Seleccioná al menos un trabajo para agregar el material al presupuesto.");
-            return;
-          }
+          if (multiplicadorTotal === 0) return alert("⚠️ Seleccioná al menos un trabajo.");
 
           const subtotal = (precioPorUnidad * cantidad * multiplicadorTotal).toFixed(2);
 
@@ -230,16 +182,10 @@
     btnGuardar.addEventListener('click', async () => {
       const nombre = nombrePresupuesto.value.trim();
       if (!nombre) return alert('Poné un nombre al presupuesto.');
-
       const fecha = new Date().toLocaleString();
       const total = totalSpan.textContent;
 
-      const data = {
-        nombre,
-        fecha,
-        total,
-        items: presupuesto
-      };
+      const data = { nombre, fecha, total, items: presupuesto };
 
       if (presupuestoIdActual) {
         await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
@@ -268,10 +214,16 @@
         <ul>
           ${lista.map(p => `
             <li>
-              <strong>${p.nombre}</strong> (${p.fecha}) - Total: $${p.total}<br>
-              <button onclick="consultarPresupuesto('${p.id}')">👁 Ver / Editar</button>
-              <button onclick="compartirPresupuesto('${p.id}')">📤 WhatsApp</button>
-              <button onclick="eliminarPresupuesto('${p.id}')">🗑 Eliminar</button>
+              <div class="info-presu">
+                <strong>${p.nombre}</strong>
+                <span>${p.fecha}</span>
+                <span>Total: $${p.total}</span>
+              </div>
+              <div class="botones-presu">
+                <button onclick="consultarPresupuesto('${p.id}')">👁</button>
+                <button onclick="compartirPresupuesto('${p.id}')">📤</button>
+                <button onclick="eliminarPresupuesto('${p.id}')">🗑</button>
+              </div>
             </li>
           `).join('')}
         </ul>
@@ -290,8 +242,6 @@
       nombrePresupuesto.value = p.nombre;
       presupuestoIdActual = p.id;
       renderPresupuesto();
-
-      alert(`✏️ Editando presupuesto "${p.nombre}". No olvides guardar los cambios.`);
     };
 
     window.eliminarPresupuesto = async (id) => {
