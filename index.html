@@ -28,6 +28,7 @@
   <p><strong>Total estimado: $<span id="total">0</span></strong></p>
 
   <div id="presupuestos-guardados"></div>
+
   <script type="module">
     import { db } from './firebase-config.js';
     import {
@@ -46,12 +47,19 @@
     const nombrePresupuesto = document.getElementById('nombre-presupuesto');
     const btnGuardar = document.getElementById('guardar-presupuesto');
 
+    function formatoMoneda(valor) {
+      return new Intl.NumberFormat('es-AR', {
+        style: 'decimal',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(valor);
+    }
+
     buscador.addEventListener('input', () => {
       const texto = buscador.value.toLowerCase();
       const filtrados = materiales.filter(m => m.nombre.toLowerCase().includes(texto));
       mostrarMateriales(filtrados);
     });
-
     async function cargarMateriales() {
       const snap = await getDocs(collection(db, 'materiales'));
       materiales = [];
@@ -96,9 +104,11 @@
           </label>
         `).join('<br>');
 
+        const precioPorUnidad = mat.precio / mat.fraccionamiento;
+
         card.innerHTML = `
           <strong>${mat.nombre}</strong><br>
-          Precio total: $${mat.precio} – $${(mat.precio / mat.fraccionamiento).toFixed(2)} x unidad<br>
+          Precio total: $${formatoMoneda(mat.precio)} – $${formatoMoneda(precioPorUnidad)} x unidad<br>
           ${mat.descripcion || 'Sin descripción'}<br>
           <input type="text" class="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5...">
           <details>
@@ -115,7 +125,6 @@
           const cantidad = calcularTotalDesdeTexto(texto);
           if (!cantidad || isNaN(cantidad)) return alert("No se pudo interpretar la cantidad.");
 
-          const precioPorUnidad = mat.precio / mat.fraccionamiento;
           const checkboxes = card.querySelectorAll('.check-trabajo');
 
           let multiplicadorTotal = 0;
@@ -132,16 +141,16 @@
 
           if (multiplicadorTotal === 0) return alert("Seleccioná al menos un trabajo.");
 
-          const subtotal = (precioPorUnidad * cantidad * multiplicadorTotal).toFixed(2);
+          const subtotal = precioPorUnidad * cantidad * multiplicadorTotal;
 
           presupuesto.push({
             nombre: mat.nombre,
             unidad: mat.unidad,
             cantidad,
-            precioPorUnidad: precioPorUnidad.toFixed(2),
+            precioPorUnidad,
             trabajos: trabajosSeleccionados,
-            multiplicadorTotal: multiplicadorTotal.toFixed(2),
-            subtotal: parseFloat(subtotal)
+            multiplicadorTotal,
+            subtotal
           });
 
           renderPresupuesto();
@@ -160,9 +169,9 @@
         li.innerHTML = `
           <div>
             <strong>${item.nombre}</strong><br>
-            Cantidad: ${item.cantidad.toFixed(2)} × $${item.precioPorUnidad}/${item.unidad}<br>
+            Cantidad: ${item.cantidad.toFixed(2)} × $${formatoMoneda(item.precioPorUnidad)}/${item.unidad}<br>
             Trabajos: ${item.trabajos.join(', ') || 'Ninguno'}<br>
-            Subtotal: $${item.subtotal}
+            Subtotal: $${formatoMoneda(item.subtotal)}
           </div>
           <button onclick="eliminarItem(${i})">Eliminar</button>
         `;
@@ -170,20 +179,20 @@
         total += item.subtotal;
       });
 
-      totalSpan.textContent = total.toFixed(2);
+      totalSpan.textContent = formatoMoneda(total);
     }
 
     window.eliminarItem = (i) => {
       presupuesto.splice(i, 1);
       renderPresupuesto();
     };
-     btnGuardar.addEventListener('click', async () => {
+        btnGuardar.addEventListener('click', async () => {
       const nombre = nombrePresupuesto.value.trim();
       if (!nombre) return alert('Poné un nombre al presupuesto.');
       const fecha = new Date().toLocaleString();
       const total = totalSpan.textContent;
 
-      const data = { nombre, fecha, total, items: presupuesto };
+      const data = { nombre, fecha, total: total.replace(/\./g, '').replace(',', '.'), items: presupuesto };
 
       if (presupuestoIdActual) {
         await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
@@ -215,7 +224,7 @@
               <div class="datos-presu">
                 <span class="nombre">${p.nombre}</span>
                 <span class="fecha">${p.fecha}</span>
-                <span class="total">Total: $${p.total}</span>
+                <span class="total">Total: $${formatoMoneda(p.total)}</span>
               </div>
               <div class="menu-wrapper">
                 <button class="menu-toggle">⋮</button>
@@ -277,7 +286,7 @@
       if (!p) return alert('Presupuesto no encontrado');
 
       const materiales = [...new Set(p.items.map(item => item.nombre))].join(', ');
-      const mensaje = `Presupuesto: ${p.nombre}\nFecha: ${p.fecha}\n\nMateriales: ${materiales}\nTotal: $${p.total}`;
+      const mensaje = `Presupuesto: ${p.nombre}\nFecha: ${p.fecha}\n\nMateriales: ${materiales}\nTotal: $${formatoMoneda(p.total)}`;
       const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
       window.open(url, '_blank');
     };
