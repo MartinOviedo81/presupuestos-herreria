@@ -272,6 +272,38 @@
     await cargarTareas();
     await cargarMateriales();
     cargarPresupuestosGuardados();
+    window.consultarPresupuesto = async (id) => {
+  const snap = await getDocs(collection(db, 'presupuestos'));
+  let p = null;
+  snap.forEach(doc => {
+    if (doc.id === id) p = { id: doc.id, ...doc.data() };
+  });
+  if (!p) return alert('Presupuesto no encontrado');
+
+  presupuesto = p.items;
+  nombrePresupuesto.value = p.nombre;
+  presupuestoIdActual = p.id;
+  renderPresupuesto();
+};
+    window.eliminarPresupuesto = async (id) => {
+  if (!confirm("¿Seguro que querés eliminar este presupuesto?")) return;
+  await deleteDoc(doc(db, 'presupuestos', id));
+  alert("Presupuesto eliminado.");
+  cargarPresupuestosGuardados();
+};
+    window.compartirPresupuesto = async (id) => {
+  const snap = await getDocs(collection(db, 'presupuestos'));
+  let p = null;
+  snap.forEach(doc => {
+    if (doc.id === id) p = { id: doc.id, ...doc.data() };
+  });
+  if (!p) return alert('Presupuesto no encontrado');
+
+  const materiales = [...new Set(p.items.map(item => item.nombre))].join(', ');
+  const mensaje = `Presupuesto: ${p.nombre}\nFecha: ${p.fecha}\n\nMateriales: ${materiales}\nTotal: $${parseFloat(p.total).toFixed(2)}`;
+  const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, '_blank');
+};
   </script>
 </body>
 </html>
