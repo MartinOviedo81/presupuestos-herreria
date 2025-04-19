@@ -5,16 +5,42 @@
   <title>Linda Herrería - Presupuestos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
+  <style>
+    #lista-materiales {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      padding: 10px;
+    }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 14px;
+      background-color: #f9f9f9;
+    }
+    .card summary {
+      cursor: pointer;
+    }
+    .card input[type="text"] {
+      width: 100%;
+      margin: 5px 0;
+    }
+    .btn-agregar {
+      margin-top: 5px;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
   <h2>Linda Herrería</h2>
 
   <div style="text-align: center; margin-bottom: 20px;">
     <a href="cargar-materiales.html" style="text-decoration: none;">
-      <button style="width: auto; padding: 10px 20px;">➕ Cargar nuevo material</button>
+      <button style="padding: 10px 20px;">➕ Cargar material</button>
     </a>
     <a href="config-tareas.html" style="text-decoration: none;">
-      <button style="width: auto; padding: 10px 20px;">⚙️ Configurar tareas</button>
+      <button style="padding: 10px 20px;">⚙️ Configurar tareas</button>
     </a>
   </div>
 
@@ -107,24 +133,18 @@
         `).join('<br>');
 
         card.innerHTML = `
-          <h4>${mat.nombre}</h4>
-          <p><strong>Unidad:</strong> ${mat.unidad}</p>
-          <p><strong>Precio total:</strong> $${mat.precio}</p>
-          <p><strong>Fracción:</strong> ${mat.fraccionamiento} ${mat.unidad}</p>
-          <p><strong>Precio por unidad:</strong> $${(mat.precio / mat.fraccionamiento).toFixed(2)}</p>
-          <p><strong>Descripción:</strong> ${mat.descripcion || 'Sin descripción'}</p>
-          <p><small>Actualizado: ${mat.fecha}</small></p>
+          <strong>${mat.nombre}</strong><br>
+          💵 $${mat.precio} total – $${(mat.precio / mat.fraccionamiento).toFixed(2)} x unidad<br>
+          📝 ${mat.descripcion || 'Sin descripción'}<br>
 
-          <label>Detalle de uso:
-            <input type="text" class="input-detalle" placeholder="Ej: 2 de 3 metros y 3 de 1 metro">
-          </label>
+          <input type="text" class="input-detalle" placeholder="Uso: 2 x 1,5 + 1 de 2">
 
           <details>
-            <summary>Trabajos a realizar</summary>
+            <summary>⚙️ Trabajos</summary>
             <div class="trabajos-lista">${trabajosInputs}</div>
           </details>
 
-          <button class="btn-agregar">Agregar al presupuesto</button>
+          <button class="btn-agregar">➕ Agregar</button>
         `;
 
         const btn = card.querySelector('.btn-agregar');
@@ -191,7 +211,6 @@
             <strong>${item.nombre}</strong><br>
             Cantidad: ${item.cantidad.toFixed(2)} × $${item.precioPorUnidad}/${item.unidad}<br>
             Trabajos: ${item.trabajos.join(', ') || 'Ninguno'}<br>
-            Multiplicador total: ${item.multiplicadorTotal}<br>
             Subtotal: $${item.subtotal}
           </div>
           <button onclick="eliminarItem(${i})">❌</button>
@@ -295,7 +314,6 @@
       window.open(url, '_blank');
     };
 
-    // Carga inicial
     await cargarTareas();
     await cargarMateriales();
     cargarPresupuestosGuardados();
