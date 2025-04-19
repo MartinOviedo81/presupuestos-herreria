@@ -28,7 +28,6 @@
   <p><strong>Total estimado: $<span id="total">0</span></strong></p>
 
   <div id="presupuestos-guardados"></div>
-
   <script type="module">
     import { db } from './firebase-config.js';
     import {
@@ -178,8 +177,7 @@
       presupuesto.splice(i, 1);
       renderPresupuesto();
     };
-
-    btnGuardar.addEventListener('click', async () => {
+     btnGuardar.addEventListener('click', async () => {
       const nombre = nombrePresupuesto.value.trim();
       if (!nombre) return alert('Poné un nombre al presupuesto.');
       const fecha = new Date().toLocaleString();
@@ -209,10 +207,10 @@
       const lista = [];
       snap.forEach(doc => lista.push({ id: doc.id, ...doc.data() }));
 
-      contenedor.innerHTML = 
+      contenedor.innerHTML = `
         <h2>Presupuestos guardados</h2>
         <ul>
-          ${lista.map(p => 
+          ${lista.map(p => `
             <li class="item-presupuesto">
               <div class="datos-presu">
                 <span class="nombre">${p.nombre}</span>
@@ -228,9 +226,9 @@
                 </div>
               </div>
             </li>
-          ).join('')}
+          `).join('')}
         </ul>
-      ;
+      `;
 
       setTimeout(() => {
         document.querySelectorAll('.menu-toggle').forEach(btn => {
