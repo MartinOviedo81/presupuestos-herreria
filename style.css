@@ -5,7 +5,7 @@
   box-sizing: border-box;
 }
 
-/* Fuente general y fondo */
+/* Estilos generales */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #f7f7f7;
@@ -13,7 +13,7 @@ body {
   padding: 20px 10px;
 }
 
-/* Encabezados */
+/* Títulos */
 h2 {
   text-align: center;
   color: #e06900;
@@ -21,7 +21,7 @@ h2 {
   font-size: 24px;
 }
 
-/* Botón principal */
+/* Botones principales */
 button {
   display: inline-block;
   width: 100%;
@@ -41,7 +41,7 @@ button:hover {
   filter: brightness(1.1);
 }
 
-/* Inputs */
+/* Inputs y selects */
 input[type="text"],
 input[type="number"],
 select {
@@ -50,8 +50,8 @@ select {
   border: 2px solid #ddd;
   border-radius: 10px;
   font-size: 16px;
-  transition: border-color 0.3s;
   background-color: white;
+  transition: border-color 0.3s;
 }
 
 input:focus,
@@ -74,7 +74,6 @@ select:focus {
 
 #buscador:focus {
   border-color: #e06900;
-  outline: none;
 }
 
 /* Lista de materiales */
@@ -120,23 +119,17 @@ select:focus {
   margin-bottom: 5px;
 }
 
-.card details {
-  margin-top: 6px;
-  margin-bottom: 6px;
-}
-
 .card button {
-  width: 100%;
+  margin-top: 8px;
   font-size: 14px;
   background: #f0a147;
-  margin-top: 8px;
 }
 
 .card button:hover {
   background: #e06900;
 }
 
-/* Lista de presupuesto actual */
+/* Lista de presupuesto */
 #presupuesto {
   list-style: none;
   padding: 0;
@@ -168,7 +161,7 @@ select:focus {
   background: #c0392b;
 }
 
-/* Total estimado */
+/* Total */
 #total {
   font-size: 22px;
   color: #e06900;
@@ -176,7 +169,7 @@ select:focus {
   display: inline-block;
 }
 
-/* Formularios */
+/* Etiquetas */
 label {
   display: block;
   margin-bottom: 12px;
@@ -200,7 +193,7 @@ label {
   padding-left: 0;
 }
 
-/* Presupuesto individual */
+/* Presupuesto guardado */
 .item-presupuesto {
   list-style: none;
   background: #fff;
@@ -234,7 +227,7 @@ label {
   color: #555;
 }
 
-/* Menú desplegable de acciones */
+/* Botón de menú ⋮ */
 .menu-wrapper {
   position: relative;
 }
@@ -242,18 +235,18 @@ label {
 .menu-toggle {
   background: #e06900;
   border: none;
-  font-size: 22px;
-  cursor: pointer;
+  font-size: 20px;
   color: white;
   padding: 8px 12px;
   border-radius: 6px;
-  transition: background 0.2s ease;
+  cursor: pointer;
 }
 
 .menu-toggle:hover {
   background: #c55800;
 }
 
+/* Menú desplegable */
 .menu-acciones {
   position: absolute;
   top: 100%;
@@ -264,7 +257,7 @@ label {
   z-index: 10;
   display: flex;
   flex-direction: column;
-  min-width: 180px;
+  min-width: 160px;
   padding: 4px 0;
   animation: fadeIn 0.2s ease-in-out;
 }
@@ -277,9 +270,8 @@ label {
   font-size: 15px;
   cursor: pointer;
   white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: block;
+  width: 100%;
 }
 
 .menu-acciones button:hover {
@@ -302,7 +294,7 @@ label {
   }
 }
 
-/* Responsive para móviles */
+/* Responsive */
 @media (max-width: 768px) {
   h2 {
     font-size: 20px;
