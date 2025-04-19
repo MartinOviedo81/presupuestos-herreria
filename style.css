@@ -275,3 +275,12 @@ select:focus {
 .hidden {
   display: none;
 }
+/* Animación para desvanecer */
+.fade-out {
+  animation: fadeOut 0.4s forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.98); }
+}
