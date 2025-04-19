@@ -22,7 +22,7 @@
   <label>Nombre del presupuesto:
     <input type="text" id="nombre-presupuesto" placeholder="Ej: Portón Juan">
   </label>
-  <button id="guardar-presupuesto">💾 Guardar presupuesto</button>
+  <button id="guardar-presupuesto">Guardar presupuesto</button>
 
   <ul id="presupuesto"></ul>
   <p><strong>Total estimado: $<span id="total">0</span></strong></p>
@@ -99,22 +99,22 @@
 
         card.innerHTML = `
           <strong>${mat.nombre}</strong><br>
-          💵 $${mat.precio} total – $${(mat.precio / mat.fraccionamiento).toFixed(2)} x unidad<br>
-          📝 ${mat.descripcion || 'Sin descripción'}<br>
+          Precio total: $${mat.precio} – $${(mat.precio / mat.fraccionamiento).toFixed(2)} x unidad<br>
+          ${mat.descripcion || 'Sin descripción'}<br>
           <input type="text" class="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5...">
           <details>
-            <summary>⚙️ Trabajos</summary>
+            <summary>Trabajos</summary>
             <div class="trabajos-lista">${trabajosInputs}</div>
           </details>
-          <button class="btn-agregar">➕ Agregar</button>
+          <button class="btn-agregar">Agregar</button>
         `;
 
         const btn = card.querySelector('.btn-agregar');
         btn.addEventListener('click', () => {
           const texto = card.querySelector('.input-detalle').value.trim();
-          if (!texto) return alert("⚠️ Ingresá el detalle de uso.");
+          if (!texto) return alert("Ingresá el detalle de uso.");
           const cantidad = calcularTotalDesdeTexto(texto);
-          if (!cantidad || isNaN(cantidad)) return alert("⚠️ No se pudo interpretar la cantidad.");
+          if (!cantidad || isNaN(cantidad)) return alert("No se pudo interpretar la cantidad.");
 
           const precioPorUnidad = mat.precio / mat.fraccionamiento;
           const checkboxes = card.querySelectorAll('.check-trabajo');
@@ -131,7 +131,7 @@
             }
           });
 
-          if (multiplicadorTotal === 0) return alert("⚠️ Seleccioná al menos un trabajo.");
+          if (multiplicadorTotal === 0) return alert("Seleccioná al menos un trabajo.");
 
           const subtotal = (precioPorUnidad * cantidad * multiplicadorTotal).toFixed(2);
 
@@ -165,7 +165,7 @@
             Trabajos: ${item.trabajos.join(', ') || 'Ninguno'}<br>
             Subtotal: $${item.subtotal}
           </div>
-          <button onclick="eliminarItem(${i})">❌</button>
+          <button onclick="eliminarItem(${i})">Eliminar</button>
         `;
         presupuestoUl.appendChild(li);
         total += item.subtotal;
@@ -189,11 +189,11 @@
 
       if (presupuestoIdActual) {
         await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
-        alert(`✅ Presupuesto "${nombre}" actualizado.`);
+        alert(`Presupuesto "${nombre}" actualizado.`);
       } else {
         const docRef = await addDoc(collection(db, 'presupuestos'), data);
         presupuestoIdActual = docRef.id;
-        alert(`💾 Presupuesto "${nombre}" guardado.`);
+        alert(`Presupuesto "${nombre}" guardado.`);
       }
 
       presupuesto = [];
@@ -222,9 +222,9 @@
               <div class="menu-wrapper">
                 <button class="menu-toggle">⋮</button>
                 <div class="menu-acciones hidden">
-                  <button onclick="consultarPresupuesto('${p.id}')">👁 Ver / Editar</button>
-                  <button onclick="compartirPresupuesto('${p.id}')">📤 Enviar por WhatsApp</button>
-                  <button onclick="eliminarPresupuesto('${p.id}')">🗑 Eliminar</button>
+                  <button onclick="consultarPresupuesto('${p.id}')">Ver / Editar</button>
+                  <button onclick="compartirPresupuesto('${p.id}')">Enviar por WhatsApp</button>
+                  <button onclick="eliminarPresupuesto('${p.id}')">Eliminar</button>
                 </div>
               </div>
             </li>
@@ -266,7 +266,7 @@
 
     window.eliminarPresupuesto = async (id) => {
       await deleteDoc(doc(db, 'presupuestos', id));
-      alert("🗑 Presupuesto eliminado.");
+      alert("Presupuesto eliminado.");
       cargarPresupuestosGuardados();
     };
 
@@ -279,7 +279,7 @@
       if (!p) return alert('Presupuesto no encontrado');
 
       const materiales = [...new Set(p.items.map(item => item.nombre))].join(', ');
-      const mensaje = `📋 *Presupuesto: ${p.nombre}*\n🗓 ${p.fecha}\n\n🔩 Materiales: ${materiales}\n\n💰 *Total: $${p.total}*`;
+      const mensaje = `Presupuesto: ${p.nombre}\nFecha: ${p.fecha}\n\nMateriales: ${materiales}\nTotal: $${p.total}`;
       const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
       window.open(url, '_blank');
     };
