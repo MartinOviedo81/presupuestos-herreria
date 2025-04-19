@@ -213,21 +213,38 @@
         <h2>Presupuestos guardados</h2>
         <ul>
           ${lista.map(p => `
-            <li>
-              <div class="info-presu">
-                <strong>${p.nombre}</strong>
-                <span>${p.fecha}</span>
-                <span>Total: $${p.total}</span>
+            <li class="item-presupuesto">
+              <div class="datos-presu">
+                <span class="nombre">${p.nombre}</span>
+                <span class="fecha">${p.fecha}</span>
+                <span class="total">$${p.total}</span>
               </div>
-              <div class="botones-presu">
-                <button onclick="consultarPresupuesto('${p.id}')">👁</button>
-                <button onclick="compartirPresupuesto('${p.id}')">📤</button>
-                <button onclick="eliminarPresupuesto('${p.id}')">🗑</button>
+              <div class="menu-wrapper">
+                <button class="menu-toggle">⋮</button>
+                <div class="menu-acciones hidden">
+                  <button onclick="consultarPresupuesto('${p.id}')">👁 Ver</button>
+                  <button onclick="compartirPresupuesto('${p.id}')">📤 WhatsApp</button>
+                  <button onclick="eliminarPresupuesto('${p.id}')">🗑 Eliminar</button>
+                </div>
               </div>
             </li>
           `).join('')}
         </ul>
       `;
+
+      document.querySelectorAll('.menu-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const menu = btn.nextElementSibling;
+          document.querySelectorAll('.menu-acciones').forEach(m => m.classList.add('hidden'));
+          menu.classList.toggle('hidden');
+        });
+      });
+
+      window.addEventListener('click', e => {
+        if (!e.target.classList.contains('menu-toggle')) {
+          document.querySelectorAll('.menu-acciones').forEach(m => m.classList.add('hidden'));
+        }
+      });
     }
 
     window.consultarPresupuesto = async (id) => {
