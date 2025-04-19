@@ -1,299 +1,85 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Linda Herrería - Presupuestos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Materiales</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="module" src="firebase-config.js"></script>
 </head>
-<body>
-  <h2>Linda Herrería</h2>
+<body class="modo-oscuro">
+  <h1>Lista de Materiales</h1>
+  <div id="materiales-container"></div>
 
-  <div style="text-align: center; margin-bottom: 20px;">
-    <a href="cargar-materiales.html"><button>➕ Cargar nuevo material</button></a>
-    <a href="config-tareas.html"><button>⚙️ Configurar tareas</button></a>
-  </div>
-
-  <input type="text" id="buscador" placeholder="Buscar material...">
-  <div id="lista-materiales"></div>
-
-  <hr>
-  <h2>Presupuesto Actual</h2>
-  <label>Nombre del presupuesto:
-    <input type="text" id="nombre-presupuesto" placeholder="Ej: Portón Juan">
-  </label>
-  <button id="guardar-presupuesto">Guardar presupuesto</button>
-
-  <ul id="presupuesto"></ul>
-  <p><strong>Total estimado: $<span id="total">0</span></strong></p>
-
-  <div id="presupuestos-guardados"></div>
+  <button class="boton-celeste" onclick="location.href='cargar-materiales.html'">Cargar nuevo material</button>
+  <button class="boton-verde" onclick="location.href='config-tareas.html'">Configurar tareas</button>
 
   <script type="module">
     import { db } from './firebase-config.js';
-    import {
-      collection, getDocs, addDoc, deleteDoc, doc, updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    let trabajos = {};
-    let materiales = [];
-    let presupuesto = [];
-    let presupuestoIdActual = null;
+    const materialesContainer = document.getElementById("materiales-container");
 
-    const buscador = document.getElementById('buscador');
-    const lista = document.getElementById('lista-materiales');
-    const presupuestoUl = document.getElementById('presupuesto');
-    const totalSpan = document.getElementById('total');
-    const nombrePresupuesto = document.getElementById('nombre-presupuesto');
-    const btnGuardar = document.getElementById('guardar-presupuesto');
-
-    function formatoMoneda(valor) {
-      return new Intl.NumberFormat('es-AR', {
-        style: 'decimal',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(valor);
-    }
-
-    buscador.addEventListener('input', () => {
-      const texto = buscador.value.toLowerCase();
-      const filtrados = materiales.filter(m => m.nombre.toLowerCase().includes(texto));
-      mostrarMateriales(filtrados);
-    });
-    async function cargarMateriales() {
-      const snap = await getDocs(collection(db, 'materiales'));
-      materiales = [];
-      snap.forEach(doc => materiales.push({ id: doc.id, ...doc.data() }));
-      mostrarMateriales(materiales);
-    }
-
-    async function cargarTareas() {
-      const snap = await getDocs(collection(db, 'tareas'));
-      trabajos = {};
-      snap.forEach(doc => {
-        const data = doc.data();
-        trabajos[data.nombre] = data.multiplicador;
-      });
-    }
-
-    function calcularTotalDesdeTexto(texto) {
-      const partes = texto.split('+').join(',').split(/,|y/i).map(p => p.trim());
-      let total = 0;
-      for (let parte of partes) {
-        const match = parte.match(/(\d+(?:[.,]\d+)?)\s*(?:x|de)?\s*(\d+(?:[.,]\d+)?)/i);
-        if (match) {
-          const cantidad = parseFloat(match[1].replace(',', '.'));
-          const medida = parseFloat(match[2].replace(',', '.'));
-          total += cantidad * medida;
+    function agruparPorCategoria(materiales) {
+      const grupos = {};
+      materiales.forEach((mat) => {
+        if (!grupos[mat.categoria]) {
+          grupos[mat.categoria] = [];
         }
-      }
-      return total;
-    }
-
-    function mostrarMateriales(listaMat) {
-      lista.innerHTML = '';
-
-      listaMat.forEach((mat, index) => {
-        const card = document.createElement('div');
-        card.className = 'card';
-
-        const trabajosInputs = Object.entries(trabajos).map(([nombre, mult]) => `
-          <label>
-            <input type="checkbox" class="check-trabajo" data-nombre="${nombre}" data-index="${index}">
-            ${nombre} × ${mult}
-          </label>
-        `).join('<br>');
-
-        const precioPorUnidad = mat.precio / mat.fraccionamiento;
-
-        card.innerHTML = `
-          <strong>${mat.nombre}</strong><br>
-          Precio total: $${formatoMoneda(mat.precio)} – $${formatoMoneda(precioPorUnidad)} x unidad<br>
-          ${mat.descripcion || 'Sin descripción'}<br>
-          <input type="text" class="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5...">
-          <details>
-            <summary>Trabajos</summary>
-            <div class="trabajos-lista">${trabajosInputs}</div>
-          </details>
-          <button class="btn-agregar">Agregar</button>
-        `;
-
-        const btn = card.querySelector('.btn-agregar');
-        btn.addEventListener('click', () => {
-          const texto = card.querySelector('.input-detalle').value.trim();
-          if (!texto) return alert("Ingresá el detalle de uso.");
-          const cantidad = calcularTotalDesdeTexto(texto);
-          if (!cantidad || isNaN(cantidad)) return alert("No se pudo interpretar la cantidad.");
-
-          const checkboxes = card.querySelectorAll('.check-trabajo');
-
-          let multiplicadorTotal = 0;
-          let trabajosSeleccionados = [];
-
-          checkboxes.forEach((check) => {
-            if (check.checked) {
-              const nombre = check.dataset.nombre;
-              const mult = trabajos[nombre];
-              multiplicadorTotal += mult;
-              trabajosSeleccionados.push(`${nombre} ×${mult}`);
-            }
-          });
-
-          if (multiplicadorTotal === 0) return alert("Seleccioná al menos un trabajo.");
-
-          const subtotal = precioPorUnidad * cantidad * multiplicadorTotal;
-
-          presupuesto.push({
-            nombre: mat.nombre,
-            unidad: mat.unidad,
-            cantidad,
-            precioPorUnidad,
-            trabajos: trabajosSeleccionados,
-            multiplicadorTotal,
-            subtotal
-          });
-
-          renderPresupuesto();
-        });
-
-        lista.appendChild(card);
+        grupos[mat.categoria].push(mat);
       });
+      return grupos;
     }
 
-    function renderPresupuesto() {
-      presupuestoUl.innerHTML = '';
-      let total = 0;
-
-      presupuesto.forEach((item, i) => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <div>
-            <strong>${item.nombre}</strong><br>
-            Cantidad: ${item.cantidad.toFixed(2)} × $${formatoMoneda(item.precioPorUnidad)}/${item.unidad}<br>
-            Trabajos: ${item.trabajos.join(', ') || 'Ninguno'}<br>
-            Subtotal: $${formatoMoneda(item.subtotal)}
-          </div>
-          <button onclick="eliminarItem(${i})">Eliminar</button>
-        `;
-        presupuestoUl.appendChild(li);
-        total += item.subtotal;
-      });
-
-      totalSpan.textContent = formatoMoneda(total);
-    }
-
-    window.eliminarItem = (i) => {
-      presupuesto.splice(i, 1);
-      renderPresupuesto();
-    };
-        btnGuardar.addEventListener('click', async () => {
-      const nombre = nombrePresupuesto.value.trim();
-      if (!nombre) return alert('Poné un nombre al presupuesto.');
-      const fecha = new Date().toLocaleString();
-      const total = totalSpan.textContent;
-
-      const data = { nombre, fecha, total: total.replace(/\./g, '').replace(',', '.'), items: presupuesto };
-
-      if (presupuestoIdActual) {
-        await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
-        alert(`Presupuesto "${nombre}" actualizado.`);
-      } else {
-        const docRef = await addDoc(collection(db, 'presupuestos'), data);
-        presupuestoIdActual = docRef.id;
-        alert(`Presupuesto "${nombre}" guardado.`);
-      }
-
-      presupuesto = [];
-      renderPresupuesto();
-      nombrePresupuesto.value = '';
-      presupuestoIdActual = null;
-      cargarPresupuestosGuardados();
-    });
-
-    async function cargarPresupuestosGuardados() {
-      const contenedor = document.getElementById('presupuestos-guardados');
-      const snap = await getDocs(collection(db, 'presupuestos'));
-      const lista = [];
-      snap.forEach(doc => lista.push({ id: doc.id, ...doc.data() }));
-
-      contenedor.innerHTML = `
-        <h2>Presupuestos guardados</h2>
-        <ul>
-          ${lista.map(p => `
-            <li class="item-presupuesto">
-              <div class="datos-presu">
-                <span class="nombre">${p.nombre}</span>
-                <span class="fecha">${p.fecha}</span>
-                <span class="total">Total: $${formatoMoneda(p.total)}</span>
-              </div>
-              <div class="menu-wrapper">
-                <button class="menu-toggle">⋮</button>
-                <div class="menu-acciones hidden">
-                  <button onclick="consultarPresupuesto('${p.id}')">Ver / Editar</button>
-                  <button onclick="compartirPresupuesto('${p.id}')">Enviar por WhatsApp</button>
-                  <button onclick="eliminarPresupuesto('${p.id}')">Eliminar</button>
-                </div>
-              </div>
-            </li>
-          `).join('')}
-        </ul>
+    function crearTarjeta(material) {
+      return `
+        <div class="tarjeta-material">
+          <h3>${material.nombre}</h3>
+          <p><strong>Precio:</strong> $${material.precioPorUnidad}</p>
+          <p><strong>Multiplicador:</strong> ${material.multiplicadorTotal}</p>
+          <button class="boton-rojo" onclick="eliminarMaterial('${material.id}')">Eliminar</button>
+        </div>
       `;
-
-      setTimeout(() => {
-        document.querySelectorAll('.menu-toggle').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const menu = btn.nextElementSibling;
-            document.querySelectorAll('.menu-acciones').forEach(m => {
-              if (m !== menu) m.classList.add('hidden');
-            });
-            menu.classList.toggle('hidden');
-          });
-        });
-      }, 0);
-
-      window.addEventListener('click', () => {
-        document.querySelectorAll('.menu-acciones').forEach(m => m.classList.add('hidden'));
-      });
     }
 
-    window.consultarPresupuesto = async (id) => {
-      const snap = await getDocs(collection(db, 'presupuestos'));
-      let p = null;
-      snap.forEach(doc => {
-        if (doc.id === id) p = { id: doc.id, ...doc.data() };
-      });
-      if (!p) return alert('Presupuesto no encontrado');
+    function mostrarMaterialesAgrupados(materiales) {
+      const grupos = agruparPorCategoria(materiales);
+      materialesContainer.innerHTML = '';
 
-      presupuesto = p.items;
-      nombrePresupuesto.value = p.nombre;
-      presupuestoIdActual = p.id;
-      renderPresupuesto();
+      for (const categoria in grupos) {
+        const seccion = document.createElement("section");
+        seccion.innerHTML = `<h2 class="categoria-titulo">${categoria}</h2>`;
+        
+        const carrusel = document.createElement("div");
+        carrusel.className = "carrusel-materiales";
+
+        grupos[categoria].forEach((mat) => {
+          carrusel.innerHTML += crearTarjeta(mat);
+        });
+
+        seccion.appendChild(carrusel);
+        materialesContainer.appendChild(seccion);
+      }
+    }
+
+    async function obtenerMateriales() {
+      const querySnapshot = await getDocs(collection(db, "materiales"));
+      const materiales = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      mostrarMaterialesAgrupados(materiales);
+    }
+
+    window.eliminarMaterial = async function(id) {
+      if (confirm("¿Eliminar este material?")) {
+        const { deleteDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js");
+        await deleteDoc(doc(db, "materiales", id));
+        obtenerMateriales(); // Recarga la lista
+      }
     };
 
-    window.eliminarPresupuesto = async (id) => {
-      await deleteDoc(doc(db, 'presupuestos', id));
-      alert("Presupuesto eliminado.");
-      cargarPresupuestosGuardados();
-    };
-
-    window.compartirPresupuesto = async (id) => {
-      const snap = await getDocs(collection(db, 'presupuestos'));
-      let p = null;
-      snap.forEach(doc => {
-        if (doc.id === id) p = { id: doc.id, ...doc.data() };
-      });
-      if (!p) return alert('Presupuesto no encontrado');
-
-      const materiales = [...new Set(p.items.map(item => item.nombre))].join(', ');
-      const mensaje = `Presupuesto: ${p.nombre}\nFecha: ${p.fecha}\n\nMateriales: ${materiales}\nTotal: $${formatoMoneda(p.total)}`;
-      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-      window.open(url, '_blank');
-    };
-
-    await cargarTareas();
-    await cargarMateriales();
-    cargarPresupuestosGuardados();
+    obtenerMateriales();
   </script>
 </body>
 </html>
