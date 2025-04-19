@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="modo-oscuro">
   <h2>Agregar o Editar Material</h2>
 
   <form id="form-material">
@@ -34,7 +34,7 @@
       <input type="text" id="descripcion" placeholder="Ej: Hierro redondo, caño cuadrado...">
     </label>
 
-    <button type="submit">💾 Guardar material</button>
+    <button type="submit" class="boton-celeste">Guardar material</button>
   </form>
 
   <p id="mensaje"></p>
@@ -68,6 +68,7 @@
       snap.forEach(docSnap => {
         const m = docSnap.data();
         const li = document.createElement('li');
+        li.classList.add('item-presupuesto');
 
         li.innerHTML = `
           <strong>${m.nombre}</strong><br>
@@ -76,8 +77,10 @@
           Precio: $${m.precio}<br>
           Descripción: ${m.descripcion || 'Sin descripción'}<br>
           <small>Última actualización: ${m.fecha || 'Sin fecha'}</small><br>
-          <button onclick="editarMaterial('${docSnap.id}', ${JSON.stringify(m).replace(/"/g, '&quot;')})">✏️ Editar</button>
-          <button onclick="eliminarMaterial('${docSnap.id}')">🗑 Eliminar</button>
+          <div style="margin-top: 10px;">
+            <button class="boton-naranja" onclick="editarMaterial('${docSnap.id}', ${JSON.stringify(m).replace(/"/g, '&quot;')})">Editar</button>
+            <button class="boton-rojo" onclick="eliminarMaterial('${docSnap.id}')">Eliminar</button>
+          </div>
         `;
         lista.appendChild(li);
       });
