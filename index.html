@@ -221,27 +221,53 @@
       cargarPresupuestosGuardados();
     });
 
-    async function cargarPresupuestosGuardados() {
-      const contenedor = document.getElementById('presupuestos-guardados');
-      const snap = await getDocs(collection(db, 'presupuestos'));
-      const lista = [];
-      snap.forEach(doc => lista.push({ id: doc.id, ...doc.data() }));
+   async function cargarPresupuestosGuardados() {
+  const contenedor = document.getElementById('presupuestos-guardados');
+  const snap = await getDocs(collection(db, 'presupuestos'));
+  const lista = [];
+  snap.forEach(doc => lista.push({ id: doc.id, ...doc.data() }));
 
-      contenedor.innerHTML = `
-        <h2>Presupuestos guardados</h2>
-        <ul>
-          ${lista.map(p => `
-            <li class="item-presupuesto">
-              <div class="datos-presu">
-                <span class="nombre">${p.nombre}</span>
-                <span class="fecha">${p.fecha}</span>
-                <span class="total">Total: $${parseFloat(p.total).toFixed(2)}</span>
-              </div>
-            </li>
-          `).join('')}
-        </ul>
-      `;
-    }
+  contenedor.innerHTML = `
+    <h2>Presupuestos guardados</h2>
+    <ul>
+      ${lista.map(p => `
+        <li class="item-presupuesto">
+          <div class="datos-presu">
+            <span class="nombre">${p.nombre}</span>
+            <span class="fecha">${p.fecha}</span>
+            <span class="total">Total: $${parseFloat(p.total).toFixed(2)}</span>
+          </div>
+          <div class="menu-wrapper">
+            <button class="abrir-menu" data-id="${p.id}">Opciones</button>
+            <div class="menu-acciones hidden" id="menu-${p.id}">
+              <button onclick="consultarPresupuesto('${p.id}')">Ver / Editar</button>
+              <button onclick="compartirPresupuesto('${p.id}')">Enviar por WhatsApp</button>
+              <button onclick="eliminarPresupuesto('${p.id}')">Eliminar</button>
+            </div>
+          </div>
+        </li>
+      `).join('')}
+    </ul>
+  `;
+
+  setTimeout(() => {
+    document.querySelectorAll('.abrir-menu').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const menu = document.getElementById(`menu-${id}`);
+        document.querySelectorAll('.menu-acciones').forEach(m => {
+          if (m !== menu) m.classList.add('hidden');
+        });
+        menu.classList.toggle('hidden');
+      });
+    });
+  }, 0);
+
+  window.addEventListener('click', () => {
+    document.querySelectorAll('.menu-acciones').forEach(m => m.classList.add('hidden'));
+  });
+}
 
     await cargarTareas();
     await cargarMateriales();
