@@ -209,10 +209,10 @@
       const lista = [];
       snap.forEach(doc => lista.push({ id: doc.id, ...doc.data() }));
 
-      contenedor.innerHTML = `
+      contenedor.innerHTML = 
         <h2>Presupuestos guardados</h2>
         <ul>
-          ${lista.map(p => `
+          ${lista.map(p => 
             <li class="item-presupuesto">
               <div class="datos-presu">
                 <span class="nombre">${p.nombre}</span>
@@ -228,9 +228,9 @@
                 </div>
               </div>
             </li>
-          `).join('')}
+          ).join('')}
         </ul>
-      `;
+      ;
 
       setTimeout(() => {
         document.querySelectorAll('.menu-toggle').forEach(btn => {
