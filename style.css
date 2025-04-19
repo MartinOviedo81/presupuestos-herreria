@@ -200,7 +200,7 @@ label {
   padding-left: 0;
 }
 
-/* Cada ítem del presupuesto guardado */
+/* Presupuesto individual */
 .item-presupuesto {
   list-style: none;
   background: #fff;
@@ -208,7 +208,6 @@ label {
   padding: 12px 15px;
   border-radius: 10px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -255,20 +254,25 @@ label {
   background: white;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   border-radius: 6px;
-  overflow: hidden;
   z-index: 10;
   display: flex;
   flex-direction: column;
+  min-width: 160px;
+  padding: 4px 0;
+  animation: fadeIn 0.2s ease-in-out;
 }
 
 .menu-acciones button {
-  padding: 8px 12px;
+  padding: 10px 16px;
   background: none;
   border: none;
   text-align: left;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .menu-acciones button:hover {
@@ -283,7 +287,7 @@ label {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(15px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -314,6 +318,11 @@ label {
 
   .menu-toggle {
     font-size: 18px;
+  }
+
+  .menu-acciones {
+    right: 10px;
+    left: auto;
   }
 
   button {
