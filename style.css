@@ -240,11 +240,18 @@ label {
 }
 
 .menu-toggle {
-  background: none;
+  background: #e06900;
   border: none;
-  font-size: 20px;
+  font-size: 22px;
   cursor: pointer;
-  padding: 5px;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.menu-toggle:hover {
+  background: #c55800;
 }
 
 .menu-acciones {
@@ -257,7 +264,7 @@ label {
   z-index: 10;
   display: flex;
   flex-direction: column;
-  min-width: 160px;
+  min-width: 180px;
   padding: 4px 0;
   animation: fadeIn 0.2s ease-in-out;
 }
@@ -283,7 +290,7 @@ label {
   display: none;
 }
 
-/* Animaciones suaves */
+/* Animación */
 @keyframes fadeIn {
   from {
     opacity: 0;
