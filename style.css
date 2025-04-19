@@ -208,19 +208,40 @@ label {
   padding: 15px;
   border-radius: 10px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-#presupuestos-guardados button {
-  margin-top: 5px;
-  margin-right: 5px;
-  padding: 8px 12px;
+.info-presu {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   font-size: 14px;
-  border-radius: 8px;
-  background: #e06900;
 }
 
-#presupuestos-guardados button:hover {
-  background: #d15800;
+.botones-presu {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.botones-presu button {
+  padding: 6px 10px;
+  font-size: 14px;
+  background: #e06900;
+  color: white;
+  border: none;
+  border-radius: 8px;
+}
+
+.botones-presu button:hover {
+  background: #c45d00;
 }
 
 /* Animación suave */
@@ -254,6 +275,11 @@ label {
   #presupuesto li {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .botones-presu {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   button {
