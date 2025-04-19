@@ -217,13 +217,13 @@
               <div class="datos-presu">
                 <span class="nombre">${p.nombre}</span>
                 <span class="fecha">${p.fecha}</span>
-                <span class="total">$${p.total}</span>
+                <span class="total">Total: $${p.total}</span>
               </div>
               <div class="menu-wrapper">
                 <button class="menu-toggle">⋮</button>
                 <div class="menu-acciones hidden">
-                  <button onclick="consultarPresupuesto('${p.id}')">👁 Ver</button>
-                  <button onclick="compartirPresupuesto('${p.id}')">📤 WhatsApp</button>
+                  <button onclick="consultarPresupuesto('${p.id}')">👁 Ver / Editar</button>
+                  <button onclick="compartirPresupuesto('${p.id}')">📤 Enviar por WhatsApp</button>
                   <button onclick="eliminarPresupuesto('${p.id}')">🗑 Eliminar</button>
                 </div>
               </div>
@@ -232,18 +232,21 @@
         </ul>
       `;
 
-      document.querySelectorAll('.menu-toggle').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const menu = btn.nextElementSibling;
-          document.querySelectorAll('.menu-acciones').forEach(m => m.classList.add('hidden'));
-          menu.classList.toggle('hidden');
+      setTimeout(() => {
+        document.querySelectorAll('.menu-toggle').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const menu = btn.nextElementSibling;
+            document.querySelectorAll('.menu-acciones').forEach(m => {
+              if (m !== menu) m.classList.add('hidden');
+            });
+            menu.classList.toggle('hidden');
+          });
         });
-      });
+      }, 0);
 
-      window.addEventListener('click', e => {
-        if (!e.target.classList.contains('menu-toggle')) {
-          document.querySelectorAll('.menu-acciones').forEach(m => m.classList.add('hidden'));
-        }
+      window.addEventListener('click', () => {
+        document.querySelectorAll('.menu-acciones').forEach(m => m.classList.add('hidden'));
       });
     }
 
