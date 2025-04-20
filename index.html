@@ -15,7 +15,16 @@
   </div>
 
   <input type="text" id="buscador" placeholder="Buscar material...">
-
+<select id="filtro-categoria">
+  <option value="todas">Todas las categorías</option>
+  <option value="caños estructurales">Caños estructurales</option>
+  <option value="hierros cuadrados">Hierros cuadrados</option>
+  <option value="hierros redondos">Hierros redondos</option>
+  <option value="planchuelas">Planchuelas</option>
+  <option value="hierros angulo">Hierros ángulo</option>
+  <option value="laminas">Láminas</option>
+  <option value="herrajes">Herrajes</option>
+</select>
   <div id="carrusel-materiales" class="carrusel"></div>
   <div id="material-seleccionado"></div>
 
@@ -53,14 +62,33 @@
       const filtrados = materiales.filter(m => m.nombre.toLowerCase().includes(texto));
       renderCarrusel(filtrados);
     });
+const filtroCategoria = document.getElementById('filtro-categoria');
 
+filtroCategoria.addEventListener('change', () => {
+  aplicarFiltros();
+});
     async function cargarMateriales() {
       const snap = await getDocs(collection(db, 'materiales'));
       materiales = [];
       snap.forEach(doc => materiales.push({ id: doc.id, ...doc.data() }));
-      renderCarrusel(materiales);
+     aplicarFiltros();
     }
+function aplicarFiltros() {
+  const texto = buscador.value.toLowerCase();
+  const categoria = filtroCategoria.value;
 
+  let filtrados = materiales;
+
+  if (categoria !== 'todas') {
+    filtrados = filtrados.filter(m => (m.categoria || '').toLowerCase() === categoria);
+  }
+
+  if (texto) {
+    filtrados = filtrados.filter(m => m.nombre.toLowerCase().includes(texto));
+  }
+
+  renderCarrusel(filtrados);
+}
     async function cargarTareas() {
       const snap = await getDocs(collection(db, 'tareas'));
       trabajos = {};
@@ -75,10 +103,11 @@
       lista.forEach((mat) => {
         const tarjeta = document.createElement('div');
         tarjeta.className = 'tarjeta';
-        tarjeta.innerHTML = `
-          <strong>${mat.nombre}</strong>
-          <p>${mat.descripcion || ''}</p>
-        `;
+       const precioUnidad = mat.precio / mat.fraccionamiento;
+tarjeta.innerHTML = `
+  <strong>${mat.nombre}</strong>
+  <p>$${formatearMoneda(precioUnidad)} x ${mat.unidad}</p>
+`;
         tarjeta.addEventListener('click', () => renderSeleccion(mat));
         carrusel.appendChild(tarjeta);
       });
