@@ -60,7 +60,12 @@
     const descripcionInput = document.getElementById('descripcion');
 
     let idMaterialEditando = null;
-
+function formatearMoneda(valor) {
+  return valor.toLocaleString('es-AR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
     async function cargarMateriales() {
       const snap = await getDocs(collection(db, 'materiales'));
       lista.innerHTML = '';
@@ -74,7 +79,7 @@
           <strong>${m.nombre}</strong><br>
           Unidad: ${m.unidad}<br>
           Fracción: ${m.fraccionamiento}<br>
-          Precio: $${m.precio}<br>
+          Precio: $${formatearMoneda(m.precio)}<br>
           Descripción: ${m.descripcion || 'Sin descripción'}<br>
           <small>Última actualización: ${m.fecha || 'Sin fecha'}</small><br>
           <div style="margin-top: 10px;">
