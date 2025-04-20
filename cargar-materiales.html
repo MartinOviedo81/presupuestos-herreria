@@ -33,7 +33,18 @@
     <label>Descripción del material:
       <input type="text" id="descripcion" placeholder="Ej: Hierro redondo, caño cuadrado...">
     </label>
-
+<label>Categoría:
+  <select id="categoria" required>
+    <option value="">Seleccionar categoría</option>
+    <option value="caños estructurales">1 - Caños estructurales</option>
+    <option value="hierros cuadrados">2 - Hierros cuadrados</option>
+    <option value="hierros redondos">3 - Hierros redondos</option>
+    <option value="planchuelas">4 - Planchuelas</option>
+    <option value="hierros angulo">5 - Hierros ángulo</option>
+    <option value="laminas">6 - Láminas (chapas, mayas, desplegado)</option>
+    <option value="herrajes">7 - Herrajes (bisagras, cerraduras...)</option>
+  </select>
+</label>
     <button type="submit" class="boton-celeste">Guardar material</button>
   </form>
 
@@ -58,7 +69,7 @@
     const fraccionInput = document.getElementById('fraccion');
     const precioInput = document.getElementById('precio');
     const descripcionInput = document.getElementById('descripcion');
-
+    const categoriaInput = document.getElementById('categoria');
     let idMaterialEditando = null;
 function formatearMoneda(valor) {
   return valor.toLocaleString('es-AR', {
@@ -81,6 +92,7 @@ function formatearMoneda(valor) {
           Fracción: ${m.fraccionamiento}<br>
           Precio: $${formatearMoneda(m.precio)}<br>
           Descripción: ${m.descripcion || 'Sin descripción'}<br>
+          Categoría: ${m.categoria || 'Sin categoría'}<br>
           <small>Última actualización: ${m.fecha || 'Sin fecha'}</small><br>
           <div style="margin-top: 10px;">
             <button class="boton-naranja" onclick="editarMaterial('${docSnap.id}', ${JSON.stringify(m).replace(/"/g, '&quot;')})">Editar</button>
@@ -97,6 +109,7 @@ function formatearMoneda(valor) {
       fraccionInput.value = material.fraccionamiento;
       precioInput.value = material.precio;
       descripcionInput.value = material.descripcion || '';
+      categoriaInput.value = material.categoria || '';
       idMaterialEditando = id;
     };
 
@@ -123,14 +136,15 @@ function formatearMoneda(valor) {
       const descripcion = descripcionInput.value.trim();
       const fecha = new Date().toLocaleString();
 
-      const data = {
-        nombre,
-        unidad,
-        fraccionamiento: fraccion,
-        precio,
-        descripcion,
-        fecha
-      };
+const data = {
+  nombre,
+  unidad,
+  fraccionamiento: fraccion,
+  precio,
+  descripcion,
+  categoria: categoriaInput.value,
+  fecha
+}; 
 
       try {
         if (idMaterialEditando) {
