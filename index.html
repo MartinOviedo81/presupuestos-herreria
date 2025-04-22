@@ -156,7 +156,12 @@ function formatearMoneda(valor) {
       const menuDetalles = document.getElementById('trabajos-menu');
       const labelMultiplicador = document.getElementById('multiplicador-acumulado');
       const checkboxes = contenedorSeleccion.querySelectorAll('.check-trabajo');
+const toggleBtn = document.getElementById('toggle-trabajos');
+const trabajosLista = contenedorSeleccion.querySelector('.trabajos-lista');
 
+toggleBtn.addEventListener('click', () => {
+  trabajosLista.classList.toggle('hidden');
+});
       checkboxes.forEach((checkbox) => {
         checkbox.addEventListener('change', () => {
           let total = 0;
