@@ -15,16 +15,16 @@
   </div>
 
  
-<select id="filtro-categoria">
-  <option value="todas">Todas las categorías</option>
-  <option value="caños estructurales">Caños estructurales</option>
-  <option value="hierros cuadrados">Hierros cuadrados</option>
-  <option value="hierros redondos">Hierros redondos</option>
-  <option value="planchuelas">Planchuelas</option>
-  <option value="hierros angulo">Hierros ángulo</option>
-  <option value="laminas">Láminas</option>
-  <option value="herrajes">Herrajes</option>
-</select>
+<div id="filtros-categorias" class="grupo-categorias">
+  <button class="btn-filtro" data-categoria="todas">Todas</button>
+  <button class="btn-filtro" data-categoria="caños estructurales">Caños estructurales</button>
+  <button class="btn-filtro" data-categoria="hierros cuadrados">Hierros cuadrados</button>
+  <button class="btn-filtro" data-categoria="hierros redondos">Hierros redondos</button>
+  <button class="btn-filtro" data-categoria="planchuelas">Planchuelas</button>
+  <button class="btn-filtro" data-categoria="hierros angulo">Hierros ángulo</button>
+  <button class="btn-filtro" data-categoria="laminas">Láminas</button>
+  <button class="btn-filtro" data-categoria="herrajes">Herrajes</button>
+</div>
   <div id="carrusel-materiales" class="carrusel"></div>
   <div id="material-seleccionado"></div>
 
@@ -58,10 +58,18 @@
     const btnGuardar = document.getElementById('guardar-presupuesto');
 
    
-const filtroCategoria = document.getElementById('filtro-categoria');
+let categoriaSeleccionada = 'todas';
 
-filtroCategoria.addEventListener('change', () => {
-  aplicarFiltros();
+document.querySelectorAll('.btn-filtro').forEach(btn => {
+  btn.addEventListener('click', () => {
+    categoriaSeleccionada = btn.dataset.categoria;
+
+    // Marcar el botón activo
+    document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    aplicarFiltros();
+  });
 });
     async function cargarMateriales() {
       const snap = await getDocs(collection(db, 'materiales'));
@@ -70,7 +78,7 @@ filtroCategoria.addEventListener('change', () => {
      aplicarFiltros();
     }
 function aplicarFiltros() {
-  const categoria = filtroCategoria.value;
+ const categoria = categoriaSeleccionada;
   let filtrados = materiales;
 
   if (categoria !== 'todas') {
