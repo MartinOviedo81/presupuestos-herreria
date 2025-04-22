@@ -301,3 +301,22 @@ select:focus {
   border: 1px solid #555;
   border-radius: 6px;
 }
+/* ESTILO PARA MENÚ DE TRABAJOS EN TARJETA EXPANDIDA */
+.tarjeta-expandida details {
+  background-color: #1e1e1e;
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 10px;
+  color: #fff;
+}
+
+.tarjeta-expandida summary {
+  font-size: 0.95rem;
+  color: #f1c40f;
+  cursor: pointer;
+}
+
+.tarjeta-expandida .trabajos-lista {
+  margin-top: 10px;
+  padding-left: 10px;
+}
