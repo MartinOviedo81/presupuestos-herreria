@@ -321,3 +321,17 @@ select:focus {
   margin-top: 10px;
   padding-left: 10px;
 }
+.trabajos-menu-custom {
+  border: 1px solid #555;
+  border-radius: 8px;
+  background-color: #1e1e1e;
+  padding: 10px;
+}
+
+.trabajos-menu-custom .trabajos-lista {
+  margin-top: 10px;
+}
+
+.trabajos-menu-custom .trabajos-lista.hidden {
+  display: none;
+}
