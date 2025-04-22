@@ -14,7 +14,7 @@
     <a href="config-tareas.html"><button class="boton-verde">⚙️ Configurar tareas</button></a>
   </div>
 
-  <input type="text" id="buscador" placeholder="Buscar material...">
+ 
 <select id="filtro-categoria">
   <option value="todas">Todas las categorías</option>
   <option value="caños estructurales">Caños estructurales</option>
@@ -49,7 +49,7 @@
     let presupuesto = [];
     let presupuestoIdActual = null;
 
-    const buscador = document.getElementById('buscador');
+    
     const carrusel = document.getElementById('carrusel-materiales');
     const contenedorSeleccion = document.getElementById('material-seleccionado');
     const presupuestoUl = document.getElementById('presupuesto');
@@ -57,11 +57,7 @@
     const nombrePresupuesto = document.getElementById('nombre-presupuesto');
     const btnGuardar = document.getElementById('guardar-presupuesto');
 
-    buscador.addEventListener('input', () => {
-      const texto = buscador.value.toLowerCase();
-      const filtrados = materiales.filter(m => m.nombre.toLowerCase().includes(texto));
-      renderCarrusel(filtrados);
-    });
+   
 const filtroCategoria = document.getElementById('filtro-categoria');
 
 filtroCategoria.addEventListener('change', () => {
@@ -74,17 +70,11 @@ filtroCategoria.addEventListener('change', () => {
      aplicarFiltros();
     }
 function aplicarFiltros() {
-  const texto = buscador.value.toLowerCase();
   const categoria = filtroCategoria.value;
-
   let filtrados = materiales;
 
   if (categoria !== 'todas') {
     filtrados = filtrados.filter(m => (m.categoria || '').toLowerCase() === categoria);
-  }
-
-  if (texto) {
-    filtrados = filtrados.filter(m => m.nombre.toLowerCase().includes(texto));
   }
 
   renderCarrusel(filtrados);
