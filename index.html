@@ -62,16 +62,19 @@
 
    
 let categoriaSeleccionada = 'todas';
+const toggleCategoriasBtn = document.getElementById('toggle-categorias');
+const listaCategorias = document.querySelector('#menu-categorias .trabajos-lista');
 
-document.querySelectorAll('.btn-filtro').forEach(btn => {
-  btn.addEventListener('click', () => {
-    categoriaSeleccionada = btn.dataset.categoria;
+toggleCategoriasBtn.addEventListener('click', () => {
+  listaCategorias.classList.toggle('hidden');
+});
 
-    // Marcar el botón activo
-    document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
+document.querySelectorAll('input[name="cat"]').forEach(radio => {
+  radio.addEventListener('change', (e) => {
+    categoriaSeleccionada = e.target.value;
+    toggleCategoriasBtn.textContent = `📂 ${categoriaSeleccionada.charAt(0).toUpperCase() + categoriaSeleccionada.slice(1)}`;
     aplicarFiltros();
+    listaCategorias.classList.add('hidden');
   });
 });
     async function cargarMateriales() {
