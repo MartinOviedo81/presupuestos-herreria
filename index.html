@@ -176,23 +176,18 @@ const trabajosLista = contenedorSeleccion.querySelector('.trabajos-lista');
 toggleBtn.addEventListener('click', () => {
   trabajosLista.classList.toggle('hidden');
 });
-      checkboxes.forEach((checkbox) => {
-        checkbox.addEventListener('change', () => {
-          let total = 0;
-          checkboxes.forEach((check) => {
-            if (check.checked) {
-              const nombre = check.dataset.nombre;
-              total += trabajos[nombre];
-            }
-          });
-          labelMultiplicador.textContent = `× ${total.toFixed(2)}`;
-
-          // Cierra el menú automáticamente
-          setTimeout(() => {
-            menuDetalles.removeAttribute('open');
-          }, 100);
-        });
-      });
+     checkboxes.forEach((checkbox) => {
+  checkbox.addEventListener('change', () => {
+    let total = 0;
+    checkboxes.forEach((check) => {
+      if (check.checked) {
+        const nombre = check.dataset.nombre;
+        total += trabajos[nombre];
+      }
+    });
+    labelMultiplicador.textContent = `× ${total.toFixed(2)}`;
+  });
+});
 
       document.getElementById('btn-agregar').addEventListener('click', () => {
         const texto = document.getElementById('input-detalle').value.trim();
