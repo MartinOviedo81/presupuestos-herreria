@@ -141,10 +141,10 @@ function formatearMoneda(valor) {
           <p>${mat.descripcion || ''}</p>
           <input type="text" id="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5..." />
           <div class="trabajos-contenedor">
-            <details id="trabajos-menu">
-              <summary>Trabajos</summary>
-              <div class="trabajos-lista">${trabajosInputs}</div>
-            </details>
+           <div id="trabajos-menu" class="trabajos-menu-custom">
+  <button id="toggle-trabajos" class="boton-gris">🔧 Trabajos</button>
+  <div class="trabajos-lista hidden">${trabajosInputs}</div>
+</div
             <span id="multiplicador-acumulado" class="label-multiplicador">× 0</span>
           </div>
           <button class="boton-verde" id="btn-agregar">Agregar</button>
