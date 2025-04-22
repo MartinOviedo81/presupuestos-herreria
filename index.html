@@ -15,15 +15,18 @@
   </div>
 
  
-<div id="filtros-categorias" class="grupo-categorias">
-  <button class="btn-filtro" data-categoria="todas">Todas</button>
-  <button class="btn-filtro" data-categoria="caños estructurales">Caños estructurales</button>
-  <button class="btn-filtro" data-categoria="hierros cuadrados">Hierros cuadrados</button>
-  <button class="btn-filtro" data-categoria="hierros redondos">Hierros redondos</button>
-  <button class="btn-filtro" data-categoria="planchuelas">Planchuelas</button>
-  <button class="btn-filtro" data-categoria="hierros angulo">Hierros ángulo</button>
-  <button class="btn-filtro" data-categoria="laminas">Láminas</button>
-  <button class="btn-filtro" data-categoria="herrajes">Herrajes</button>
+<div id="menu-categorias" class="trabajos-menu-custom">
+  <button id="toggle-categorias" class="boton-celeste">📂 Categorías</button>
+  <div class="trabajos-lista hidden">
+    <label><input type="radio" name="cat" value="todas" checked> Todas las categorías</label>
+    <label><input type="radio" name="cat" value="caños estructurales"> Caños estructurales</label>
+    <label><input type="radio" name="cat" value="hierros cuadrados"> Hierros cuadrados</label>
+    <label><input type="radio" name="cat" value="hierros redondos"> Hierros redondos</label>
+    <label><input type="radio" name="cat" value="planchuelas"> Planchuelas</label>
+    <label><input type="radio" name="cat" value="hierros angulo"> Hierros ángulo</label>
+    <label><input type="radio" name="cat" value="laminas"> Láminas</label>
+    <label><input type="radio" name="cat" value="herrajes"> Herrajes</label>
+  </div>
 </div>
   <div id="carrusel-materiales" class="carrusel"></div>
   <div id="material-seleccionado"></div>
