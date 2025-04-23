@@ -285,7 +285,8 @@ document.getElementById('input-detalle').addEventListener('focus', () => {
   const fechaActual = new Date();
   const fecha = fechaActual.toLocaleDateString('es-AR');
   const fechaOrden = fechaActual.toISOString();
-
+  const total = totalSpan.textContent; // ✅ esta es la línea clave
+      
   const data = {
     nombre,
     fecha,
