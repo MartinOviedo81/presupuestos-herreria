@@ -341,6 +341,20 @@ docs.sort((a, b) => {
   }
 });
 
+let docs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+docs.sort((a, b) => {
+  switch (ordenSeleccionado) {
+    case 'fecha-asc': return new Date(a.fecha) - new Date(b.fecha);
+    case 'fecha-desc': return new Date(b.fecha) - new Date(a.fecha);
+    case 'nombre-asc': return a.nombre.localeCompare(b.nombre);
+    case 'nombre-desc': return b.nombre.localeCompare(a.nombre);
+    case 'total-asc': return parseFloat(a.total) - parseFloat(b.total);
+    case 'total-desc': return parseFloat(b.total) - parseFloat(a.total);
+    default: return 0;
+  }
+});
+
 contenedor.innerHTML = `
   <h2>Presupuestos guardados</h2>
   <ul>
