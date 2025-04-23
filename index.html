@@ -289,32 +289,34 @@ toggleBtn.addEventListener('click', () => {
       cargarPresupuestosGuardados();
     });
 
-    window.cargarPresupuestosGuardados = async function () {
+  window.cargarPresupuestosGuardados = async function () {
   const contenedor = document.getElementById('presupuestos-guardados');
   const snap = await getDocs(collection(db, 'presupuestos'));
-  const lista = [];
-  snap.forEach(doc => lista.push({ id: doc.id, ...doc.data() }));
 
   contenedor.innerHTML = `
     <h2>Presupuestos guardados</h2>
     <ul>
-      ${lista.map(p => `
-        <li class="item-presupuesto">
-          <div class="datos-presu">
-            <span class="nombre">${p.nombre}</span>
-            <span class="fecha">${p.fecha}</span>
-            <span class="total">Total: $${formatearMoneda(parseFloat(p.total))}</span>
-          </div>
-          <div class="menu-wrapper">
-            <button class="abrir-menu" data-id="${p.id}">Opciones</button>
-            <div class="menu-acciones hidden" id="menu-${p.id}">
-              <button onclick="consultarPresupuesto('${p.id}')">Ver / Editar</button>
-              <button onclick="compartirPresupuesto('${p.id}')">Enviar por WhatsApp</button>
-              <button onclick="eliminarPresupuesto('${p.id}')">Eliminar</button>
+      ${snap.docs.map(doc => {
+        const p = doc.data();
+        return `
+          <li class="item-presupuesto" id="presupuesto-${doc.id}">
+            <div class="datos-presu">
+              <span class="nombre">${p.nombre}</span>
+              <span class="fecha">${p.fecha}</span>
+              <span class="total">Total: $<span class="monto">${formatearMoneda(parseFloat(p.total))}</span></span>
             </div>
-          </div>
-        </li>
-      `).join('')}
+            <div class="menu-wrapper">
+              <button class="abrir-menu" data-id="${doc.id}">Opciones</button>
+              <div class="menu-acciones hidden" id="menu-${doc.id}">
+                <button onclick="consultarPresupuesto('${doc.id}')">Ver / Editar</button>
+                <button onclick="compartirPresupuesto('${doc.id}')">Enviar por WhatsApp</button>
+                <button onclick="eliminarPresupuesto('${doc.id}')">Eliminar</button>
+                <button onclick="refrescarPresupuesto('${doc.id}')">🔄 Refrescar</button>
+              </div>
+            </div>
+          </li>
+        `;
+      }).join('')}
     </ul>
   `;
 
@@ -375,6 +377,40 @@ window.compartirPresupuesto = async (id) => {
     await cargarTareas();
     await cargarMateriales();
     await window.cargarPresupuestosGuardados();
+    window.refrescarPresupuesto = async (id) => {
+  const presupuestoSnap = await getDocs(collection(db, 'presupuestos'));
+  const materialesSnap = await getDocs(collection(db, 'materiales'));
+
+  const preciosActuales = {};
+  materialesSnap.forEach(doc => {
+    const mat = doc.data();
+    preciosActuales[mat.nombre] = mat.precio / mat.fraccionamiento;
+  });
+
+  let presupuestoActual = null;
+  presupuestoSnap.forEach(doc => {
+    if (doc.id === id) presupuestoActual = { id: doc.id, ref: doc.ref, ...doc.data() };
+  });
+
+  if (!presupuestoActual) return alert('Presupuesto no encontrado.');
+
+  const nuevoTotal = presupuestoActual.items.reduce((acc, item) => {
+    const precio = preciosActuales[item.nombre] || item.precioPorUnidad;
+    return acc + precio * item.cantidad * item.multiplicadorTotal;
+  }, 0);
+
+  const totalAnterior = parseFloat(presupuestoActual.total);
+  if (Math.abs(nuevoTotal - totalAnterior) > 0.01) {
+    await updateDoc(presupuestoActual.ref, {
+      total: nuevoTotal.toFixed(2)
+    });
+
+    document.querySelector(`#presupuesto-${id} .monto`).textContent = formatearMoneda(nuevoTotal);
+    alert(`Presupuesto "${presupuestoActual.nombre}" actualizado con nuevo total.`);
+  } else {
+    alert('✅ El presupuesto ya está actualizado.');
+  }
+};
   </script>
 </body>
 </html>
