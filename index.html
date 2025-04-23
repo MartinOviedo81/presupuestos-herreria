@@ -327,33 +327,43 @@ document.querySelectorAll('input[name="orden"]').forEach(radio => {
   const contenedor = document.getElementById('presupuestos-guardados');
   const snap = await getDocs(collection(db, 'presupuestos'));
 
-  contenedor.innerHTML = `
-    <h2>Presupuestos guardados</h2>
-    <ul>
-      ${snap.docs.map(doc => {
-        const p = doc.data();
-        return `
-          <li class="item-presupuesto" id="presupuesto-${doc.id}">
-            <div class="datos-presu">
-              <span class="nombre">${p.nombre}</span>
-              <span class="fecha">${p.fecha}</span>
-              <span class="total">Total: $<span class="monto">${formatearMoneda(parseFloat(p.total))}</span></span>
-            </div>
-            <div class="menu-wrapper">
-              <button class="abrir-menu" data-id="${doc.id}">Opciones</button>
-              <div class="menu-acciones hidden" id="menu-${doc.id}">
-                <button onclick="consultarPresupuesto('${doc.id}')">Ver / Editar</button>
-                <button onclick="compartirPresupuesto('${doc.id}')">Enviar por WhatsApp</button>
-                <button onclick="eliminarPresupuesto('${doc.id}')">Eliminar</button>
-                <button onclick="refrescarPresupuesto('${doc.id}')">🔄 Refrescar</button>
-              </div>
-            </div>
-          </li>
-        `;
-      }).join('')}
-    </ul>
-  `;
+let docs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+docs.sort((a, b) => {
+  switch (ordenSeleccionado) {
+    case 'fecha-asc': return new Date(a.fecha) - new Date(b.fecha);
+    case 'fecha-desc': return new Date(b.fecha) - new Date(a.fecha);
+    case 'nombre-asc': return a.nombre.localeCompare(b.nombre);
+    case 'nombre-desc': return b.nombre.localeCompare(a.nombre);
+    case 'total-asc': return parseFloat(a.total) - parseFloat(b.total);
+    case 'total-desc': return parseFloat(b.total) - parseFloat(a.total);
+    default: return 0;
+  }
+});
+
+contenedor.innerHTML = `
+  <h2>Presupuestos guardados</h2>
+  <ul>
+    ${docs.map(p => `
+      <li class="item-presupuesto" id="presupuesto-${p.id}">
+        <div class="datos-presu">
+          <span class="nombre">${p.nombre}</span>
+          <span class="fecha">${p.fecha}</span>
+          <span class="total">Total: $<span class="monto">${formatearMoneda(parseFloat(p.total))}</span></span>
+        </div>
+        <div class="menu-wrapper">
+          <button class="abrir-menu" data-id="${p.id}">Opciones</button>
+          <div class="menu-acciones hidden" id="menu-${p.id}">
+            <button onclick="consultarPresupuesto('${p.id}')">Ver / Editar</button>
+            <button onclick="compartirPresupuesto('${p.id}')">Enviar por WhatsApp</button>
+            <button onclick="eliminarPresupuesto('${p.id}')">Eliminar</button>
+            <button onclick="refrescarPresupuesto('${p.id}')">🔄 Refrescar</button>
+          </div>
+        </div>
+      </li>
+    `).join('')}
+  </ul>
+`;
   setTimeout(() => {
     document.querySelectorAll('.abrir-menu').forEach(btn => {
       btn.addEventListener('click', (e) => {
