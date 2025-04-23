@@ -136,100 +136,102 @@ function formatearMoneda(valor) {
     maximumFractionDigits: 2
   });
 }
-    function renderSeleccion(mat) {
-      contenedorSeleccion.innerHTML = '';
+function renderSeleccion(mat) {
+  contenedorSeleccion.innerHTML = '';
 
-      const precioPorUnidad = mat.precio / mat.fraccionamiento;
+  const precioPorUnidad = mat.precio / mat.fraccionamiento;
 
-      const trabajosInputs = Object.entries(trabajos).map(([nombre, mult]) => `
-        <label>
-          <input type="checkbox" class="check-trabajo" data-nombre="${nombre}">
-          ${nombre} × ${mult}
-        </label>
-      `).join('<br>');
+  const trabajosInputs = Object.entries(trabajos).map(([nombre, mult]) => `
+    <label>
+      <input type="checkbox" class="check-trabajo" data-nombre="${nombre}">
+      ${nombre} × ${mult}
+    </label>
+  `).join('<br>');
 
-      const html = `
-        <div class="tarjeta-expandida">
-          <h3>${mat.nombre}</h3>
-         <p>Precio total: $${formatearMoneda(precioPorUnidad)} x unidad</p>
-          <p>${mat.descripcion || ''}</p>
-          <input type="text" id="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5..." />
-          <div class="trabajos-contenedor">
-           <div id="trabajos-menu" class="trabajos-menu-custom">
-  <button id="toggle-trabajos" class="boton-gris">🔧 Trabajos</button>
-  <div class="trabajos-lista hidden">${trabajosInputs}</div>
-</div
-            <span id="multiplicador-acumulado" class="label-multiplicador">× 0</span>
-          </div>
-          <button class="boton-verde" id="btn-agregar">Agregar</button>
+  const html = `
+    <div class="tarjeta-expandida">
+      <h3>${mat.nombre}</h3>
+      <p>Precio total: $${formatearMoneda(precioPorUnidad)} x unidad</p>
+      <p>${mat.descripcion || ''}</p>
+      <input type="text" id="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5..." />
+      <div class="trabajos-contenedor">
+        <div id="trabajos-menu" class="trabajos-menu-custom">
+          <button id="toggle-trabajos" class="boton-gris">🔧 Trabajos</button>
+          <div class="trabajos-lista hidden">${trabajosInputs}</div>
         </div>
-      `;
+        <span id="multiplicador-acumulado" class="label-multiplicador">× 0</span>
+      </div>
+      <button class="boton-verde" id="btn-agregar">Agregar</button>
+    </div>
+  `;
 
-      contenedorSeleccion.innerHTML = html;
+  contenedorSeleccion.innerHTML = html;
 
-      const menuDetalles = document.getElementById('trabajos-menu');
-      const labelMultiplicador = document.getElementById('multiplicador-acumulado');
-      const checkboxes = contenedorSeleccion.querySelectorAll('.check-trabajo');
-const toggleBtn = document.getElementById('toggle-trabajos');
-const trabajosLista = contenedorSeleccion.querySelector('.trabajos-lista');
+  setTimeout(() => {
+    const labelMultiplicador = document.getElementById('multiplicador-acumulado');
+    const checkboxes = contenedorSeleccion.querySelectorAll('.check-trabajo');
+    const toggleBtn = document.getElementById('toggle-trabajos');
+    const trabajosLista = contenedorSeleccion.querySelector('.trabajos-lista');
 
-toggleBtn.addEventListener('click', () => {
-  trabajosLista.classList.toggle('hidden');
-});
-     checkboxes.forEach((checkbox) => {
-  checkbox.addEventListener('change', () => {
-    let total = 0;
-    checkboxes.forEach((check) => {
-      if (check.checked) {
-        const nombre = check.dataset.nombre;
-        total += trabajos[nombre];
-      }
+    toggleBtn.addEventListener('click', () => {
+      trabajosLista.classList.toggle('hidden');
     });
-    labelMultiplicador.textContent = `× ${total.toFixed(2)}`;
-  });
-});
 
-      document.getElementById('btn-agregar').addEventListener('click', () => {
-        const texto = document.getElementById('input-detalle').value.trim();
-        if (!texto) return alert("Ingresá el detalle de uso.");
-        const cantidad = calcularTotalDesdeTexto(texto);
-        if (!cantidad || isNaN(cantidad)) return alert("No se pudo interpretar la cantidad.");
-
-        let multiplicadorTotal = 0;
-        let trabajosSeleccionados = [];
-
+    checkboxes.forEach((checkbox) => {
+      checkbox.addEventListener('change', () => {
+        let total = 0;
         checkboxes.forEach((check) => {
           if (check.checked) {
             const nombre = check.dataset.nombre;
-            const mult = trabajos[nombre];
-            multiplicadorTotal += mult;
-            trabajosSeleccionados.push(`${nombre} ×${mult}`);
+            total += trabajos[nombre];
           }
         });
-
-        if (multiplicadorTotal === 0) return alert("Seleccioná al menos un trabajo.");
-
-        const subtotal = precioPorUnidad * cantidad * multiplicadorTotal;
-
-        presupuesto.push({
-          nombre: mat.nombre,
-          unidad: mat.unidad,
-          cantidad,
-          precioPorUnidad,
-          trabajos: trabajosSeleccionados,
-          multiplicadorTotal,
-          subtotal
-        });
-
-        renderPresupuesto();
-
-        contenedorSeleccion.classList.add('fade-out');
-        setTimeout(() => {
-          contenedorSeleccion.innerHTML = '';
-          contenedorSeleccion.classList.remove('fade-out');
-        }, 700); // Match con el tiempo en CSS
+        labelMultiplicador.textContent = `× ${total.toFixed(2)}`;
       });
-    }
+    });
+
+    document.getElementById('btn-agregar').addEventListener('click', () => {
+      const texto = document.getElementById('input-detalle').value.trim();
+      if (!texto) return alert("Ingresá el detalle de uso.");
+      const cantidad = calcularTotalDesdeTexto(texto);
+      if (!cantidad || isNaN(cantidad)) return alert("No se pudo interpretar la cantidad.");
+
+      let multiplicadorTotal = 0;
+      let trabajosSeleccionados = [];
+
+      checkboxes.forEach((check) => {
+        if (check.checked) {
+          const nombre = check.dataset.nombre;
+          const mult = trabajos[nombre];
+          multiplicadorTotal += mult;
+          trabajosSeleccionados.push(`${nombre} ×${mult}`);
+        }
+      });
+
+      if (multiplicadorTotal === 0) return alert("Seleccioná al menos un trabajo.");
+
+      const subtotal = precioPorUnidad * cantidad * multiplicadorTotal;
+
+      presupuesto.push({
+        nombre: mat.nombre,
+        unidad: mat.unidad,
+        cantidad,
+        precioPorUnidad,
+        trabajos: trabajosSeleccionados,
+        multiplicadorTotal,
+        subtotal
+      });
+
+      renderPresupuesto();
+
+      contenedorSeleccion.classList.add('fade-out');
+      setTimeout(() => {
+        contenedorSeleccion.innerHTML = '';
+        contenedorSeleccion.classList.remove('fade-out');
+      }, 700);
+    });
+  }, 0);
+}
 
     function renderPresupuesto() {
       presupuestoUl.innerHTML = '';
