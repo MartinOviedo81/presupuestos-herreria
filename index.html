@@ -279,17 +279,20 @@ document.getElementById('input-detalle').addEventListener('focus', () => {
     };
 
     btnGuardar.addEventListener('click', async () => {
-     const fechaActual = new Date();
-const fecha = fechaActual.toLocaleDateString('es-AR'); // visible (23/4/2025)
-const fechaOrden = fechaActual.toISOString();          // orden interno
+  const nombre = nombrePresupuesto.value.trim(); // ✅ ahora está definida correctamente
+  if (!nombre) return alert('Poné un nombre al presupuesto.');
 
-const data = {
-  nombre,
-  fecha,
-  fechaOrden,
-  total: total.replace(/\./g, '').replace(',', '.'),
-  items: presupuesto
-};
+  const fechaActual = new Date();
+  const fecha = fechaActual.toLocaleDateString('es-AR');
+  const fechaOrden = fechaActual.toISOString();
+
+  const data = {
+    nombre,
+    fecha,
+    fechaOrden,
+    total: total.replace(/\./g, '').replace(',', '.'),
+    items: presupuesto
+  };
 
       if (presupuestoIdActual) {
         await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
