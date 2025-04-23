@@ -359,3 +359,8 @@ select:focus {
   color: #1e1e1e;
   font-weight: bold;
 }
+.detalle-precio-expandido {
+  font-size: 0.85rem;
+  color: #ccc;
+  margin-bottom: 0.5rem;
+}
