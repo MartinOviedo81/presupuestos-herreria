@@ -151,8 +151,12 @@ function renderSeleccion(mat) {
   const html = `
     <div class="tarjeta-expandida">
       <h3>${mat.nombre}</h3>
-      <p>Precio total del material: $${formatearMoneda(mat.precio)}</p>
-<p>Precio por unidad: $${formatearMoneda(precioPorUnidad)} x ${mat.unidad}</p>
+      <p>
+  $${formatearMoneda(mat.precio)} → 
+  $${formatearMoneda(precioPorUnidad)} x ${
+    mat.unidad === 'metro' ? 'mt' : mat.unidad === 'superficie' ? 'm²' : 'u'
+  }
+</p>
       <input type="text" id="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5..." />
       <div class="trabajos-contenedor">
         <div id="trabajos-menu" class="trabajos-menu-custom">
