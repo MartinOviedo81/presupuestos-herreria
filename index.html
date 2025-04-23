@@ -176,7 +176,9 @@ function renderSeleccion(mat) {
     toggleBtn.addEventListener('click', () => {
       trabajosLista.classList.toggle('hidden');
     });
-
+document.getElementById('input-detalle').addEventListener('focus', () => {
+  trabajosLista.classList.add('hidden');
+});
     checkboxes.forEach((checkbox) => {
       checkbox.addEventListener('change', () => {
         let total = 0;
