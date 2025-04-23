@@ -38,7 +38,17 @@
 
   <ul id="presupuesto"></ul>
   <p><strong>Total estimado: $<span id="total">0</span></strong></p>
-
+<div id="menu-orden" class="trabajos-menu-custom">
+  <button id="toggle-orden" class="boton-naranja">Ordenar por</button>
+  <div class="trabajos-lista hidden">
+    <label><input type="radio" name="orden" value="fecha-desc" checked> Fecha ↓</label>
+    <label><input type="radio" name="orden" value="fecha-asc"> Fecha ↑</label>
+    <label><input type="radio" name="orden" value="nombre-asc"> Nombre A-Z</label>
+    <label><input type="radio" name="orden" value="nombre-desc"> Nombre Z-A</label>
+    <label><input type="radio" name="orden" value="total-desc"> Total ↓</label>
+    <label><input type="radio" name="orden" value="total-asc"> Total ↑</label>
+  </div>
+</div>
   <div id="presupuestos-guardados"></div>
 
   <script type="module">
@@ -296,7 +306,23 @@ document.getElementById('input-detalle').addEventListener('focus', () => {
       presupuestoIdActual = null;
       cargarPresupuestosGuardados();
     });
+let ordenSeleccionado = 'fecha-desc';
 
+const toggleOrdenBtn = document.getElementById('toggle-orden');
+const listaOrden = document.querySelector('#menu-orden .trabajos-lista');
+
+toggleOrdenBtn.addEventListener('click', () => {
+  listaOrden.classList.toggle('hidden');
+});
+
+document.querySelectorAll('input[name="orden"]').forEach(radio => {
+  radio.addEventListener('change', (e) => {
+    ordenSeleccionado = e.target.value;
+    toggleOrdenBtn.textContent = `Orden: ${e.target.nextSibling.textContent.trim()}`;
+    window.cargarPresupuestosGuardados(); // vuelve a cargar aplicando el nuevo orden
+    listaOrden.classList.add('hidden');
+  });
+});
   window.cargarPresupuestosGuardados = async function () {
   const contenedor = document.getElementById('presupuestos-guardados');
   const snap = await getDocs(collection(db, 'presupuestos'));
