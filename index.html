@@ -279,17 +279,17 @@ document.getElementById('input-detalle').addEventListener('focus', () => {
     };
 
     btnGuardar.addEventListener('click', async () => {
-      const nombre = nombrePresupuesto.value.trim();
-      if (!nombre) return alert('Poné un nombre al presupuesto.');
-      const fecha = new Date().toLocaleString();
-      const total = totalSpan.textContent;
+     const fechaActual = new Date();
+const fecha = fechaActual.toLocaleDateString('es-AR'); // visible (23/4/2025)
+const fechaOrden = fechaActual.toISOString();          // orden interno
 
-      const data = {
-        nombre,
-        fecha,
-        total: total.replace(/\./g, '').replace(',', '.'),
-        items: presupuesto
-      };
+const data = {
+  nombre,
+  fecha,
+  fechaOrden,
+  total: total.replace(/\./g, '').replace(',', '.'),
+  items: presupuesto
+};
 
       if (presupuestoIdActual) {
         await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
@@ -331,8 +331,8 @@ let docs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
 docs.sort((a, b) => {
   switch (ordenSeleccionado) {
-    case 'fecha-asc': return new Date(a.fecha) - new Date(b.fecha);
-    case 'fecha-desc': return new Date(b.fecha) - new Date(a.fecha);
+   case 'fecha-asc': return new Date(a.fechaOrden) - new Date(b.fechaOrden);
+case 'fecha-desc': return new Date(b.fechaOrden) - new Date(a.fechaOrden);
     case 'nombre-asc': return a.nombre.localeCompare(b.nombre);
     case 'nombre-desc': return b.nombre.localeCompare(a.nombre);
     case 'total-asc': return parseFloat(a.total) - parseFloat(b.total);
