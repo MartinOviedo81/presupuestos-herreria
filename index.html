@@ -425,18 +425,18 @@ const materiales = [...new Set(p.items.map(item => item.nombre))];
 const totalRedondeado = redondearADecena(parseFloat(p.total));
 
 const mensaje = `
----------------------------------------------------------------
-🛠 ***Presupuesto: ${p.nombre}***
+--------------------------------------------------------------
+🛠 *Presupuesto: ${p.nombre}*
 _Fecha: ${p.fecha}_
 
-📋 ***Materiales:***
+📋 *Materiales:*
 ${materiales.map(m => `- _${m}_`).join('\n')}
 
-💰 ***Total:*** $${formatearMoneda(totalRedondeado)}
+💰 *Total:* *$${formatearMoneda(totalRedondeado)}*
 
 _Gracias por tu consulta!!_
-***Linda Herrería***
----------------------------------------------------------------
+*Linda Herrería*
+--------------------------------------------------------------
 `.trim();
 const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
   window.open(url, '_blank');
