@@ -421,10 +421,20 @@ window.compartirPresupuesto = async (id) => {
   });
   if (!p) return alert('Presupuesto no encontrado');
 
-  const materiales = [...new Set(p.items.map(item => item.nombre))].join(', ');
-  const totalRedondeado = redondearADecena(parseFloat(p.total));
-const mensaje = `Presupuesto: ${p.nombre}\nFecha: ${p.fecha}\n\nMateriales: ${materiales}\nTotal: $${formatearMoneda(totalRedondeado)}`;
+  const materiales = [...new Set(p.items.map(item => item.nombre))];
+const totalRedondeado = redondearADecena(parseFloat(p.total));
 
+const mensaje = `
+---------------------
+🛠 *Presupuesto: ${p.nombre}*
+📅 Fecha: ${p.fecha}
+
+📋 *Materiales:*
+${materiales.map(m => `- ${m}`).join('\n')}
+
+💰 *Total:* $${formatearMoneda(totalRedondeado)}
+---------------------
+`.trim();
   const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
   window.open(url, '_blank');
 };
