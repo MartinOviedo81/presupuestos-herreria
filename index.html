@@ -438,7 +438,9 @@ _Gracias por tu consulta!!_
 _Linda Herrería_
 
 `.trim();
-
+const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, '_blank');
+};
     await cargarTareas();
     await cargarMateriales();
     await window.cargarPresupuestosGuardados();
