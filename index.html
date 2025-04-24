@@ -425,15 +425,15 @@ window.compartirPresupuesto = async (id) => {
 const totalRedondeado = redondearADecena(parseFloat(p.total));
 
 const mensaje = `
----------------------
-🛠 *Presupuesto: ${p.nombre}*
-📅 Fecha: ${p.fecha}
+----------------------------------------
+*Presupuesto: ${p.nombre}*
+Fecha: ${p.fecha}
 
-📋 *Materiales:*
+*Materiales:*
 ${materiales.map(m => `- ${m}`).join('\n')}
 
 💰 *Total:* $${formatearMoneda(totalRedondeado)}
----------------------
+----------------------------------------
 `.trim();
   const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
   window.open(url, '_blank');
