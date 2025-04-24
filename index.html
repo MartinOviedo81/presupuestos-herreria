@@ -256,15 +256,14 @@ document.getElementById('input-detalle').addEventListener('focus', () => {
       presupuesto.forEach((item, i) => {
         const li = document.createElement('li');
         li.innerHTML = `
-          <div>
-            <strong>${item.nombre}</strong><br>
-            Cantidad: ${item.cantidad.toFixed(2)} × $${item.precioPorUnidad.toFixed(2)}/${item.unidad}<br>
-            Trabajos: ${item.trabajos.join(', ') || 'Ninguno'}<br>
-            Subtotal: $${formatearMoneda(item.subtotal)}
-
-          </div>
-          <button class="boton-rojo" onclick="eliminarItem(${i})">Eliminar</button>
-        `;
+  <div>
+    <span style="color: #f39c12; font-weight: bold;">${item.nombre}</span>,
+    ${item.cantidad.toFixed(2)} ${item.unidad === 'metro' ? 'mt' : item.unidad === 'superficie' ? 'm²' : 'ud.'},
+    <span style="color: #ccc;">$${formatearMoneda(item.precioPorUnidad)} x <strong>${item.multiplicadorTotal.toFixed(2)}</strong></span>,
+    <span style="color: #ccc;">Subtotal: <strong>$${formatearMoneda(item.subtotal)}</strong></span>
+  </div>
+  <button class="boton-rojo" onclick="eliminarItem(${i})">Eliminar</button>
+`;
         presupuestoUl.appendChild(li);
         total += item.subtotal;
       });
