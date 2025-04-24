@@ -141,11 +141,16 @@ tarjeta.innerHTML = `
       return total;
     }
 function formatearMoneda(valor) {
-  return valor.toLocaleString('es-AR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+  return Math.round(valor).toLocaleString('es-AR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   });
 }
+
+function redondearADecena(valor) {
+  return Math.round(valor / 100) * 100;
+}
+    
 function renderSeleccion(mat) {
   contenedorSeleccion.innerHTML = '';
 
@@ -268,8 +273,8 @@ document.getElementById('input-detalle').addEventListener('focus', () => {
         total += item.subtotal;
       });
 
-     totalSpan.textContent = formatearMoneda(total);
-
+     const totalRedondeado = redondearADecena(total);
+totalSpan.textContent = formatearMoneda(totalRedondeado);
     }
 
     window.eliminarItem = (i) => {
@@ -284,16 +289,17 @@ document.getElementById('input-detalle').addEventListener('focus', () => {
   const fechaActual = new Date();
   const fecha = fechaActual.toLocaleDateString('es-AR');
   const fechaOrden = fechaActual.toISOString();
-  const total = totalSpan.textContent; // ✅ esta es la línea clave
-      
-  const data = {
-    nombre,
-    fecha,
-    fechaOrden,
-    total: total.replace(/\./g, '').replace(',', '.'),
-    items: presupuesto
-  };
+  const totalTexto = totalSpan.textContent;
+const totalNum = parseFloat(totalTexto.replace(/\./g, '').replace(',', '.'));
+const totalRedondeado = redondearADecena(totalNum);
 
+const data = {
+  nombre,
+  fecha,
+  fechaOrden,
+  total: totalRedondeado.toFixed(0),
+  items: presupuesto
+};
       if (presupuestoIdActual) {
         await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
         alert(`Presupuesto "${nombre}" actualizado.`);
@@ -416,7 +422,9 @@ window.compartirPresupuesto = async (id) => {
   if (!p) return alert('Presupuesto no encontrado');
 
   const materiales = [...new Set(p.items.map(item => item.nombre))].join(', ');
-  const mensaje = `Presupuesto: ${p.nombre}\nFecha: ${p.fecha}\n\nMateriales: ${materiales}\nTotal: $${formatearMoneda(parseFloat(p.total))}`;
+  const totalRedondeado = redondearADecena(parseFloat(p.total));
+const mensaje = `Presupuesto: ${p.nombre}\nFecha: ${p.fecha}\n\nMateriales: ${materiales}\nTotal: $${formatearMoneda(totalRedondeado)}`;
+
   const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
   window.open(url, '_blank');
 };
