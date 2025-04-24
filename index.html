@@ -421,23 +421,23 @@ window.compartirPresupuesto = async (id) => {
   });
   if (!p) return alert('Presupuesto no encontrado');
 
-  const materiales = [...new Set(p.items.map(item => item.nombre))];
+const materiales = [...new Set(p.items.map(item => item.nombre))];
 const totalRedondeado = redondearADecena(parseFloat(p.total));
 
 const mensaje = `
-----------------------------------------
-*Presupuesto: ${p.nombre}*
-Fecha: ${p.fecha}
+---------------------
+🛠 *Presupuesto: ${p.nombre}*
+_Fecha: ${p.fecha}_
 
-*Materiales:*
-${materiales.map(m => `- ${m}`).join('\n')}
+📋 *Materiales:*
+${materiales.map(m => `- _${m}_`).join('\n')}
 
 💰 *Total:* $${formatearMoneda(totalRedondeado)}
-----------------------------------------
+
+_Gracias por tu consulta!!_
+_Linda Herrería_
+---------------------
 `.trim();
-  const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-  window.open(url, '_blank');
-};
 
     await cargarTareas();
     await cargarMateriales();
