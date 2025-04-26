@@ -9,11 +9,13 @@
 <body class="modo-oscuro">
   <h2>Linda Herrería</h2>
 
-  <div class="botones-nav">
-    <a href="cargar-materiales.html"><button class="boton-celeste">➕ Cargar nuevo material</button></a>
-    <a href="config-tareas.html"><button class="boton-verde">⚙️ Configurar tareas</button></a>
-  </div>
+ <!-- Menú Hamburguesa -->
+<div class="menu-hamburguesa" onclick="toggleMenu()">≡</div>
 
+<div class="opciones-menu hidden" id="menuOpciones">
+  <a href="cargar-materiales.html">➕ Cargar nuevo material</a>
+  <a href="config-tareas.html">⚙️ Configurar tareas</a>
+</div>
  
 <div id="menu-categorias" class="trabajos-menu-custom">
  <button id="toggle-categorias" class="boton-gris">
@@ -525,5 +527,11 @@ const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
 };
     lucide.createIcons();
   </script>
+  <script>
+function toggleMenu() {
+  const menu = document.getElementById('menuOpciones');
+  menu.classList.toggle('hidden');
+}
+</script>
 </body>
 </html>
