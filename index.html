@@ -13,8 +13,12 @@
 <div class="menu-hamburguesa" onclick="toggleMenu()">≡</div>
 
 <div class="opciones-menu hidden" id="menuOpciones">
-  <a href="cargar-materiales.html">➕ Cargar nuevo material</a>
-  <a href="config-tareas.html">⚙️ Configurar tareas</a>
+  <a href="cargar-materiales.html">
+    <i data-lucide="plus-circle"></i> Cargar nuevo material
+  </a>
+  <a href="config-tareas.html">
+    <i data-lucide="settings"></i> Configurar tareas
+  </a>
 </div>
  
 <div id="menu-categorias" class="trabajos-menu-custom">
@@ -531,6 +535,7 @@ const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
 function toggleMenu() {
   const menu = document.getElementById('menuOpciones');
   menu.classList.toggle('hidden');
+  lucide.createIcons(); // <<<<<< ACTIVAR ICONOS
 }
 
 // Cerrar menú si clickeás fuera
