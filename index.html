@@ -527,11 +527,22 @@ const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
 };
     lucide.createIcons();
   </script>
-  <script>
+<script>
 function toggleMenu() {
   const menu = document.getElementById('menuOpciones');
   menu.classList.toggle('hidden');
 }
+
+// Cerrar menú si clickeás fuera
+window.addEventListener('click', function(e) {
+  const menu = document.getElementById('menuOpciones');
+  const hamburguesa = document.querySelector('.menu-hamburguesa');
+  
+  // Si el clic no fue sobre el menú ni sobre el botón hamburguesa
+  if (!menu.contains(e.target) && !hamburguesa.contains(e.target)) {
+    menu.classList.add('hidden');
+  }
+});
 </script>
 </body>
 </html>
