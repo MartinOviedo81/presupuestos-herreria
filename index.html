@@ -16,7 +16,9 @@
 
  
 <div id="menu-categorias" class="trabajos-menu-custom">
-  <button id="toggle-categorias" class="boton-gris">Categorías</button>
+ <button id="toggle-categorias" class="boton-gris">
+  <i data-lucide="list"></i> Categorías
+</button>
   <div class="trabajos-lista hidden">
     <label><input type="radio" name="cat" value="todas" checked> Todas las categorías</label>
     <label><input type="radio" name="cat" value="caños estructurales"> Caños estructurales cuadrados</label>
@@ -51,8 +53,9 @@
   </div>
 </div>
   <div id="presupuestos-guardados"></div>
-
+<script src="https://unpkg.com/lucide@latest"></script>
   <script type="module">
+    lucide.createIcons();
     import { db } from './firebase-config.js';
     import {
       collection, getDocs, addDoc, deleteDoc, doc, updateDoc
@@ -484,6 +487,7 @@ const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
     alert('✅ El presupuesto ya está actualizado.');
   }
 };
+    lucide.createIcons();
   </script>
 </body>
 </html>
