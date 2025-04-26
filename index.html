@@ -86,7 +86,43 @@ toggleCategoriasBtn.addEventListener('click', () => {
 document.querySelectorAll('input[name="cat"]').forEach(radio => {
   radio.addEventListener('change', (e) => {
     categoriaSeleccionada = e.target.value;
-    toggleCategoriasBtn.textContent = `${categoriaSeleccionada.charAt(0).toUpperCase() + categoriaSeleccionada.slice(1)}`;
+
+    let icono = 'list'; // icono por defecto
+
+    switch (categoriaSeleccionada) {
+      case 'caños estructurales':
+        icono = 'square'; // caño cuadrado
+        break;
+      case 'caños estructurales redondos':
+        icono = 'circle'; // caño redondo
+        break;
+      case 'hierros cuadrados':
+        icono = 'align-justify'; // barras
+        break;
+      case 'hierros redondos':
+        icono = 'circle-dot'; // redondo
+        break;
+      case 'planchuelas':
+        icono = 'columns'; // chapas
+        break;
+      case 'hierros angulo':
+        icono = 'chevron-right'; // ángulo
+        break;
+      case 'laminas':
+        icono = 'layers'; // laminas
+        break;
+      case 'herrajes':
+        icono = 'wrench'; // herramientas
+        break;
+      case 'todas':
+        icono = 'list'; // lista general
+        break;
+    }
+
+    toggleCategoriasBtn.innerHTML = `<i data-lucide="${icono}"></i> ${categoriaSeleccionada.charAt(0).toUpperCase() + categoriaSeleccionada.slice(1)}`;
+
+    lucide.createIcons(); // 🔥 ¡recrear iconos cada vez que cambia!
+
     aplicarFiltros();
     listaCategorias.classList.add('hidden');
   });
