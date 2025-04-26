@@ -376,3 +376,40 @@ select:focus {
   width: 20px;
   height: 20px;
 }
+.menu-hamburguesa {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  font-size: 30px;
+  cursor: pointer;
+  z-index: 2000;
+  color: white;
+}
+
+.opciones-menu {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 60px;
+  left: 15px;
+  background-color: #333;
+  border: 1px solid #666;
+  border-radius: 8px;
+  padding: 10px;
+  z-index: 2000;
+}
+
+.opciones-menu.hidden {
+  display: none;
+}
+
+.opciones-menu a {
+  color: white;
+  text-decoration: none;
+  padding: 8px 0;
+  font-weight: bold;
+}
+
+.opciones-menu a:hover {
+  color: #00aced;
+}
