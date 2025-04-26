@@ -16,14 +16,15 @@
 
  
 <div id="menu-categorias" class="trabajos-menu-custom">
-  <button id="toggle-categorias" class="boton-naranja">Categorías</button>
+  <button id="toggle-categorias" class="boton-gris">Categorías</button>
   <div class="trabajos-lista hidden">
     <label><input type="radio" name="cat" value="todas" checked> Todas las categorías</label>
-    <label><input type="radio" name="cat" value="caños estructurales"> Caños estructurales</label>
+    <label><input type="radio" name="cat" value="caños estructurales"> Caños estructurales cuadrados</label>
+    <label><input type="radio" name="cat" value="caños estructurales redondos"> Caños estructurales redondos</label>
     <label><input type="radio" name="cat" value="hierros cuadrados"> Hierros cuadrados</label>
     <label><input type="radio" name="cat" value="hierros redondos"> Hierros redondos</label>
     <label><input type="radio" name="cat" value="planchuelas"> Planchuelas</label>
-    <label><input type="radio" name="cat" value="hierros angulo"> Hierros ángulo</label>
+    <label><input type="radio" name="cat" value="hierros angulo"> Angulo</label>
     <label><input type="radio" name="cat" value="laminas"> Láminas</label>
     <label><input type="radio" name="cat" value="herrajes"> Herrajes</label>
   </div>
@@ -82,7 +83,7 @@ toggleCategoriasBtn.addEventListener('click', () => {
 document.querySelectorAll('input[name="cat"]').forEach(radio => {
   radio.addEventListener('change', (e) => {
     categoriaSeleccionada = e.target.value;
-    toggleCategoriasBtn.textContent = `📂 ${categoriaSeleccionada.charAt(0).toUpperCase() + categoriaSeleccionada.slice(1)}`;
+    toggleCategoriasBtn.textContent = `${categoriaSeleccionada.charAt(0).toUpperCase() + categoriaSeleccionada.slice(1)}`;
     aplicarFiltros();
     listaCategorias.classList.add('hidden');
   });
@@ -120,7 +121,12 @@ function aplicarFiltros() {
        const precioUnidad = mat.precio / mat.fraccionamiento;
 tarjeta.innerHTML = `
   <strong>${mat.nombre}</strong>
-  <p>$${formatearMoneda(precioUnidad)} x ${mat.unidad}</p>
+  <p>
+    $${formatearMoneda(mat.precio)} → 
+    $${formatearMoneda(precioUnidad)} x ${
+      mat.unidad === 'metro' ? 'mt' : mat.unidad === 'superficie' ? 'm²' : 'ud'
+    }
+  </p>
 `;
         tarjeta.addEventListener('click', () => renderSeleccion(mat));
         carrusel.appendChild(tarjeta);
