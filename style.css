@@ -423,3 +423,46 @@ select:focus {
   width: 20px;
   height: 20px;
 }
+.mini-controls {
+  margin-bottom: 1rem;
+}
+
+.cantidad-controles {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.input-cantidad {
+  width: 50px;
+  text-align: center;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #2c2c2c;
+  color: white;
+}
+
+.btn-mini {
+  background-color: #3a3a3a;
+  border: none;
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-mini:hover {
+  background-color: #555;
+}
+
+.boton-eliminar {
+  background-color: #922b21; /* Rojo más oscuro */
+}
+
+.boton-eliminar:hover {
+  background-color: #c0392b;
+}
