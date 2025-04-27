@@ -120,19 +120,6 @@ btnConfirmar.addEventListener('click', () => {
   lucide.createIcons(); // <- esto es MUY importante para que se dibujen los íconos correctamente
 });
 
-  listaCantidades.innerHTML = seleccionados.map(id => {
-    const presupuesto = presupuestos.find(p => p.id === id);
-    return `
-      <li class="item-presupuesto">
-        <strong>${presupuesto.nombre}</strong> (${presupuesto.fecha})<br>
-        Cantidad: <input type="number" min="1" value="1" data-id="${id}" style="width: 80px;">
-      </li>
-    `;
-  }).join('');
-
-  contenedorCantidades.classList.remove('hidden');
-});
-
 btnGenerar.addEventListener('click', () => {
   seleccionadosConCantidad = [];
   listaCantidades.addEventListener('click', (e) => {
