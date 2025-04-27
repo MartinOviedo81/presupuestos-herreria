@@ -7,36 +7,46 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="modo-oscuro">
-  <h2>Lista de Materiales</h2>
 
-  <!-- Botón de ordenamiento de presupuestos -->
-  <div id="menu-orden" class="trabajos-menu-custom">
-    <button id="toggle-orden" class="boton-gris">Ordenar presupuestos</button>
-    <div class="trabajos-lista hidden">
-      <label><input type="radio" name="orden" value="nombre-asc" checked> Nombre A-Z</label>
-      <label><input type="radio" name="orden" value="nombre-desc"> Nombre Z-A</label>
-      <label><input type="radio" name="orden" value="fecha-asc"> Fecha ascendente</label>
-      <label><input type="radio" name="orden" value="fecha-desc"> Fecha descendente</label>
-    </div>
-  </div>
+<h2>Lista de Materiales</h2>
 
-  <div id="contenedor-presupuestos">
-    <h3>Seleccioná los presupuestos</h3>
-    <ul id="lista-presupuestos"></ul>
-    <button id="btn-generar" class="boton-verde">Generar lista de materiales</button>
+<!-- Botón de ordenamiento -->
+<div id="menu-orden" class="trabajos-menu-custom">
+  <button id="toggle-orden" class="boton-gris">Ordenar presupuestos</button>
+  <div class="trabajos-lista hidden">
+    <label><input type="radio" name="orden" value="nombre-asc" checked> Nombre A-Z</label>
+    <label><input type="radio" name="orden" value="nombre-desc"> Nombre Z-A</label>
+    <label><input type="radio" name="orden" value="fecha-asc"> Fecha ascendente</label>
+    <label><input type="radio" name="orden" value="fecha-desc"> Fecha descendente</label>
   </div>
+</div>
 
-  <div id="resultado" class="hidden">
-    <h3>Materiales necesarios</h3>
-    <div id="lista-materiales"></div>
-    <h3>Total: $<span id="total-materiales">0</span></h3>
-  </div>
+<div id="contenedor-presupuestos">
+  <h3>Seleccioná los presupuestos</h3>
+  <ul id="lista-presupuestos"></ul>
+  <button id="btn-confirmar" class="boton-celeste">Confirmar selección</button>
+</div>
+
+<div id="contenedor-cantidades" class="hidden">
+  <h3>Cantidades de presupuestos seleccionados</h3>
+  <ul id="lista-cantidades"></ul>
+  <button id="btn-generar" class="boton-verde">Generar lista de materiales</button>
+</div>
+
+<div id="resultado" class="hidden">
+  <h3>Materiales necesarios</h3>
+  <div id="lista-materiales"></div>
+  <h3>Total: $<span id="total-materiales">0</span></h3>
+</div>
 
 <script type="module">
 import { db } from './firebase-config.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const listaPresupuestos = document.getElementById('lista-presupuestos');
+const btnConfirmar = document.getElementById('btn-confirmar');
+const contenedorCantidades = document.getElementById('contenedor-cantidades');
+const listaCantidades = document.getElementById('lista-cantidades');
 const btnGenerar = document.getElementById('btn-generar');
 const listaMateriales = document.getElementById('lista-materiales');
 const resultado = document.getElementById('resultado');
@@ -47,6 +57,7 @@ const listaOrden = document.querySelector('#menu-orden .trabajos-lista');
 let presupuestos = [];
 let materiales = [];
 let ordenSeleccionado = 'nombre-asc';
+let seleccionadosConCantidad = [];
 
 async function cargarDatos() {
   const snapPresupuestos = await getDocs(collection(db, 'presupuestos'));
@@ -83,10 +94,42 @@ function renderPresupuestos() {
   `).join('');
 }
 
-function calcularMateriales(idsSeleccionados) {
+btnConfirmar.addEventListener('click', () => {
+  const seleccionados = Array.from(listaPresupuestos.querySelectorAll('input:checked')).map(input => input.value);
+  if (seleccionados.length === 0) {
+    alert('Seleccioná al menos un presupuesto.');
+    return;
+  }
+
+  listaCantidades.innerHTML = seleccionados.map(id => {
+    const presupuesto = presupuestos.find(p => p.id === id);
+    return `
+      <li class="item-presupuesto">
+        <strong>${presupuesto.nombre}</strong> (${presupuesto.fecha})<br>
+        Cantidad: <input type="number" min="1" value="1" data-id="${id}" style="width: 80px;">
+      </li>
+    `;
+  }).join('');
+
+  contenedorCantidades.classList.remove('hidden');
+});
+
+btnGenerar.addEventListener('click', () => {
+  seleccionadosConCantidad = [];
+
+  listaCantidades.querySelectorAll('input[type="number"]').forEach(input => {
+    const id = input.dataset.id;
+    const cantidad = parseInt(input.value) || 1;
+    seleccionadosConCantidad.push({ id, cantidad });
+  });
+
+  generarListaMateriales();
+});
+
+function generarListaMateriales() {
   const materialesNecesarios = {};
 
-  idsSeleccionados.forEach(id => {
+  seleccionadosConCantidad.forEach(({ id, cantidad }) => {
     const presupuesto = presupuestos.find(p => p.id === id);
     if (!presupuesto) return;
 
@@ -94,28 +137,17 @@ function calcularMateriales(idsSeleccionados) {
       if (!materialesNecesarios[item.nombre]) {
         materialesNecesarios[item.nombre] = 0;
       }
-      materialesNecesarios[item.nombre] += item.cantidad;
+      materialesNecesarios[item.nombre] += item.cantidad * cantidad;
     });
   });
 
-  return materialesNecesarios;
-}
-
-btnGenerar.addEventListener('click', () => {
-  const seleccionados = Array.from(listaPresupuestos.querySelectorAll('input:checked')).map(input => input.value);
-  if (seleccionados.length === 0) {
-    alert('Seleccioná al menos un presupuesto.');
-    return;
-  }
-
-  const materialesCalculados = calcularMateriales(seleccionados);
   const materialesAgrupados = {};
 
-  for (let nombre in materialesCalculados) {
+  for (let nombre in materialesNecesarios) {
     const mat = materiales.find(m => m.nombre === nombre);
     if (!mat) continue;
 
-    const cantidadNecesaria = materialesCalculados[nombre];
+    const cantidadNecesaria = materialesNecesarios[nombre];
     const unidadesCompradas = Math.ceil(cantidadNecesaria / mat.fraccionamiento);
     const subtotal = unidadesCompradas * mat.precio;
 
@@ -132,7 +164,7 @@ btnGenerar.addEventListener('click', () => {
   }
 
   mostrarMateriales(materialesAgrupados);
-});
+}
 
 function mostrarMateriales(agrupados) {
   listaMateriales.innerHTML = '';
@@ -171,8 +203,7 @@ function mostrarMateriales(agrupados) {
   resultado.classList.remove('hidden');
 }
 
-// Ordenamiento del menú desplegable
-
+// Botón de orden de presupuestos
 toggleOrdenBtn.addEventListener('click', () => {
   listaOrden.classList.toggle('hidden');
 });
@@ -188,5 +219,6 @@ listaOrden.querySelectorAll('input[name="orden"]').forEach(radio => {
 
 await cargarDatos();
 </script>
+
 </body>
 </html>
