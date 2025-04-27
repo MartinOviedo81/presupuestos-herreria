@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Materiales - Linda Herrería</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="modo-oscuro">
+  <h2>Lista de Materiales</h2>
+
+  <div id="contenedor-presupuestos">
+    <h3>Seleccioná los presupuestos</h3>
+    <ul id="lista-presupuestos"></ul>
+    <button id="btn-generar" class="boton-verde">Generar lista de materiales</button>
+  </div>
+
+  <div id="resultado" class="hidden">
+    <h3>Materiales necesarios</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="border-bottom: 1px solid #555; text-align: left;">Material</th>
+          <th style="border-bottom: 1px solid #555; text-align: right;">Cantidad</th>
+          <th style="border-bottom: 1px solid #555; text-align: right;">Precio Unitario</th>
+          <th style="border-bottom: 1px solid #555; text-align: right;">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-materiales"></tbody>
+    </table>
+    <h3>Total: $<span id="total-materiales">0</span></h3>
+  </div>
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const listaPresupuestos = document.getElementById('lista-presupuestos');
+    const btnGenerar = document.getElementById('btn-generar');
+    const tablaMateriales = document.getElementById('tabla-materiales');
+    const resultado = document.getElementById('resultado');
+    const totalMateriales = document.getElementById('total-materiales');
+
+    let presupuestos = [];
+    let materiales = [];
+
+    async function cargarDatos() {
+      const snapPresupuestos = await getDocs(collection(db, 'presupuestos'));
+      const snapMateriales = await getDocs(collection(db, 'materiales'));
+
+      presupuestos = snapPresupuestos.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      materiales = snapMateriales.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      listaPresupuestos.innerHTML = presupuestos.map(p => `
+        <li>
+          <label>
+            <input type="checkbox" value="${p.id}">
+            ${p.nombre} (${p.fecha})
+          </label>
+        </li>
+      `).join('');
+    }
+
+    function formatearMoneda(valor) {
+      return Math.round(valor).toLocaleString('es-AR');
+    }
+
+    function calcularMateriales(idsSeleccionados) {
+      const materialesNecesarios = {};
+
+      idsSeleccionados.forEach(id => {
+        const presupuesto = presupuestos.find(p => p.id === id);
+        if (!presupuesto) return;
+
+        presupuesto.items.forEach(item => {
+          if (!materialesNecesarios[item.nombre]) {
+            materialesNecesarios[item.nombre] = 0;
+          }
+          materialesNecesarios[item.nombre] += item.cantidad;
+        });
+      });
+
+      return materialesNecesarios;
+    }
+
+    btnGenerar.addEventListener('click', () => {
+      const seleccionados = Array.from(listaPresupuestos.querySelectorAll('input:checked')).map(input => input.value);
+      if (seleccionados.length === 0) {
+        alert('Seleccioná al menos un presupuesto.');
+        return;
+      }
+
+      const materialesCalculados = calcularMateriales(seleccionados);
+      tablaMateriales.innerHTML = '';
+
+      let totalGeneral = 0;
+
+      for (let nombre in materialesCalculados) {
+        const mat = materiales.find(m => m.nombre === nombre);
+        if (!mat) continue;
+
+        const cantidadNecesaria = materialesCalculados[nombre];
+        const unidadesCompradas = Math.ceil(cantidadNecesaria / mat.fraccionamiento);
+        const precioUnitario = mat.precio;
+        const subtotal = unidadesCompradas * precioUnitario;
+
+        totalGeneral += subtotal;
+
+        const row = `
+          <tr>
+            <td>${nombre}</td>
+            <td style="text-align: right;">${unidadesCompradas}</td>
+            <td style="text-align: right;">$${formatearMoneda(precioUnitario)}</td>
+            <td style="text-align: right;">$${formatearMoneda(subtotal)}</td>
+          </tr>
+        `;
+
+        tablaMateriales.innerHTML += row;
+      }
+
+      totalMateriales.textContent = formatearMoneda(totalGeneral);
+      resultado.classList.remove('hidden');
+    });
+
+    cargarDatos();
+  </script>
+</body>
+</html>
