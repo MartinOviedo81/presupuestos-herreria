@@ -104,6 +104,25 @@ btnConfirmar.addEventListener('click', () => {
   listaCantidades.innerHTML = seleccionados.map(id => {
     const presupuesto = presupuestos.find(p => p.id === id);
     return `
+      <li class="item-presupuesto mini-controls" data-id="${id}">
+        <strong>${presupuesto.nombre}</strong> (${presupuesto.fecha})<br>
+        <div class="cantidad-controles">
+          <button class="btn-mini boton-disminuir" data-id="${id}"><i data-lucide="square-minus"></i></button>
+          <input type="number" min="1" value="1" class="input-cantidad" data-id="${id}">
+          <button class="btn-mini boton-aumentar" data-id="${id}"><i data-lucide="square-plus"></i></button>
+          <button class="btn-mini boton-eliminar" data-id="${id}"><i data-lucide="trash-2"></i></button>
+        </div>
+      </li>
+    `;
+  }).join('');
+
+  contenedorCantidades.classList.remove('hidden');
+  lucide.createIcons(); // <- esto es MUY importante para que se dibujen los íconos correctamente
+});
+
+  listaCantidades.innerHTML = seleccionados.map(id => {
+    const presupuesto = presupuestos.find(p => p.id === id);
+    return `
       <li class="item-presupuesto">
         <strong>${presupuesto.nombre}</strong> (${presupuesto.fecha})<br>
         Cantidad: <input type="number" min="1" value="1" data-id="${id}" style="width: 80px;">
@@ -116,6 +135,26 @@ btnConfirmar.addEventListener('click', () => {
 
 btnGenerar.addEventListener('click', () => {
   seleccionadosConCantidad = [];
+  listaCantidades.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+
+  const id = btn.dataset.id;
+  const input = listaCantidades.querySelector(`input[data-id="${id}"]`);
+  if (!input) return;
+
+  if (btn.classList.contains('boton-aumentar')) {
+    input.value = parseInt(input.value) + 1;
+  } else if (btn.classList.contains('boton-disminuir')) {
+    if (parseInt(input.value) > 1) {
+      input.value = parseInt(input.value) - 1;
+    }
+  } else if (btn.classList.contains('boton-eliminar')) {
+    if (confirm('¿Seguro que querés eliminar este presupuesto de la selección?')) {
+      btn.closest('li').remove();
+    }
+  }
+});
 
   listaCantidades.querySelectorAll('input[type="number"]').forEach(input => {
     const id = input.dataset.id;
