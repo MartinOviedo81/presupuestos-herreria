@@ -9,6 +9,17 @@
 <body class="modo-oscuro">
   <h2>Lista de Materiales</h2>
 
+  <!-- Botón de ordenamiento de presupuestos -->
+  <div id="menu-orden" class="trabajos-menu-custom">
+    <button id="toggle-orden" class="boton-gris">Ordenar presupuestos</button>
+    <div class="trabajos-lista hidden">
+      <label><input type="radio" name="orden" value="nombre-asc" checked> Nombre A-Z</label>
+      <label><input type="radio" name="orden" value="nombre-desc"> Nombre Z-A</label>
+      <label><input type="radio" name="orden" value="fecha-asc"> Fecha ascendente</label>
+      <label><input type="radio" name="orden" value="fecha-desc"> Fecha descendente</label>
+    </div>
+  </div>
+
   <div id="contenedor-presupuestos">
     <h3>Seleccioná los presupuestos</h3>
     <ul id="lista-presupuestos"></ul>
@@ -17,112 +28,165 @@
 
   <div id="resultado" class="hidden">
     <h3>Materiales necesarios</h3>
-    <table style="width: 100%; border-collapse: collapse;">
-      <thead>
-        <tr>
-          <th style="border-bottom: 1px solid #555; text-align: left;">Material</th>
-          <th style="border-bottom: 1px solid #555; text-align: right;">Cantidad</th>
-          <th style="border-bottom: 1px solid #555; text-align: right;">Precio Unitario</th>
-          <th style="border-bottom: 1px solid #555; text-align: right;">Subtotal</th>
-        </tr>
-      </thead>
-      <tbody id="tabla-materiales"></tbody>
-    </table>
+    <div id="lista-materiales"></div>
     <h3>Total: $<span id="total-materiales">0</span></h3>
   </div>
 
-  <script type="module">
-    import { db } from './firebase-config.js';
-    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+<script type="module">
+import { db } from './firebase-config.js';
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    const listaPresupuestos = document.getElementById('lista-presupuestos');
-    const btnGenerar = document.getElementById('btn-generar');
-    const tablaMateriales = document.getElementById('tabla-materiales');
-    const resultado = document.getElementById('resultado');
-    const totalMateriales = document.getElementById('total-materiales');
+const listaPresupuestos = document.getElementById('lista-presupuestos');
+const btnGenerar = document.getElementById('btn-generar');
+const listaMateriales = document.getElementById('lista-materiales');
+const resultado = document.getElementById('resultado');
+const totalMateriales = document.getElementById('total-materiales');
+const toggleOrdenBtn = document.getElementById('toggle-orden');
+const listaOrden = document.querySelector('#menu-orden .trabajos-lista');
 
-    let presupuestos = [];
-    let materiales = [];
+let presupuestos = [];
+let materiales = [];
+let ordenSeleccionado = 'nombre-asc';
 
-    async function cargarDatos() {
-      const snapPresupuestos = await getDocs(collection(db, 'presupuestos'));
-      const snapMateriales = await getDocs(collection(db, 'materiales'));
+async function cargarDatos() {
+  const snapPresupuestos = await getDocs(collection(db, 'presupuestos'));
+  const snapMateriales = await getDocs(collection(db, 'materiales'));
 
-      presupuestos = snapPresupuestos.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      materiales = snapMateriales.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  presupuestos = snapPresupuestos.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  materiales = snapMateriales.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-      listaPresupuestos.innerHTML = presupuestos.map(p => `
-        <li>
-          <label>
-            <input type="checkbox" value="${p.id}">
-            ${p.nombre} (${p.fecha})
-          </label>
-        </li>
-      `).join('');
-    }
+  renderPresupuestos();
+}
 
-    function formatearMoneda(valor) {
-      return Math.round(valor).toLocaleString('es-AR');
-    }
+function formatearMoneda(valor) {
+  return Math.round(valor).toLocaleString('es-AR');
+}
 
-    function calcularMateriales(idsSeleccionados) {
-      const materialesNecesarios = {};
+function renderPresupuestos() {
+  let lista = [...presupuestos];
 
-      idsSeleccionados.forEach(id => {
-        const presupuesto = presupuestos.find(p => p.id === id);
-        if (!presupuesto) return;
+  lista.sort((a, b) => {
+    if (ordenSeleccionado === 'nombre-asc') return a.nombre.localeCompare(b.nombre);
+    if (ordenSeleccionado === 'nombre-desc') return b.nombre.localeCompare(a.nombre);
+    if (ordenSeleccionado === 'fecha-asc') return new Date(a.fechaOrden) - new Date(b.fechaOrden);
+    if (ordenSeleccionado === 'fecha-desc') return new Date(b.fechaOrden) - new Date(a.fechaOrden);
+    return 0;
+  });
 
-        presupuesto.items.forEach(item => {
-          if (!materialesNecesarios[item.nombre]) {
-            materialesNecesarios[item.nombre] = 0;
-          }
-          materialesNecesarios[item.nombre] += item.cantidad;
-        });
-      });
+  listaPresupuestos.innerHTML = lista.map(p => `
+    <li>
+      <label>
+        <input type="checkbox" value="${p.id}">
+        ${p.nombre} (${p.fecha})
+      </label>
+    </li>
+  `).join('');
+}
 
-      return materialesNecesarios;
-    }
+function calcularMateriales(idsSeleccionados) {
+  const materialesNecesarios = {};
 
-    btnGenerar.addEventListener('click', () => {
-      const seleccionados = Array.from(listaPresupuestos.querySelectorAll('input:checked')).map(input => input.value);
-      if (seleccionados.length === 0) {
-        alert('Seleccioná al menos un presupuesto.');
-        return;
+  idsSeleccionados.forEach(id => {
+    const presupuesto = presupuestos.find(p => p.id === id);
+    if (!presupuesto) return;
+
+    presupuesto.items.forEach(item => {
+      if (!materialesNecesarios[item.nombre]) {
+        materialesNecesarios[item.nombre] = 0;
       }
-
-      const materialesCalculados = calcularMateriales(seleccionados);
-      tablaMateriales.innerHTML = '';
-
-      let totalGeneral = 0;
-
-      for (let nombre in materialesCalculados) {
-        const mat = materiales.find(m => m.nombre === nombre);
-        if (!mat) continue;
-
-        const cantidadNecesaria = materialesCalculados[nombre];
-        const unidadesCompradas = Math.ceil(cantidadNecesaria / mat.fraccionamiento);
-        const precioUnitario = mat.precio;
-        const subtotal = unidadesCompradas * precioUnitario;
-
-        totalGeneral += subtotal;
-
-        const row = `
-          <tr>
-            <td>${nombre}</td>
-            <td style="text-align: right;">${unidadesCompradas}</td>
-            <td style="text-align: right;">$${formatearMoneda(precioUnitario)}</td>
-            <td style="text-align: right;">$${formatearMoneda(subtotal)}</td>
-          </tr>
-        `;
-
-        tablaMateriales.innerHTML += row;
-      }
-
-      totalMateriales.textContent = formatearMoneda(totalGeneral);
-      resultado.classList.remove('hidden');
+      materialesNecesarios[item.nombre] += item.cantidad;
     });
+  });
 
-    cargarDatos();
-  </script>
+  return materialesNecesarios;
+}
+
+btnGenerar.addEventListener('click', () => {
+  const seleccionados = Array.from(listaPresupuestos.querySelectorAll('input:checked')).map(input => input.value);
+  if (seleccionados.length === 0) {
+    alert('Seleccioná al menos un presupuesto.');
+    return;
+  }
+
+  const materialesCalculados = calcularMateriales(seleccionados);
+  const materialesAgrupados = {};
+
+  for (let nombre in materialesCalculados) {
+    const mat = materiales.find(m => m.nombre === nombre);
+    if (!mat) continue;
+
+    const cantidadNecesaria = materialesCalculados[nombre];
+    const unidadesCompradas = Math.ceil(cantidadNecesaria / mat.fraccionamiento);
+    const subtotal = unidadesCompradas * mat.precio;
+
+    if (!materialesAgrupados[mat.categoria]) materialesAgrupados[mat.categoria] = [];
+
+    materialesAgrupados[mat.categoria].push({
+      nombre: mat.nombre,
+      unidad: mat.unidad,
+      metrosNecesarios: cantidadNecesaria,
+      unidades: unidadesCompradas,
+      precio: mat.precio,
+      subtotal
+    });
+  }
+
+  mostrarMateriales(materialesAgrupados);
+});
+
+function mostrarMateriales(agrupados) {
+  listaMateriales.innerHTML = '';
+  let total = 0;
+
+  const ordenCategorias = [
+    'caños estructurales',
+    'hierros cuadrados',
+    'hierros redondos',
+    'planchuelas',
+    'hierros angulo',
+    'laminas',
+    'herrajes'
+  ];
+
+  ordenCategorias.forEach(cat => {
+    if (agrupados[cat]) {
+      listaMateriales.innerHTML += `<h3 style="color: #f39c12; margin-top: 1rem;">${cat.charAt(0).toUpperCase() + cat.slice(1)}</h3>`;
+      const materialesCat = agrupados[cat].sort((a, b) => a.precio - b.precio);
+
+      materialesCat.forEach(m => {
+        listaMateriales.innerHTML += `
+          <div class="item-presupuesto">
+            <strong>${m.nombre}</strong><br>
+            ${m.unidades} unidad${m.unidades > 1 ? 'es' : ''} (${m.metrosNecesarios.toFixed(2)} ${m.unidad === 'metro' ? 'mt' : m.unidad === 'superficie' ? 'm²' : 'ud'})<br>
+            Precio unitario: $${formatearMoneda(m.precio)}<br>
+            Subtotal: <strong>$${formatearMoneda(m.subtotal)}</strong>
+          </div>
+        `;
+        total += m.subtotal;
+      });
+    }
+  });
+
+  totalMateriales.textContent = formatearMoneda(total);
+  resultado.classList.remove('hidden');
+}
+
+// Ordenamiento del menú desplegable
+
+toggleOrdenBtn.addEventListener('click', () => {
+  listaOrden.classList.toggle('hidden');
+});
+
+listaOrden.querySelectorAll('input[name="orden"]').forEach(radio => {
+  radio.addEventListener('change', (e) => {
+    ordenSeleccionado = e.target.value;
+    toggleOrdenBtn.textContent = `Ordenar: ${e.target.nextSibling.textContent.trim()}`;
+    renderPresupuestos();
+    listaOrden.classList.add('hidden');
+  });
+});
+
+await cargarDatos();
+</script>
 </body>
 </html>
