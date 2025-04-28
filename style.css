@@ -448,11 +448,14 @@ select:focus {
   background-color: #3a3a3a;
   border: none;
   border-radius: 6px;
-  padding: 6px;
+  padding: 8px; /* Antes era 6px, lo agrandamos */
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  font-size: 1.1rem; /* Opcional: para agrandar más el icono */
 }
 
 .btn-mini:hover {
@@ -460,7 +463,7 @@ select:focus {
 }
 
 .boton-eliminar {
-  background-color: #922b21; /* Rojo más oscuro */
+  background-color: #922b21;
 }
 
 .boton-eliminar:hover {
