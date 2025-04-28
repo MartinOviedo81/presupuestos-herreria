@@ -455,23 +455,16 @@ select:focus {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1.1rem;
 }
 
-.btn-mini:hover {
-  background-color: #555;
-}
-
-/* 🎯 Para los íconos Lucide dentro del botón mini */
 .btn-mini i svg {
-  stroke: #ccc; /* Gris clarito */
+  stroke: #ccc !important; /* Fuerza ícono gris clarito */
 }
 
 .btn-mini:hover i svg {
-  stroke: white; /* Blanco al pasar el mouse */
+  stroke: white !important; /* Al pasar el mouse, blanco */
 }
 
-/* 🔥 Botón eliminar especial */
 .boton-eliminar {
   background-color: #922b21;
 }
@@ -480,9 +473,8 @@ select:focus {
   background-color: #c0392b;
 }
 
-/* 🔧 Input de cantidad más corto */
 .input-cantidad {
-  width: 40px; /* Más corto */
+  width: 40px;
   text-align: center;
   padding: 6px;
   border-radius: 6px;
