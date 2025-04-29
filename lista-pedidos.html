@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Pedidos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="modo-oscuro">
+
+<h2>Lista de Pedidos</h2>
+
+<div class="menu-hamburguesa" onclick="toggleMenu()">≡</div>
+<div class="opciones-menu hidden" id="menuOpciones">
+  <a href="index.html">
+    <i data-lucide="home"></i> Inicio
+  </a>
+</div>
+
+<hr>
+<h3>Nuevo Pedido</h3>
+<input type="text" id="cliente" placeholder="Nombre del cliente">
+<textarea id="descripcion" placeholder="Descripción del pedido"></textarea>
+<select id="estado">
+  <option value="En espera">En espera</option>
+  <option value="Presupuestado">Presupuestado</option>
+  <option value="Confirmado">Confirmado</option>
+  <option value="Finalizado">Finalizado</option>
+</select>
+<button id="btn-guardar" class="boton-verde">Guardar Pedido</button>
+
+<hr>
+<h3>Pedidos Guardados</h3>
+<div id="menu-orden" class="trabajos-menu-custom">
+  <button id="toggle-orden" class="boton-gris">Ordenar por</button>
+  <div class="trabajos-lista hidden">
+    <label><input type="radio" name="orden" value="fecha-desc" checked> Fecha ↓</label>
+    <label><input type="radio" name="orden" value="fecha-asc"> Fecha ↑</label>
+    <label><input type="radio" name="orden" value="cliente-asc"> Cliente A-Z</label>
+    <label><input type="radio" name="orden" value="cliente-desc"> Cliente Z-A</label>
+    <label><input type="radio" name="orden" value="estado"> Estado</label>
+  </div>
+</div>
+<div id="lista-pedidos"></div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script type="module">
+import { db } from './firebase-config.js';
+import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+lucide.createIcons();
+
+const btnGuardar = document.getElementById('btn-guardar');
+const listaPedidos = document.getElementById('lista-pedidos');
+let ordenSeleccionado = 'fecha-desc';
+
+btnGuardar.addEventListener('click', async () => {
+  const cliente = document.getElementById('cliente').value.trim();
+  const descripcion = document.getElementById('descripcion').value.trim();
+  const estado = document.getElementById('estado').value;
+  
+  if (!cliente || !descripcion) return alert('Completa todos los campos.');
+
+  const fechaActual = new Date();
+  const fecha = fechaActual.toLocaleDateString('es-AR');
+  const fechaOrden = fechaActual.toISOString();
+
+  await addDoc(collection(db, 'pedidos'), { cliente, descripcion, estado, fecha, fechaOrden });
+
+  document.getElementById('cliente').value = '';
+  document.getElementById('descripcion').value = '';
+  document.getElementById('estado').value = 'En espera';
+
+  cargarPedidos();
+});
+
+async function cargarPedidos() {
+  const snap = await getDocs(collection(db, 'pedidos'));
+  let pedidos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+  pedidos.sort((a, b) => {
+    switch (ordenSeleccionado) {
+      case 'fecha-asc': return new Date(a.fechaOrden) - new Date(b.fechaOrden);
+      case 'fecha-desc': return new Date(b.fechaOrden) - new Date(a.fechaOrden);
+      case 'cliente-asc': return a.cliente.localeCompare(b.cliente);
+      case 'cliente-desc': return b.cliente.localeCompare(a.cliente);
+      case 'estado': return a.estado.localeCompare(b.estado);
+      default: return 0;
+    }
+  });
+
+  listaPedidos.innerHTML = pedidos.map(p => `
+    <div class="item-presupuesto">
+      <div><strong>${p.cliente}</strong> - ${p.fecha}</div>
+      <div>${p.descripcion}</div>
+      <div>Estado: <strong>${p.estado}</strong></div>
+      <div class="menu-wrapper">
+        <button class="abrir-menu" data-id="${p.id}">Opciones</button>
+        <div class="menu-acciones hidden" id="menu-${p.id}">
+          <button onclick="editarPedido('${p.id}')">Editar</button>
+          <button onclick="cambiarEstado('${p.id}')">Cambiar estado</button>
+          <button onclick="eliminarPedido('${p.id}')">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  setTimeout(() => {
+    document.querySelectorAll('.abrir-menu').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const menu = document.getElementById(`menu-${id}`);
+        document.querySelectorAll('.menu-acciones').forEach(m => m.classList.add('hidden'));
+        menu.classList.toggle('hidden');
+      });
+    });
+  }, 0);
+}
+
+window.editarPedido = async (id) => {
+  const cliente = prompt('Nuevo nombre del cliente:');
+  const descripcion = prompt('Nueva descripción del pedido:');
+  if (cliente && descripcion) {
+    await updateDoc(doc(db, 'pedidos', id), { cliente, descripcion });
+    cargarPedidos();
+  }
+};
+
+window.cambiarEstado = async (id) => {
+  const nuevoEstado = prompt('Nuevo estado (En espera, Presupuestado, Confirmado, Finalizado):');
+  if (nuevoEstado) {
+    await updateDoc(doc(db, 'pedidos', id), { estado: nuevoEstado });
+    cargarPedidos();
+  }
+};
+
+window.eliminarPedido = async (id) => {
+  if (confirm('¿Seguro que deseas eliminar este pedido?')) {
+    await deleteDoc(doc(db, 'pedidos', id));
+    cargarPedidos();
+  }
+};
+
+// Ordenar pedidos
+const toggleOrdenBtn = document.getElementById('toggle-orden');
+const listaOrden = document.querySelector('#menu-orden .trabajos-lista');
+
+toggleOrdenBtn.addEventListener('click', () => {
+  listaOrden.classList.toggle('hidden');
+});
+
+document.querySelectorAll('input[name="orden"]').forEach(radio => {
+  radio.addEventListener('change', (e) => {
+    ordenSeleccionado = e.target.value;
+    toggleOrdenBtn.textContent = `Orden: ${e.target.nextSibling.textContent.trim()}`;
+    cargarPedidos();
+    listaOrden.classList.add('hidden');
+  });
+});
+
+cargarPedidos();
+
+</script>
+<script>
+function toggleMenu() {
+  const menu = document.getElementById('menuOpciones');
+  menu.classList.toggle('hidden');
+  lucide.createIcons();
+}
+window.addEventListener('click', function(e) {
+  const menu = document.getElementById('menuOpciones');
+  const hamburguesa = document.querySelector('.menu-hamburguesa');
+  if (!menu.contains(e.target) && !hamburguesa.contains(e.target)) {
+    menu.classList.add('hidden');
+  }
+});
+</script>
+
+</body>
+</html>
