@@ -5,6 +5,12 @@
   <title>Lista de Pedidos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .estado-espera { background-color: #f1c40f; color: #000; font-weight: bold; }
+    .estado-presupuestado { background-color: #3498db; color: #fff; font-weight: bold; }
+    .estado-confirmado { background-color: #2ecc71; color: #fff; font-weight: bold; }
+    .estado-finalizado { background-color: #95a5a6; color: #000; font-weight: bold; }
+  </style>
 </head>
 <body class="modo-oscuro">
 
@@ -102,7 +108,7 @@ async function cargarPedidos() {
       <div>${p.cliente}</div>
       <input type="text" id="descripcion-${p.id}" value="${p.descripcion}" style="width: 100%;">
       <div>${p.fecha}</div>
-      <select id="estado-${p.id}" style="width: 100%;">
+      <select id="estado-${p.id}" style="width: 100%;" onchange="actualizarColor('${p.id}')">
         <option ${p.estado === 'En espera' ? 'selected' : ''}>En espera</option>
         <option ${p.estado === 'Presupuestado' ? 'selected' : ''}>Presupuestado</option>
         <option ${p.estado === 'Confirmado' ? 'selected' : ''}>Confirmado</option>
@@ -112,6 +118,8 @@ async function cargarPedidos() {
     </div>
     `).join('')}
   `;
+
+  pedidos.forEach(p => actualizarColor(p.id));
 }
 
 window.guardarCambios = async (id) => {
@@ -120,6 +128,17 @@ window.guardarCambios = async (id) => {
 
   await updateDoc(doc(db, 'pedidos', id), { descripcion, estado });
   cargarPedidos();
+};
+
+window.actualizarColor = (id) => {
+  const select = document.getElementById(`estado-${id}`);
+  select.classList.remove('estado-espera', 'estado-presupuestado', 'estado-confirmado', 'estado-finalizado');
+  switch (select.value) {
+    case 'En espera': select.classList.add('estado-espera'); break;
+    case 'Presupuestado': select.classList.add('estado-presupuestado'); break;
+    case 'Confirmado': select.classList.add('estado-confirmado'); break;
+    case 'Finalizado': select.classList.add('estado-finalizado'); break;
+  }
 };
 
 const toggleOrdenBtn = document.getElementById('toggle-orden');
@@ -158,4 +177,3 @@ window.addEventListener('click', function(e) {
 
 </body>
 </html>
-
