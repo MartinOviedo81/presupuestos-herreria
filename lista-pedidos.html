@@ -89,42 +89,37 @@ async function cargarPedidos() {
     }
   });
 
-  listaPedidos.innerHTML = pedidos.map(p => `
-    <div class="item-presupuesto" id="pedido-${p.id}">
-      <div class="fade-in">
-        <input type="text" value="${p.cliente}" id="cliente-${p.id}" class="input-cantidad">
-        <textarea id="descripcion-${p.id}">${p.descripcion}</textarea>
-        <select id="estado-${p.id}">
-          <option ${p.estado === 'En espera' ? 'selected' : ''}>En espera</option>
-          <option ${p.estado === 'Presupuestado' ? 'selected' : ''}>Presupuestado</option>
-          <option ${p.estado === 'Confirmado' ? 'selected' : ''}>Confirmado</option>
-          <option ${p.estado === 'Finalizado' ? 'selected' : ''}>Finalizado</option>
-        </select>
-        <div class="trabajos-menu-custom">
-          <button class="boton-verde" onclick="guardarCambios('${p.id}')">Guardar cambios</button>
-          <button class="boton-rojo" onclick="eliminarPedido('${p.id}')">Eliminar</button>
-        </div>
-      </div>
+  listaPedidos.innerHTML = `
+    <div style="display: grid; grid-template-columns: 1fr 2fr 1fr 1fr 0.5fr; gap: 10px; margin-bottom: 10px;">
+      <strong>Cliente</strong>
+      <strong>Descripción</strong>
+      <strong>Fecha</strong>
+      <strong>Estado</strong>
+      <strong>Guardar</strong>
     </div>
-  `).join('');
+    ${pedidos.map(p => `
+    <div style="display: grid; grid-template-columns: 1fr 2fr 1fr 1fr 0.5fr; gap: 10px; align-items: center; margin-bottom: 8px;">
+      <div>${p.cliente}</div>
+      <input type="text" id="descripcion-${p.id}" value="${p.descripcion}" style="width: 100%;">
+      <div>${p.fecha}</div>
+      <select id="estado-${p.id}" style="width: 100%;">
+        <option ${p.estado === 'En espera' ? 'selected' : ''}>En espera</option>
+        <option ${p.estado === 'Presupuestado' ? 'selected' : ''}>Presupuestado</option>
+        <option ${p.estado === 'Confirmado' ? 'selected' : ''}>Confirmado</option>
+        <option ${p.estado === 'Finalizado' ? 'selected' : ''}>Finalizado</option>
+      </select>
+      <button class="boton-verde" onclick="guardarCambios('${p.id}')">💾</button>
+    </div>
+    `).join('')}
+  `;
 }
 
 window.guardarCambios = async (id) => {
-  const cliente = document.getElementById(`cliente-${id}`).value.trim();
   const descripcion = document.getElementById(`descripcion-${id}`).value.trim();
   const estado = document.getElementById(`estado-${id}`).value;
 
-  if (!cliente || !descripcion) return alert('Completa todos los campos.');
-
-  await updateDoc(doc(db, 'pedidos', id), { cliente, descripcion, estado });
+  await updateDoc(doc(db, 'pedidos', id), { descripcion, estado });
   cargarPedidos();
-};
-
-window.eliminarPedido = async (id) => {
-  if (confirm('¿Seguro que deseas eliminar este pedido?')) {
-    await deleteDoc(doc(db, 'pedidos', id));
-    cargarPedidos();
-  }
 };
 
 const toggleOrdenBtn = document.getElementById('toggle-orden');
@@ -163,3 +158,4 @@ window.addEventListener('click', function(e) {
 
 </body>
 </html>
+
