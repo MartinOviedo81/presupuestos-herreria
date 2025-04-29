@@ -90,49 +90,34 @@ async function cargarPedidos() {
   });
 
   listaPedidos.innerHTML = pedidos.map(p => `
-    <div class="item-presupuesto">
-      <div><strong>${p.cliente}</strong> - ${p.fecha}</div>
-      <div>${p.descripcion}</div>
-      <div>Estado: <strong>${p.estado}</strong></div>
-      <div class="menu-wrapper">
-        <button class="abrir-menu" data-id="${p.id}">Opciones</button>
-        <div class="menu-acciones hidden" id="menu-${p.id}">
-          <button onclick="editarPedido('${p.id}')">Editar</button>
-          <button onclick="cambiarEstado('${p.id}')">Cambiar estado</button>
-          <button onclick="eliminarPedido('${p.id}')">Eliminar</button>
+    <div class="item-presupuesto" id="pedido-${p.id}">
+      <div class="fade-in">
+        <input type="text" value="${p.cliente}" id="cliente-${p.id}" class="input-cantidad">
+        <textarea id="descripcion-${p.id}">${p.descripcion}</textarea>
+        <select id="estado-${p.id}">
+          <option ${p.estado === 'En espera' ? 'selected' : ''}>En espera</option>
+          <option ${p.estado === 'Presupuestado' ? 'selected' : ''}>Presupuestado</option>
+          <option ${p.estado === 'Confirmado' ? 'selected' : ''}>Confirmado</option>
+          <option ${p.estado === 'Finalizado' ? 'selected' : ''}>Finalizado</option>
+        </select>
+        <div class="trabajos-menu-custom">
+          <button class="boton-verde" onclick="guardarCambios('${p.id}')">Guardar cambios</button>
+          <button class="boton-rojo" onclick="eliminarPedido('${p.id}')">Eliminar</button>
         </div>
       </div>
     </div>
   `).join('');
-
-  setTimeout(() => {
-    document.querySelectorAll('.abrir-menu').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        const menu = document.getElementById(`menu-${id}`);
-        document.querySelectorAll('.menu-acciones').forEach(m => m.classList.add('hidden'));
-        menu.classList.toggle('hidden');
-      });
-    });
-  }, 0);
 }
 
-window.editarPedido = async (id) => {
-  const cliente = prompt('Nuevo nombre del cliente:');
-  const descripcion = prompt('Nueva descripción del pedido:');
-  if (cliente && descripcion) {
-    await updateDoc(doc(db, 'pedidos', id), { cliente, descripcion });
-    cargarPedidos();
-  }
-};
+window.guardarCambios = async (id) => {
+  const cliente = document.getElementById(`cliente-${id}`).value.trim();
+  const descripcion = document.getElementById(`descripcion-${id}`).value.trim();
+  const estado = document.getElementById(`estado-${id}`).value;
 
-window.cambiarEstado = async (id) => {
-  const nuevoEstado = prompt('Nuevo estado (En espera, Presupuestado, Confirmado, Finalizado):');
-  if (nuevoEstado) {
-    await updateDoc(doc(db, 'pedidos', id), { estado: nuevoEstado });
-    cargarPedidos();
-  }
+  if (!cliente || !descripcion) return alert('Completa todos los campos.');
+
+  await updateDoc(doc(db, 'pedidos', id), { cliente, descripcion, estado });
+  cargarPedidos();
 };
 
 window.eliminarPedido = async (id) => {
@@ -142,7 +127,6 @@ window.eliminarPedido = async (id) => {
   }
 };
 
-// Ordenar pedidos
 const toggleOrdenBtn = document.getElementById('toggle-orden');
 const listaOrden = document.querySelector('#menu-orden .trabajos-lista');
 
