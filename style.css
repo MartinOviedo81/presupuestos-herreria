@@ -498,13 +498,16 @@ textarea {
 }
 .item-presupuesto {
   position: relative;
-  padding-top: 100px; /* espacio para que no se solape el botón arriba */
+  padding: 10px;
+  padding-right: 12px;
+  border-radius: 10px;
+  margin-bottom: 12px;
 }
 
 .menu-wrapper.esquina-izquierda {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 4px;
+  left: 4px;
   z-index: 10;
 }
 
