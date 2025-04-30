@@ -127,11 +127,14 @@ const estados = ['En espera', 'Presupuestado', 'Confirmado', 'Finalizado'];
 
 toggleFormBtn.addEventListener('click', () => {
   contenedorForm.classList.toggle('hidden');
-  toggleFormBtn.textContent = contenedorForm.classList.contains('hidden')
-    ? '➕ Nuevo pedido'
-    : '✖ Cerrar formulario';
+toggleFormBtn.innerHTML = contenedorForm.classList.contains('hidden')
+  ? '<i data-lucide="plus"></i> Nuevo pedido'
+  : '<i data-lucide="x-circle"></i> Cerrar formulario';
+
+lucide.createIcons();
 });
 
+  
 function formatearFecha(fechaISO) {
   const fecha = new Date(fechaISO);
   const dia = fecha.getDate().toString().padStart(2, '0');
@@ -230,7 +233,8 @@ window.editarPedido = (id, pedido) => {
   idPedidoEditando = id;
 
   contenedorForm.classList.remove('hidden');
-  toggleFormBtn.textContent = '✖ Cerrar formulario';
+  toggleFormBtn.innerHTML = '<i data-lucide="x-circle"></i> Cerrar formulario';
+  lucide.createIcons();
   contenedorForm.scrollIntoView({ behavior: 'smooth' });
 };
 
