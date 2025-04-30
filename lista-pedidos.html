@@ -6,18 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    .chip {
+    .estado-btn {
       border: none;
       border-radius: 12px;
       padding: 6px 10px;
-      margin: 2px 4px;
       font-size: 0.85rem;
+      font-weight: bold;
       cursor: pointer;
+      margin-top: 6px;
     }
-    .chip-espera { background: #f1c40f; color: #000; }
-    .chip-presupuestado { background: #3498db; color: #fff; }
-    .chip-confirmado { background: #2ecc71; color: #fff; }
-    .chip-finalizado { background: #95a5a6; color: #000; }
+    .estado-espera { background: #f1c40f; color: #000; }
+    .estado-presupuestado { background: #3498db; color: #fff; }
+    .estado-confirmado { background: #2ecc71; color: #fff; }
+    .estado-finalizado { background: #95a5a6; color: #000; }
   </style>
 </head>
 <body class="modo-oscuro">
@@ -47,16 +48,18 @@
   <hr>
 
   <h3>Pedidos Guardados</h3>
-<div class="mini-controls">
-  <label for="filtro-estado">Filtrar por estado:</label>
-  <select id="filtro-estado">
-    <option value="Todos">Todos</option>
-    <option value="En espera">En espera</option>
-    <option value="Presupuestado">Presupuestado</option>
-    <option value="Confirmado">Confirmado</option>
-    <option value="Finalizado">Finalizado</option>
-  </select>
-</div>
+
+  <div class="mini-controls">
+    <label for="filtro-estado">Filtrar por estado:</label>
+    <select id="filtro-estado">
+      <option value="Todos">Todos</option>
+      <option value="En espera">En espera</option>
+      <option value="Presupuestado">Presupuestado</option>
+      <option value="Confirmado">Confirmado</option>
+      <option value="Finalizado">Finalizado</option>
+    </select>
+  </div>
+
   <div id="menu-orden" class="trabajos-menu-custom">
     <button id="toggle-orden" class="boton-gris">Ordenar por</button>
     <div class="trabajos-lista hidden">
@@ -78,7 +81,6 @@
 
     const form = document.getElementById('form-pedido');
     const lista = document.getElementById('lista-pedidos');
-
     const nombreInput = document.getElementById('nombrePedido');
     const clienteInput = document.getElementById('cliente');
     const descripcionInput = document.getElementById('descripcion');
@@ -86,64 +88,64 @@
     let idPedidoEditando = null;
     let ordenSeleccionado = 'fecha-desc';
 
+    const estados = ['En espera', 'Presupuestado', 'Confirmado', 'Finalizado'];
+
+    function formatearFecha(fechaISO) {
+      const fecha = new Date(fechaISO);
+      const dia = fecha.getDate().toString().padStart(2, '0');
+      const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+      const anio = fecha.getFullYear();
+      return `${dia}/${mes}/${anio}`;
+    }
+
     async function cargarPedidos() {
-  const filtro = document.getElementById('filtro-estado').value;
-  const snap = await getDocs(collection(db, 'pedidos'));
-  let pedidos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const filtro = document.getElementById('filtro-estado').value;
+      const snap = await getDocs(collection(db, 'pedidos'));
+      let pedidos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-  // Filtrar por estado
-  if (filtro !== 'Todos') {
-    pedidos = pedidos.filter(p => p.estado === filtro);
-  }
+      if (filtro !== 'Todos') {
+        pedidos = pedidos.filter(p => p.estado === filtro);
+      }
 
-  // Ordenar
-  pedidos.sort((a, b) => {
-    switch (ordenSeleccionado) {
-      case 'fecha-asc': return new Date(a.fechaCreacion) - new Date(b.fechaCreacion);
-      case 'fecha-desc': return new Date(b.fechaCreacion) - new Date(a.fechaCreacion);
-      case 'cliente-asc': return a.cliente.localeCompare(b.cliente);
-      case 'cliente-desc': return b.cliente.localeCompare(a.cliente);
-      case 'estado': return a.estado.localeCompare(b.estado);
-      default: return 0;
-    }
-  });
+      pedidos.sort((a, b) => {
+        switch (ordenSeleccionado) {
+          case 'fecha-asc': return new Date(a.fechaCreacion) - new Date(b.fechaCreacion);
+          case 'fecha-desc': return new Date(b.fechaCreacion) - new Date(a.fechaCreacion);
+          case 'cliente-asc': return a.cliente.localeCompare(b.cliente);
+          case 'cliente-desc': return b.cliente.localeCompare(a.cliente);
+          case 'estado': return a.estado.localeCompare(b.estado);
+          default: return 0;
+        }
+      });
 
-  // Mostrar en la lista
-  lista.innerHTML = '';
-  pedidos.forEach(p => {
-    const li = document.createElement('li');
-    li.classList.add('item-presupuesto');
-    li.innerHTML = `
-      <div class="nombre">${p.nombre}</div>
-      <div>Cliente: ${p.cliente}</div>
-      <div>Descripción: ${p.descripcion}</div>
-      <div>Estado:
-        <div class="estado-chips">
-          ${crearChipsEstado(p.estado, p.id)}
-        </div>
-      </div>
-      <small>Creado: ${p.fechaCreacion || '-'}</small><br>
-      <small>Última actualización: ${p.fechaActualizacion || '-'}</small><br>
-      <div style="margin-top: 10px;">
-        <button class="boton-naranja" onclick="editarPedido('${p.id}', ${JSON.stringify(p).replace(/"/g, '&quot;')})">Editar</button>
-        <button class="boton-rojo" onclick="eliminarPedido('${p.id}')">Eliminar</button>
-      </div>
-    `;
-    lista.appendChild(li);
-  });
-}
+      lista.innerHTML = '';
+      pedidos.forEach(p => {
+        const li = document.createElement('li');
+        li.classList.add('item-presupuesto');
 
-    function crearChipsEstado(actual, id) {
-      const estados = ['En espera', 'Presupuestado', 'Confirmado', 'Finalizado'];
-      return estados.map(estado => {
-        const clase = `chip-${estado.toLowerCase().replace(' ', '')}`;
-        return `<button class="chip ${clase}" onclick="cambiarEstado('${id}', '${estado}')">${estado}</button>`;
-      }).join('');
+        const clase = `estado-${p.estado.toLowerCase().replace(' ', '')}`;
+        li.innerHTML = `
+          <div class="nombre">${p.nombre}</div>
+          <div>Cliente: ${p.cliente}</div>
+          <div>Descripción: ${p.descripcion}</div>
+          <button class="estado-btn ${clase}" onclick="cambiarEstado('${p.id}', '${p.estado}')">${p.estado}</button>
+          <small>Creado: ${p.fechaCreacion ? formatearFecha(p.fechaCreacion) : '-'}</small><br>
+          <small>Última actualización: ${p.fechaActualizacion || '-'}</small><br>
+          <div style="margin-top: 10px;">
+            <button class="boton-naranja" onclick="editarPedido('${p.id}', ${JSON.stringify(p).replace(/"/g, '&quot;')})">Editar</button>
+            <button class="boton-rojo" onclick="eliminarPedido('${p.id}')">Eliminar</button>
+          </div>
+        `;
+        lista.appendChild(li);
+      });
     }
 
-    window.cambiarEstado = async (id, nuevoEstado) => {
+    window.cambiarEstado = async (id, actual) => {
+      const idx = estados.indexOf(actual);
+      const siguiente = estados[(idx + 1) % estados.length];
+      const clase = `estado-${siguiente.toLowerCase().replace(' ', '')}`;
       const fechaActualizacion = new Date().toLocaleString();
-      await updateDoc(doc(db, 'pedidos', id), { estado: nuevoEstado, fechaActualizacion });
+      await updateDoc(doc(db, 'pedidos', id), { estado: siguiente, fechaActualizacion });
       cargarPedidos();
     };
 
@@ -153,6 +155,7 @@
       descripcionInput.value = pedido.descripcion;
       estadoInput.value = pedido.estado;
       idPedidoEditando = id;
+      form.scrollIntoView({ behavior: 'smooth' });
     };
 
     window.eliminarPedido = async (id) => {
@@ -168,18 +171,19 @@
       const cliente = clienteInput.value.trim();
       const descripcion = descripcionInput.value.trim();
       const estado = estadoInput.value;
-      const ahora = new Date().toISOString();
+      const ahora = new Date();
+      const fechaISO = ahora.toISOString();
 
       const data = {
         nombre,
         cliente,
         descripcion,
         estado,
-        fechaActualizacion: new Date().toLocaleString()
+        fechaActualizacion: ahora.toLocaleString()
       };
 
       if (!idPedidoEditando) {
-        data.fechaCreacion = ahora;
+        data.fechaCreacion = fechaISO;
         await addDoc(collection(db, 'pedidos'), data);
       } else {
         await updateDoc(doc(db, 'pedidos', idPedidoEditando), data);
@@ -190,22 +194,20 @@
       cargarPedidos();
     });
 
-    const toggleOrdenBtn = document.getElementById('toggle-orden');
-    const listaOrden = document.querySelector('#menu-orden .trabajos-lista');
-
-    toggleOrdenBtn.addEventListener('click', () => {
-      listaOrden.classList.toggle('hidden');
+    document.getElementById('toggle-orden').addEventListener('click', () => {
+      document.querySelector('#menu-orden .trabajos-lista').classList.toggle('hidden');
     });
-    
-    document.getElementById('filtro-estado').addEventListener('change', cargarPedidos);
+
     document.querySelectorAll('input[name="orden"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
         ordenSeleccionado = e.target.value;
-        toggleOrdenBtn.textContent = `Orden: ${e.target.nextSibling.textContent.trim()}`;
-        listaOrden.classList.add('hidden');
+        document.getElementById('toggle-orden').textContent = `Orden: ${e.target.nextSibling.textContent.trim()}`;
+        document.querySelector('#menu-orden .trabajos-lista').classList.add('hidden');
         cargarPedidos();
       });
     });
+
+    document.getElementById('filtro-estado').addEventListener('change', cargarPedidos);
 
     cargarPedidos();
   </script>
