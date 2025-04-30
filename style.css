@@ -495,15 +495,14 @@ textarea {
   position: relative;
 }
 
-.menu-wrapper.esquina-derecha {
+.menu-wrapper.esquina-izquierda {
   position: absolute;
   top: 8px;
-  right: 8px;
+  left: 8px;
   z-index: 10;
 }
 
-.menu-wrapper.esquina-derecha .menu-acciones {
-  right: 0;
-  left: auto;
-  transform: translateX(-100%);
+.menu-wrapper.esquina-izquierda .menu-acciones {
+  left: 0;
+  right: auto;
 }
