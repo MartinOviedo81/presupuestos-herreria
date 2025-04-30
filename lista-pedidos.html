@@ -52,7 +52,7 @@
 <h2>Gestión de Pedidos</h2>
 
 <button id="toggle-form" class="boton-celeste">
-  <i data-lucide="plus"></i> Nuevo pedido
+  <i data-lucide="shopping-cart"></i> Nuevo pedido
 </button>
   
 <div id="contenedor-formulario" class="hidden">
@@ -128,7 +128,7 @@ const estados = ['En espera', 'Presupuestado', 'Confirmado', 'Finalizado'];
 toggleFormBtn.addEventListener('click', () => {
   contenedorForm.classList.toggle('hidden');
 toggleFormBtn.innerHTML = contenedorForm.classList.contains('hidden')
-  ? '<i data-lucide="plus"></i> Nuevo pedido'
+  ? '<i data-lucide="shopping-cart"></i> Nuevo pedido'
   : '<i data-lucide="x-circle"></i> Cerrar formulario';
 
 lucide.createIcons();
