@@ -517,3 +517,10 @@ textarea {
   left: 0;
   right: auto;
 }
+
+#toggle-form i {
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
