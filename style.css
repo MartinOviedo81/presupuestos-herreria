@@ -498,7 +498,7 @@ textarea {
 }
 .item-presupuesto {
   position: relative;
-  padding-top: 40px; /* espacio para que no se solape el botón arriba */
+  padding-top: 100px; /* espacio para que no se solape el botón arriba */
 }
 
 .menu-wrapper.esquina-izquierda {
