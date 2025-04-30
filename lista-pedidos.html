@@ -19,31 +19,48 @@
     .estado-presupuestado { background: #3498db; color: #fff; }
     .estado-confirmado { background: #2ecc71; color: #fff; }
     .estado-finalizado { background: #95a5a6; color: #000; }
+
+    #contenedor-formulario {
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #toggle-form {
+      margin-bottom: 1rem;
+    }
   </style>
 </head>
 <body class="modo-oscuro">
   <h2>Gestión de Pedidos</h2>
 
-  <form id="form-pedido">
-    <label>Nombre del pedido:
-      <input type="text" id="nombrePedido" required>
-    </label>
-    <label>Cliente:
-      <input type="text" id="cliente" required>
-    </label>
-    <label>Descripción:
-      <textarea id="descripcion" required></textarea>
-    </label>
-    <label>Estado inicial:
-      <select id="estado" required>
-        <option value="En espera">En espera</option>
-        <option value="Presupuestado">Presupuestado</option>
-        <option value="Confirmado">Confirmado</option>
-        <option value="Finalizado">Finalizado</option>
-      </select>
-    </label>
-    <button type="submit" class="boton-verde">Guardar Pedido</button>
-  </form>
+  <button id="toggle-form" class="boton-celeste">➕ Nuevo pedido</button>
+
+  <div id="contenedor-formulario" class="hidden">
+    <form id="form-pedido">
+      <label>Nombre del pedido:
+        <input type="text" id="nombrePedido" required>
+      </label>
+      <label>Cliente:
+        <input type="text" id="cliente" required>
+      </label>
+      <label>Descripción:
+        <textarea id="descripcion" required></textarea>
+      </label>
+      <label>Estado inicial:
+        <select id="estado" required>
+          <option value="En espera">En espera</option>
+          <option value="Presupuestado">Presupuestado</option>
+          <option value="Confirmado">Confirmado</option>
+          <option value="Finalizado">Finalizado</option>
+        </select>
+      </label>
+      <button type="submit" class="boton-verde">Guardar Pedido</button>
+    </form>
+  </div>
 
   <hr>
 
@@ -85,10 +102,19 @@
     const clienteInput = document.getElementById('cliente');
     const descripcionInput = document.getElementById('descripcion');
     const estadoInput = document.getElementById('estado');
+    const contenedorForm = document.getElementById('contenedor-formulario');
+    const toggleFormBtn = document.getElementById('toggle-form');
+
     let idPedidoEditando = null;
     let ordenSeleccionado = 'fecha-desc';
-
     const estados = ['En espera', 'Presupuestado', 'Confirmado', 'Finalizado'];
+
+    toggleFormBtn.addEventListener('click', () => {
+      contenedorForm.classList.toggle('hidden');
+      toggleFormBtn.textContent = contenedorForm.classList.contains('hidden')
+        ? '➕ Nuevo pedido'
+        : '✖ Cerrar formulario';
+    });
 
     function formatearFecha(fechaISO) {
       const fecha = new Date(fechaISO);
@@ -122,7 +148,6 @@
       pedidos.forEach(p => {
         const li = document.createElement('li');
         li.classList.add('item-presupuesto');
-
         const clase = `estado-${p.estado.toLowerCase().replace(' ', '')}`;
         li.innerHTML = `
           <div class="nombre">${p.nombre}</div>
@@ -143,9 +168,11 @@
     window.cambiarEstado = async (id, actual) => {
       const idx = estados.indexOf(actual);
       const siguiente = estados[(idx + 1) % estados.length];
-      const clase = `estado-${siguiente.toLowerCase().replace(' ', '')}`;
       const fechaActualizacion = new Date().toLocaleString();
-      await updateDoc(doc(db, 'pedidos', id), { estado: siguiente, fechaActualizacion });
+      await updateDoc(doc(db, 'pedidos', id), {
+        estado: siguiente,
+        fechaActualizacion
+      });
       cargarPedidos();
     };
 
@@ -155,7 +182,10 @@
       descripcionInput.value = pedido.descripcion;
       estadoInput.value = pedido.estado;
       idPedidoEditando = id;
-      form.scrollIntoView({ behavior: 'smooth' });
+
+      contenedorForm.classList.remove('hidden');
+      toggleFormBtn.textContent = '✖ Cerrar formulario';
+      contenedorForm.scrollIntoView({ behavior: 'smooth' });
     };
 
     window.eliminarPedido = async (id) => {
