@@ -1,93 +1,106 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Lista de Pedidos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    .estado-espera { background-color: #f1c40f; color: #000; font-weight: bold; }
-    .estado-presupuestado { background-color: #3498db; color: #fff; font-weight: bold; }
-    .estado-confirmado { background-color: #2ecc71; color: #fff; font-weight: bold; }
-    .estado-finalizado { background-color: #95a5a6; color: #000; font-weight: bold; }
+    .chip {
+      border: none;
+      border-radius: 12px;
+      padding: 6px 10px;
+      margin: 2px 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .chip-espera { background: #f1c40f; color: #000; }
+    .chip-presupuestado { background: #3498db; color: #fff; }
+    .chip-confirmado { background: #2ecc71; color: #fff; }
+    .chip-finalizado { background: #95a5a6; color: #000; }
   </style>
 </head>
 <body class="modo-oscuro">
+  <h2>Gestión de Pedidos</h2>
 
-<h2>Lista de Pedidos</h2>
+  <form id="form-pedido">
+    <label>Nombre del pedido:
+      <input type="text" id="nombrePedido" required>
+    </label>
+    <label>Cliente:
+      <input type="text" id="cliente" required>
+    </label>
+    <label>Descripción:
+      <textarea id="descripcion" required></textarea>
+    </label>
+    <label>Estado inicial:
+      <select id="estado" required>
+        <option value="En espera">En espera</option>
+        <option value="Presupuestado">Presupuestado</option>
+        <option value="Confirmado">Confirmado</option>
+        <option value="Finalizado">Finalizado</option>
+      </select>
+    </label>
+    <button type="submit" class="boton-verde">Guardar Pedido</button>
+  </form>
 
-<div class="menu-hamburguesa" onclick="toggleMenu()">≡</div>
-<div class="opciones-menu hidden" id="menuOpciones">
-  <a href="index.html">
-    <i data-lucide="home"></i> Inicio
-  </a>
+  <hr>
+
+  <h3>Pedidos Guardados</h3>
+<div class="mini-controls">
+  <label for="filtro-estado">Filtrar por estado:</label>
+  <select id="filtro-estado">
+    <option value="Todos">Todos</option>
+    <option value="En espera">En espera</option>
+    <option value="Presupuestado">Presupuestado</option>
+    <option value="Confirmado">Confirmado</option>
+    <option value="Finalizado">Finalizado</option>
+  </select>
 </div>
-
-<hr>
-<h3>Nuevo Pedido</h3>
-<input type="text" id="cliente" placeholder="Nombre del cliente">
-<textarea id="descripcion" placeholder="Descripción del pedido"></textarea>
-<select id="estado">
-  <option value="En espera">En espera</option>
-  <option value="Presupuestado">Presupuestado</option>
-  <option value="Confirmado">Confirmado</option>
-  <option value="Finalizado">Finalizado</option>
-</select>
-<button id="btn-guardar" class="boton-verde">Guardar Pedido</button>
-
-<hr>
-<h3>Pedidos Guardados</h3>
-<div id="menu-orden" class="trabajos-menu-custom">
-  <button id="toggle-orden" class="boton-gris">Ordenar por</button>
-  <div class="trabajos-lista hidden">
-    <label><input type="radio" name="orden" value="fecha-desc" checked> Fecha ↓</label>
-    <label><input type="radio" name="orden" value="fecha-asc"> Fecha ↑</label>
-    <label><input type="radio" name="orden" value="cliente-asc"> Cliente A-Z</label>
-    <label><input type="radio" name="orden" value="cliente-desc"> Cliente Z-A</label>
-    <label><input type="radio" name="orden" value="estado"> Estado</label>
+  <div id="menu-orden" class="trabajos-menu-custom">
+    <button id="toggle-orden" class="boton-gris">Ordenar por</button>
+    <div class="trabajos-lista hidden">
+      <label><input type="radio" name="orden" value="fecha-desc" checked> Fecha ↓</label>
+      <label><input type="radio" name="orden" value="fecha-asc"> Fecha ↑</label>
+      <label><input type="radio" name="orden" value="cliente-asc"> Cliente A-Z</label>
+      <label><input type="radio" name="orden" value="cliente-desc"> Cliente Z-A</label>
+      <label><input type="radio" name="orden" value="estado"> Estado</label>
+    </div>
   </div>
-</div>
-<div id="lista-pedidos"></div>
 
-<script src="https://unpkg.com/lucide@latest"></script>
-<script type="module">
-import { db } from './firebase-config.js';
-import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+  <ul id="lista-pedidos"></ul>
 
-lucide.createIcons();
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import {
+      collection, getDocs, addDoc, deleteDoc, doc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-const btnGuardar = document.getElementById('btn-guardar');
-const listaPedidos = document.getElementById('lista-pedidos');
-let ordenSeleccionado = 'fecha-desc';
+    const form = document.getElementById('form-pedido');
+    const lista = document.getElementById('lista-pedidos');
 
-btnGuardar.addEventListener('click', async () => {
-  const cliente = document.getElementById('cliente').value.trim();
-  const descripcion = document.getElementById('descripcion').value.trim();
-  const estado = document.getElementById('estado').value;
-  
-  if (!cliente || !descripcion) return alert('Completa todos los campos.');
+    const nombreInput = document.getElementById('nombrePedido');
+    const clienteInput = document.getElementById('cliente');
+    const descripcionInput = document.getElementById('descripcion');
+    const estadoInput = document.getElementById('estado');
+    let idPedidoEditando = null;
+    let ordenSeleccionado = 'fecha-desc';
 
-  const fechaActual = new Date();
-  const fecha = fechaActual.toLocaleDateString('es-AR');
-  const fechaOrden = fechaActual.toISOString();
-
-  await addDoc(collection(db, 'pedidos'), { cliente, descripcion, estado, fecha, fechaOrden });
-
-  document.getElementById('cliente').value = '';
-  document.getElementById('descripcion').value = '';
-  document.getElementById('estado').value = 'En espera';
-
-  cargarPedidos();
-});
-
-async function cargarPedidos() {
+    async function cargarPedidos() {
+  const filtro = document.getElementById('filtro-estado').value;
   const snap = await getDocs(collection(db, 'pedidos'));
   let pedidos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+  // Filtrar por estado
+  if (filtro !== 'Todos') {
+    pedidos = pedidos.filter(p => p.estado === filtro);
+  }
+
+  // Ordenar
   pedidos.sort((a, b) => {
     switch (ordenSeleccionado) {
-      case 'fecha-asc': return new Date(a.fechaOrden) - new Date(b.fechaOrden);
-      case 'fecha-desc': return new Date(b.fechaOrden) - new Date(a.fechaOrden);
+      case 'fecha-asc': return new Date(a.fechaCreacion) - new Date(b.fechaCreacion);
+      case 'fecha-desc': return new Date(b.fechaCreacion) - new Date(a.fechaCreacion);
       case 'cliente-asc': return a.cliente.localeCompare(b.cliente);
       case 'cliente-desc': return b.cliente.localeCompare(a.cliente);
       case 'estado': return a.estado.localeCompare(b.estado);
@@ -95,85 +108,106 @@ async function cargarPedidos() {
     }
   });
 
-  listaPedidos.innerHTML = `
-    <div style="display: grid; grid-template-columns: 1fr 2fr 1fr 1fr 0.5fr; gap: 10px; margin-bottom: 10px;">
-      <strong>Cliente</strong>
-      <strong>Descripción</strong>
-      <strong>Fecha</strong>
-      <strong>Estado</strong>
-      <strong>Guardar</strong>
-    </div>
-    ${pedidos.map(p => `
-    <div style="display: grid; grid-template-columns: 1fr 2fr 1fr 1fr 0.5fr; gap: 10px; align-items: center; margin-bottom: 8px;">
-      <div>${p.cliente}</div>
-      <input type="text" id="descripcion-${p.id}" value="${p.descripcion}" style="width: 100%;">
-      <div>${p.fecha}</div>
-      <select id="estado-${p.id}" style="width: 100%;" onchange="actualizarColor('${p.id}')">
-        <option ${p.estado === 'En espera' ? 'selected' : ''}>En espera</option>
-        <option ${p.estado === 'Presupuestado' ? 'selected' : ''}>Presupuestado</option>
-        <option ${p.estado === 'Confirmado' ? 'selected' : ''}>Confirmado</option>
-        <option ${p.estado === 'Finalizado' ? 'selected' : ''}>Finalizado</option>
-      </select>
-      <button class="boton-verde" onclick="guardarCambios('${p.id}')">💾</button>
-    </div>
-    `).join('')}
-  `;
-
-  pedidos.forEach(p => actualizarColor(p.id));
-}
-
-window.guardarCambios = async (id) => {
-  const descripcion = document.getElementById(`descripcion-${id}`).value.trim();
-  const estado = document.getElementById(`estado-${id}`).value;
-
-  await updateDoc(doc(db, 'pedidos', id), { descripcion, estado });
-  cargarPedidos();
-};
-
-window.actualizarColor = (id) => {
-  const select = document.getElementById(`estado-${id}`);
-  select.classList.remove('estado-espera', 'estado-presupuestado', 'estado-confirmado', 'estado-finalizado');
-  switch (select.value) {
-    case 'En espera': select.classList.add('estado-espera'); break;
-    case 'Presupuestado': select.classList.add('estado-presupuestado'); break;
-    case 'Confirmado': select.classList.add('estado-confirmado'); break;
-    case 'Finalizado': select.classList.add('estado-finalizado'); break;
-  }
-};
-
-const toggleOrdenBtn = document.getElementById('toggle-orden');
-const listaOrden = document.querySelector('#menu-orden .trabajos-lista');
-
-toggleOrdenBtn.addEventListener('click', () => {
-  listaOrden.classList.toggle('hidden');
-});
-
-document.querySelectorAll('input[name="orden"]').forEach(radio => {
-  radio.addEventListener('change', (e) => {
-    ordenSeleccionado = e.target.value;
-    toggleOrdenBtn.textContent = `Orden: ${e.target.nextSibling.textContent.trim()}`;
-    cargarPedidos();
-    listaOrden.classList.add('hidden');
+  // Mostrar en la lista
+  lista.innerHTML = '';
+  pedidos.forEach(p => {
+    const li = document.createElement('li');
+    li.classList.add('item-presupuesto');
+    li.innerHTML = `
+      <div class="nombre">${p.nombre}</div>
+      <div>Cliente: ${p.cliente}</div>
+      <div>Descripción: ${p.descripcion}</div>
+      <div>Estado:
+        <div class="estado-chips">
+          ${crearChipsEstado(p.estado, p.id)}
+        </div>
+      </div>
+      <small>Creado: ${p.fechaCreacion || '-'}</small><br>
+      <small>Última actualización: ${p.fechaActualizacion || '-'}</small><br>
+      <div style="margin-top: 10px;">
+        <button class="boton-naranja" onclick="editarPedido('${p.id}', ${JSON.stringify(p).replace(/"/g, '&quot;')})">Editar</button>
+        <button class="boton-rojo" onclick="eliminarPedido('${p.id}')">Eliminar</button>
+      </div>
+    `;
+    lista.appendChild(li);
   });
-});
-
-cargarPedidos();
-
-</script>
-<script>
-function toggleMenu() {
-  const menu = document.getElementById('menuOpciones');
-  menu.classList.toggle('hidden');
-  lucide.createIcons();
 }
-window.addEventListener('click', function(e) {
-  const menu = document.getElementById('menuOpciones');
-  const hamburguesa = document.querySelector('.menu-hamburguesa');
-  if (!menu.contains(e.target) && !hamburguesa.contains(e.target)) {
-    menu.classList.add('hidden');
-  }
-});
-</script>
 
+    function crearChipsEstado(actual, id) {
+      const estados = ['En espera', 'Presupuestado', 'Confirmado', 'Finalizado'];
+      return estados.map(estado => {
+        const clase = `chip-${estado.toLowerCase().replace(' ', '')}`;
+        return `<button class="chip ${clase}" onclick="cambiarEstado('${id}', '${estado}')">${estado}</button>`;
+      }).join('');
+    }
+
+    window.cambiarEstado = async (id, nuevoEstado) => {
+      const fechaActualizacion = new Date().toLocaleString();
+      await updateDoc(doc(db, 'pedidos', id), { estado: nuevoEstado, fechaActualizacion });
+      cargarPedidos();
+    };
+
+    window.editarPedido = (id, pedido) => {
+      nombreInput.value = pedido.nombre;
+      clienteInput.value = pedido.cliente;
+      descripcionInput.value = pedido.descripcion;
+      estadoInput.value = pedido.estado;
+      idPedidoEditando = id;
+    };
+
+    window.eliminarPedido = async (id) => {
+      if (confirm('¿Seguro que querés eliminar este pedido?')) {
+        await deleteDoc(doc(db, 'pedidos', id));
+        cargarPedidos();
+      }
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nombre = nombreInput.value.trim();
+      const cliente = clienteInput.value.trim();
+      const descripcion = descripcionInput.value.trim();
+      const estado = estadoInput.value;
+      const ahora = new Date().toISOString();
+
+      const data = {
+        nombre,
+        cliente,
+        descripcion,
+        estado,
+        fechaActualizacion: new Date().toLocaleString()
+      };
+
+      if (!idPedidoEditando) {
+        data.fechaCreacion = ahora;
+        await addDoc(collection(db, 'pedidos'), data);
+      } else {
+        await updateDoc(doc(db, 'pedidos', idPedidoEditando), data);
+        idPedidoEditando = null;
+      }
+
+      form.reset();
+      cargarPedidos();
+    });
+
+    const toggleOrdenBtn = document.getElementById('toggle-orden');
+    const listaOrden = document.querySelector('#menu-orden .trabajos-lista');
+
+    toggleOrdenBtn.addEventListener('click', () => {
+      listaOrden.classList.toggle('hidden');
+    });
+    
+    document.getElementById('filtro-estado').addEventListener('change', cargarPedidos);
+    document.querySelectorAll('input[name="orden"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        ordenSeleccionado = e.target.value;
+        toggleOrdenBtn.textContent = `Orden: ${e.target.nextSibling.textContent.trim()}`;
+        listaOrden.classList.add('hidden');
+        cargarPedidos();
+      });
+    });
+
+    cargarPedidos();
+  </script>
 </body>
 </html>
