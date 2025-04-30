@@ -491,3 +491,13 @@ textarea {
   background-color: #2c2c2c;
   color: white;
 }
+.item-presupuesto {
+  position: relative;
+}
+
+.menu-wrapper.esquina-derecha {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+}
