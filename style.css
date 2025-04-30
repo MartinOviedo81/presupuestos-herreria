@@ -207,8 +207,11 @@ button:hover {
   }
 }
 .menu-wrapper {
-  position: relative;
-  margin-top: 10px;
+  position: absolute;
+  top: 0;
+  left: 8px;
+  z-index: 10;
+  margin: 0;     /* ✅ muy importante para que no lo empuje más abajo */
 }
 
 .abrir-menu {
