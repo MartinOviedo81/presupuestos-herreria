@@ -506,11 +506,10 @@ textarea {
 
 .menu-wrapper.esquina-izquierda {
   position: absolute;
-  top: 4px;
-  left: 4px;
+  top: 2px;     /* ✅ más pegado arriba */
+  left: 8px;
   z-index: 10;
 }
-
 .menu-wrapper.esquina-izquierda .menu-acciones {
   left: 0;
   right: auto;
