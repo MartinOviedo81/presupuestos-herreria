@@ -498,8 +498,8 @@ textarea {
 }
 .item-presupuesto {
   position: relative;
-  padding: 10px;
-  padding-right: 12px;
+  padding: 12px;          /* margen general */
+  padding-top: 48px;      /* espacio reservado solo para el botón ⋮ */
   border-radius: 10px;
   margin-bottom: 12px;
 }
