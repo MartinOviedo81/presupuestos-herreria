@@ -37,15 +37,18 @@
 <body class="modo-oscuro">
 
 <!-- Menú hamburguesa -->
-<div class="menu-hamburguesa" onclick="toggleMenu()">
-  <i data-lucide="menu"></i>
-</div>
-<div class="opciones-menu hidden" id="menuOpciones">
-  <a href="index.html">
-    <i data-lucide="home"></i> Inicio
-  </a>
-</div>
+  <!-- ✅ Menú hamburguesa funcional -->
+  <div class="menu-hamburguesa" id="btnMenu">
+    <i data-lucide="menu"></i>
+  </div>
 
+  <div class="opciones-menu hidden" id="menuOpciones">
+    <a href="index.html">
+      <i data-lucide="home"></i> Inicio
+    </a>
+    <!-- Podés agregar más opciones acá -->
+  </div>
+  
 <h2>Gestión de Pedidos</h2>
 
 <button id="toggle-form" class="boton-celeste">➕ Nuevo pedido</button>
@@ -283,23 +286,28 @@ document.getElementById('filtro-estado').addEventListener('change', cargarPedido
 cargarPedidos();
 </script>
 
-<script src="https://unpkg.com/lucide@latest"></script>
-<script type="module">
-  function toggleMenu() {
-    const menu = document.getElementById('menuOpciones');
-    menu.classList.toggle('hidden');
+ <script src="https://unpkg.com/lucide@latest"></script>
+  <script type="module">
+    // ✅ Abrir/cerrar el menú hamburguesa con addEventListener
+    const btnMenu = document.getElementById('btnMenu');
+    const menuOpciones = document.getElementById('menuOpciones');
+
+    btnMenu?.addEventListener('click', (e) => {
+      e.stopPropagation(); // evita que el clic cierre el menú
+      menuOpciones.classList.toggle('hidden');
+      lucide.createIcons(); // por si hay íconos nuevos
+    });
+
+    // ✅ Cerrar el menú si se hace clic fuera de él
+    window.addEventListener('click', (e) => {
+      if (!menuOpciones.contains(e.target) && !btnMenu.contains(e.target)) {
+        menuOpciones.classList.add('hidden');
+      }
+    });
+
+    // ✅ Activar íconos Lucide en el primer render
     lucide.createIcons();
-  }
+  </script>
 
-  window.addEventListener('click', function(e) {
-    const menu = document.getElementById('menuOpciones');
-    const hamburguesa = document.querySelector('.menu-hamburguesa');
-    if (!menu.contains(e.target) && !hamburguesa.contains(e.target)) {
-      menu.classList.add('hidden');
-    }
-  });
-
-  lucide.createIcons();
-</script>
 </body>
 </html>
