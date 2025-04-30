@@ -161,13 +161,7 @@ async function cargarPedidos() {
     li.classList.add('item-presupuesto');
     const clase = `estado-${p.estado.toLowerCase().replace(' ', '')}`;
     li.innerHTML = `
-      <div class="nombre">${p.nombre}</div>
-      <div>Cliente: ${p.cliente}</div>
-      <div>Descripción: ${p.descripcion}</div>
-      <button class="estado-btn ${clase}" onclick="cambiarEstado('${p.id}', '${p.estado}')">${p.estado}</button>
-      <small>Creado: ${p.fechaCreacion ? formatearFecha(p.fechaCreacion) : '-'}</small><br>
-      <small>Última actualización: ${p.fechaActualizacion || '-'}</small><br>
-      <div class="menu-wrapper" style="margin-top: 10px;">
+      <div class="menu-wrapper esquina-derecha">
         <button class="btn-mini abrir-menu" data-id="${p.id}">
           <i data-lucide="more-vertical"></i>
         </button>
@@ -180,6 +174,13 @@ async function cargarPedidos() {
           </button>
         </div>
       </div>
+
+      <div class="nombre">${p.nombre}</div>
+      <div>Cliente: ${p.cliente}</div>
+      <div>Descripción: ${p.descripcion}</div>
+      <button class="estado-btn ${clase}" onclick="cambiarEstado('${p.id}', '${p.estado}')">${p.estado}</button>
+      <small>Creado: ${p.fechaCreacion ? formatearFecha(p.fechaCreacion) : '-'}</small><br>
+      <small>Última actualización: ${p.fechaActualizacion || '-'}</small>
     `;
     lista.appendChild(li);
   });
