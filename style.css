@@ -518,9 +518,14 @@ textarea {
   right: auto;
 }
 
+#toggle-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 #toggle-form i {
-  width: 18px;
-  height: 18px;
-  margin-right: 6px;
+  width: 20px;
+  height: 20px;
   vertical-align: middle;
 }
