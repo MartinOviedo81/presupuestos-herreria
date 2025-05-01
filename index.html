@@ -100,7 +100,7 @@ document.querySelectorAll('input[name="cat"]').forEach(radio => {
   radio.addEventListener('change', (e) => {
     categoriaSeleccionada = e.target.value;
 
-    let icono = 'list'; // icono por defecto
+    let icono = 'paperclip'; // icono por defecto
 
     switch (categoriaSeleccionada) {
       case 'caños estructurales':
@@ -128,7 +128,7 @@ document.querySelectorAll('input[name="cat"]').forEach(radio => {
         icono = 'key-round'; // herramientas
         break;
       case 'todas':
-        icono = 'list'; // lista general
+        icono = 'paperclip'; // lista general
         break;
     }
 
