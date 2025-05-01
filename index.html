@@ -339,11 +339,30 @@ totalSpan.textContent = formatearMoneda(totalRedondeado);
       presupuesto.splice(i, 1);
       renderPresupuesto();
     };
+async function actualizarPreciosEnPresupuesto() {
+  const snap = await getDocs(collection(db, 'materiales'));
+  const preciosActuales = {};
+  snap.forEach(doc => {
+    const m = doc.data();
+    preciosActuales[m.nombre] = m.precio / m.fraccionamiento;
+  });
 
+  presupuesto = presupuesto.map(item => {
+    const nuevoPrecio = preciosActuales[item.nombre] || item.precioPorUnidad;
+    const nuevoSubtotal = nuevoPrecio * item.cantidad * item.multiplicadorTotal;
+    return {
+      ...item,
+      precioPorUnidad: nuevoPrecio,
+      subtotal: nuevoSubtotal
+    };
+  });
+}
     btnGuardar.addEventListener('click', async () => {
   const nombre = nombrePresupuesto.value.trim(); // ✅ ahora está definida correctamente
   if (!nombre) return alert('Poné un nombre al presupuesto.');
-
+ if (presupuestoIdActual) {
+    await actualizarPreciosEnPresupuesto();
+  }
   const fechaActual = new Date();
   const fecha = fechaActual.toLocaleDateString('es-AR');
   const fechaOrden = fechaActual.toISOString();
