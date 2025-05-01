@@ -471,13 +471,32 @@ contenedor.innerHTML = `
 
 window.consultarPresupuesto = async (id) => {
   const snap = await getDocs(collection(db, 'presupuestos'));
+  const materialesSnap = await getDocs(collection(db, 'materiales'));
+
   let p = null;
   snap.forEach(doc => {
     if (doc.id === id) p = { id: doc.id, ...doc.data() };
   });
   if (!p) return alert('Presupuesto no encontrado');
 
-  presupuesto = p.items;
+  // Obtener precios actualizados
+  const preciosActuales = {};
+  materialesSnap.forEach(doc => {
+    const mat = doc.data();
+    preciosActuales[mat.nombre] = mat.precio / mat.fraccionamiento;
+  });
+
+  // Actualizar precios dentro del presupuesto
+  presupuesto = p.items.map(item => {
+    const nuevoPrecio = preciosActuales[item.nombre] || item.precioPorUnidad;
+    const nuevoSubtotal = nuevoPrecio * item.cantidad * item.multiplicadorTotal;
+    return {
+      ...item,
+      precioPorUnidad: nuevoPrecio,
+      subtotal: nuevoSubtotal
+    };
+  });
+
   nombrePresupuesto.value = p.nombre;
   presupuestoIdActual = p.id;
   renderPresupuesto();
