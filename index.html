@@ -488,48 +488,51 @@ window.consultarPresupuesto = async (id) => {
     preciosActuales[mat.nombre] = mat.precio / mat.fraccionamiento;
   });
 
-  // Actualizar precios dentro del presupuesto
+  let huboCambios = false;
+
+  // Actualizar precios y detectar cambios
   presupuesto = p.items.map(item => {
     const nuevoPrecio = preciosActuales[item.nombre] || item.precioPorUnidad;
-    const nuevoSubtotal = nuevoPrecio * item.cantidad * item.multiplicadorTotal;
+    const precioViejo = item.precioPorUnidad;
+    const subtotalNuevo = nuevoPrecio * item.cantidad * item.multiplicadorTotal;
+
+    if (Math.abs(nuevoPrecio - precioViejo) > 0.01) {
+      huboCambios = true;
+    }
+
     return {
       ...item,
       precioPorUnidad: nuevoPrecio,
-      subtotal: nuevoSubtotal
+      subtotal: subtotalNuevo
     };
   });
 
   nombrePresupuesto.value = p.nombre;
-presupuestoIdActual = p.id;
-renderPresupuesto();
+  presupuestoIdActual = p.id;
+  renderPresupuesto();
 
-// Crear un contenedor para el ícono
-const iconoWrapper = document.createElement('div');
-iconoWrapper.style.display = 'flex';
-iconoWrapper.style.alignItems = 'center';
+  // 👇 Mostrar ícono solo si hubo diferencias de precio
+  if (huboCambios) {
+    const iconoWrapper = document.createElement('div');
+    iconoWrapper.style.display = 'flex';
+    iconoWrapper.style.alignItems = 'center';
 
-// Crear el ícono Lucide
-const icono = document.createElement('i');
-icono.setAttribute('data-lucide', 'refresh-ccw');
-icono.style.color = '#f1c40f';
-icono.style.opacity = '0.9';
-icono.style.cursor = 'default';
-icono.title = 'Precios actualizados'; // 👈 Tooltip opcional
+    const icono = document.createElement('i');
+    icono.setAttribute('data-lucide', 'refresh-ccw');
+    icono.style.color = '#f1c40f';
+    icono.style.opacity = '0.9';
+    icono.title = 'Precios actualizados';
 
-// Insertar el ícono en el contenedor
-iconoWrapper.appendChild(icono);
+    iconoWrapper.appendChild(icono);
 
-// Agregar al lado del input
-const wrapper = document.getElementById('nombre-wrapper');
-wrapper.appendChild(iconoWrapper);
+    const wrapper = document.getElementById('nombre-wrapper');
+    wrapper.appendChild(iconoWrapper);
+    lucide.createIcons();
 
-// Renderizar ícono Lucide
-lucide.createIcons();
-
-// Eliminar ícono completo luego de 3 segundos
-setTimeout(() => {
-  iconoWrapper.remove();
-}, 3000);
+    setTimeout(() => {
+      iconoWrapper.remove();
+    }, 3000);
+  }
 };
 
 window.eliminarPresupuesto = async (id) => {
