@@ -1,580 +1,147 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <title>Linda Herrería - Presupuestos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/png" href="lindaherreriaColor.png" />
-  <link rel="stylesheet" href="style.css" />
-</head>
 <body class="modo-oscuro">
   <h2>Linda Herrería</h2>
 
- <!-- Menú Hamburguesa -->
-<div class="menu-hamburguesa" onclick="toggleMenu()">≡</div>
-
-<div class="opciones-menu hidden" id="menuOpciones">
-  <a href="cargar-materiales.html">
-    <i data-lucide="plus-circle"></i> Cargar nuevo material
-  </a>
-  <a href="config-tareas.html">
-    <i data-lucide="settings"></i> Configurar tareas
-  </a>
-  <a href="lista-materiales.html">
-  <i data-lucide="clipboard-list"></i> Lista de materiales
-</a>
-  <a href="lista-pedidos.html">
-  <i data-lucide="file-text"></i> Lista de pedidos
-</a>
-</div>
- 
-<div id="menu-categorias" class="trabajos-menu-custom">
- <button id="toggle-categorias" class="boton-gris">
-  <i data-lucide="list"></i> Categorías
-</button>
-  <div class="trabajos-lista hidden">
-    <label><input type="radio" name="cat" value="todas" checked> Todas las categorías</label>
-    <label><input type="radio" name="cat" value="caños estructurales"> Caños estructurales cuadrados</label>
-    <label><input type="radio" name="cat" value="caños estructurales redondos"> Caños estructurales redondos</label>
-    <label><input type="radio" name="cat" value="hierros cuadrados"> Hierros cuadrados</label>
-    <label><input type="radio" name="cat" value="hierros redondos"> Hierros redondos</label>
-    <label><input type="radio" name="cat" value="planchuelas"> Planchuelas</label>
-    <label><input type="radio" name="cat" value="hierros angulo"> Angulo</label>
-    <label><input type="radio" name="cat" value="laminas"> Láminas</label>
-    <label><input type="radio" name="cat" value="herrajes"> Herrajes</label>
-  </div>
-</div>
-  <div id="carrusel-materiales" class="carrusel"></div>
-  <div id="material-seleccionado"></div>
+  <!-- ... Menú, categorías, carrusel, selección de materiales, etc. ... -->
 
   <hr />
   <h2>Presupuesto Actual</h2>
-<input type="text" id="nombre-presupuesto" placeholder="Nombre presupuesto" />
-  <label style="margin-top: 1rem; display: block;">Imagen 1 (opcional)</label>
-<input type="file" id="imagen1-presupuesto" accept="image/*" />
+  <input type="text" id="nombre-presupuesto" placeholder="Nombre presupuesto" />
 
-<label style="margin-top: 1rem; display: block;">Imagen 2 (opcional)</label>
-<input type="file" id="imagen2-presupuesto" accept="image/*" />
+  <!-- INPUTS DE IMÁGENES -->
+  <label style="margin-top: 1rem; display: block;">Imagen 1 (opcional)</label>
+  <input type="file" id="imagen1-presupuesto" accept="image/*" />
+
+  <label style="margin-top: 1rem; display: block;">Imagen 2 (opcional)</label>
+  <input type="file" id="imagen2-presupuesto" accept="image/*" />
+
   <button id="guardar-presupuesto" class="boton-naranja">Guardar presupuesto</button>
 
   <ul id="presupuesto"></ul>
   <p><strong>Total estimado: $<span id="total">0</span></strong></p>
-<div id="menu-orden" class="trabajos-menu-custom">
-  <button id="toggle-orden" class="boton-gris">Ordenar por</button>
-  <div class="trabajos-lista hidden">
-    <label><input type="radio" name="orden" value="fecha-desc" checked> Fecha ↓</label>
-    <label><input type="radio" name="orden" value="fecha-asc"> Fecha ↑</label>
-    <label><input type="radio" name="orden" value="nombre-asc"> Nombre A-Z</label>
-    <label><input type="radio" name="orden" value="nombre-desc"> Nombre Z-A</label>
-    <label><input type="radio" name="orden" value="total-desc"> Total ↓</label>
-    <label><input type="radio" name="orden" value="total-asc"> Total ↑</label>
-  </div>
-</div>
+
   <div id="presupuestos-guardados"></div>
-<script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase + lógica -->
   <script type="module">
-    lucide.createIcons();
-    import { db } from './firebase-config.js';
+    import { db, storage } from './firebase-config.js';
     import {
       collection, getDocs, addDoc, deleteDoc, doc, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import {
+      ref, uploadBytes, getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
 
-    let trabajos = {};
-    let materiales = [];
+    // ... tus otras funciones como cargarMateriales, renderSeleccion, etc. ...
+
+    const btnGuardar = document.getElementById('guardar-presupuesto');
+    const totalSpan = document.getElementById('total');
+    const nombrePresupuesto = document.getElementById('nombre-presupuesto');
     let presupuesto = [];
     let presupuestoIdActual = null;
 
-    
-    const carrusel = document.getElementById('carrusel-materiales');
-    const contenedorSeleccion = document.getElementById('material-seleccionado');
-    const presupuestoUl = document.getElementById('presupuesto');
-    const totalSpan = document.getElementById('total');
-    const nombrePresupuesto = document.getElementById('nombre-presupuesto');
-    const btnGuardar = document.getElementById('guardar-presupuesto');
+    btnGuardar.addEventListener('click', async () => {
+      const nombre = nombrePresupuesto.value.trim();
+      if (!nombre) return alert('Poné un nombre al presupuesto.');
 
-   
-let categoriaSeleccionada = 'todas';
-const toggleCategoriasBtn = document.getElementById('toggle-categorias');
-const listaCategorias = document.querySelector('#menu-categorias .trabajos-lista');
+      const archivo1 = document.getElementById('imagen1-presupuesto').files[0];
+      const archivo2 = document.getElementById('imagen2-presupuesto').files[0];
+      let imagenes = [];
 
-toggleCategoriasBtn.addEventListener('click', () => {
-  listaCategorias.classList.toggle('hidden');
-});
+      const subirImagen = async (archivo) => {
+        const refImagen = ref(storage, `presupuestos/${Date.now()}_${archivo.name}`);
+        const snap = await uploadBytes(refImagen, archivo);
+        return await getDownloadURL(snap.ref);
+      };
 
-document.querySelectorAll('input[name="cat"]').forEach(radio => {
-  radio.addEventListener('change', (e) => {
-    categoriaSeleccionada = e.target.value;
+      if (archivo1) imagenes.push(await subirImagen(archivo1));
+      if (archivo2) imagenes.push(await subirImagen(archivo2));
 
-    let icono = 'list'; // icono por defecto
+      const fechaActual = new Date();
+      const data = {
+        nombre,
+        fecha: fechaActual.toLocaleDateString('es-AR'),
+        fechaOrden: fechaActual.toISOString(),
+        total: redondearADecena(parseFloat(totalSpan.textContent.replace(/\./g, ''))).toFixed(0),
+        items: presupuesto,
+        imagenes
+      };
 
-    switch (categoriaSeleccionada) {
-      case 'caños estructurales':
-        icono = 'square-square'; // caño cuadrado
-        break;
-      case 'caños estructurales redondos':
-        icono = 'circle'; // caño redondo
-        break;
-      case 'hierros cuadrados':
-        icono = 'box'; // barras
-        break;
-      case 'hierros redondos':
-        icono = 'blend'; // redondo
-        break;
-      case 'planchuelas':
-        icono = 'stretch-horizontal'; // chapas
-        break;
-      case 'hierros angulo':
-        icono = 'triangle'; // ángulo
-        break;
-      case 'laminas':
-        icono = 'layers'; // laminas
-        break;
-      case 'herrajes':
-        icono = 'key-round'; // herramientas
-        break;
-      case 'todas':
-        icono = 'list'; // lista general
-        break;
-    }
-
-    toggleCategoriasBtn.innerHTML = `<i data-lucide="${icono}"></i> ${categoriaSeleccionada.charAt(0).toUpperCase() + categoriaSeleccionada.slice(1)}`;
-
-    lucide.createIcons(); // 🔥 ¡recrear iconos cada vez que cambia!
-
-    aplicarFiltros();
-    listaCategorias.classList.add('hidden');
-  });
-});
-    async function cargarMateriales() {
-      const snap = await getDocs(collection(db, 'materiales'));
-      materiales = [];
-      snap.forEach(doc => materiales.push({ id: doc.id, ...doc.data() }));
-     aplicarFiltros();
-    }
-function aplicarFiltros() {
- const categoria = categoriaSeleccionada;
-  let filtrados = materiales;
-
-  if (categoria !== 'todas') {
-    filtrados = filtrados.filter(m => (m.categoria || '').toLowerCase() === categoria);
-  }
-
-  renderCarrusel(filtrados);
-}
-    async function cargarTareas() {
-      const snap = await getDocs(collection(db, 'tareas'));
-      trabajos = {};
-      snap.forEach(doc => {
-        const data = doc.data();
-        trabajos[data.nombre] = data.multiplicador;
-      });
-    }
-
-    function renderCarrusel(lista) {
-      carrusel.innerHTML = '';
-      lista.forEach((mat) => {
-        const tarjeta = document.createElement('div');
-        tarjeta.className = 'tarjeta';
-       const precioUnidad = mat.precio / mat.fraccionamiento;
-tarjeta.innerHTML = `
-  <strong>${mat.nombre}</strong>
-  <p>
-    $${formatearMoneda(mat.precio)} → 
-    $${formatearMoneda(precioUnidad)} x ${
-      mat.unidad === 'metro' ? 'mt' : mat.unidad === 'superficie' ? 'm²' : 'ud'
-    }
-  </p>
-`;
-        tarjeta.addEventListener('click', () => renderSeleccion(mat));
-        carrusel.appendChild(tarjeta);
-      });
-    }
-
-    function calcularTotalDesdeTexto(texto) {
-      const partes = texto.split('+').join(',').split(/,|y/i).map(p => p.trim());
-      let total = 0;
-      for (let parte of partes) {
-        const match = parte.match(/(\d+(?:[.,]\d+)?)\s*(?:x|de)?\s*(\d+(?:[.,]\d+)?)/i);
-        if (match) {
-          const cantidad = parseFloat(match[1].replace(',', '.'));
-          const medida = parseFloat(match[2].replace(',', '.'));
-          total += cantidad * medida;
-        }
+      if (presupuestoIdActual) {
+        await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
+        alert(`Presupuesto "${nombre}" actualizado.`);
+      } else {
+        const docRef = await addDoc(collection(db, 'presupuestos'), data);
+        presupuestoIdActual = docRef.id;
+        alert(`Presupuesto "${nombre}" guardado.`);
       }
-      return total;
-    }
-function formatearMoneda(valor) {
-  return Math.round(valor).toLocaleString('es-AR', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  });
-}
 
-function redondearADecena(valor) {
-  return Math.round(valor / 100) * 100;
-}
-    
-function renderSeleccion(mat) {
-  contenedorSeleccion.innerHTML = '';
-
-  const precioPorUnidad = mat.precio / mat.fraccionamiento;
-
-  const trabajosInputs = Object.entries(trabajos).map(([nombre, mult]) => `
-    <label>
-      <input type="checkbox" class="check-trabajo" data-nombre="${nombre}">
-      ${nombre} × ${mult}
-    </label>
-  `).join('<br>');
-
-  const html = `
-    <div class="tarjeta-expandida">
-      <h3>${mat.nombre}</h3>
-     <p class="detalle-precio-expandido">
-  <strong>$${formatearMoneda(mat.precio)}</strong> → 
-  $${formatearMoneda(precioPorUnidad)} x ${
-    mat.unidad === 'metro' ? 'mt' : mat.unidad === 'superficie' ? 'm²' : 'u'
-  }
-</p>
-      <input type="text" id="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5..." />
-      <div class="trabajos-contenedor">
-        <div id="trabajos-menu" class="trabajos-menu-custom">
-          <button id="toggle-trabajos" class="boton-gris">🔧 Trabajos</button>
-          <div class="trabajos-lista hidden">${trabajosInputs}</div>
-        </div>
-        <span id="multiplicador-acumulado" class="label-multiplicador">× 0</span>
-      </div>
-      <button class="boton-verde" id="btn-agregar">Agregar</button>
-    </div>
-  `;
-
-  contenedorSeleccion.innerHTML = html;
-
-  setTimeout(() => {
-    const labelMultiplicador = document.getElementById('multiplicador-acumulado');
-    const checkboxes = contenedorSeleccion.querySelectorAll('.check-trabajo');
-    const toggleBtn = document.getElementById('toggle-trabajos');
-    const trabajosLista = contenedorSeleccion.querySelector('.trabajos-lista');
-
-    toggleBtn.addEventListener('click', () => {
-      trabajosLista.classList.toggle('hidden');
-    });
-document.getElementById('input-detalle').addEventListener('focus', () => {
-  trabajosLista.classList.add('hidden');
-});
-    checkboxes.forEach((checkbox) => {
-      checkbox.addEventListener('change', () => {
-        let total = 0;
-        checkboxes.forEach((check) => {
-          if (check.checked) {
-            const nombre = check.dataset.nombre;
-            total += trabajos[nombre];
-          }
-        });
-        labelMultiplicador.textContent = `× ${total.toFixed(2)}`;
-      });
-    });
-
-    document.getElementById('btn-agregar').addEventListener('click', () => {
-      const texto = document.getElementById('input-detalle').value.trim();
-      if (!texto) return alert("Ingresá el detalle de uso.");
-      const cantidad = calcularTotalDesdeTexto(texto);
-      if (!cantidad || isNaN(cantidad)) return alert("No se pudo interpretar la cantidad.");
-
-      let multiplicadorTotal = 0;
-      let trabajosSeleccionados = [];
-
-      checkboxes.forEach((check) => {
-        if (check.checked) {
-          const nombre = check.dataset.nombre;
-          const mult = trabajos[nombre];
-          multiplicadorTotal += mult;
-          trabajosSeleccionados.push(`${nombre} ×${mult}`);
-        }
-      });
-
-      if (multiplicadorTotal === 0) return alert("Seleccioná al menos un trabajo.");
-
-      const subtotal = precioPorUnidad * cantidad * multiplicadorTotal;
-
-      presupuesto.push({
-        nombre: mat.nombre,
-        unidad: mat.unidad,
-        cantidad,
-        precioPorUnidad,
-        trabajos: trabajosSeleccionados,
-        multiplicadorTotal,
-        subtotal
-      });
-
+      presupuesto = [];
       renderPresupuesto();
+      nombrePresupuesto.value = '';
+      presupuestoIdActual = null;
+      cargarPresupuestosGuardados();
+    });
 
-      contenedorSeleccion.classList.add('fade-out');
+    window.cargarPresupuestosGuardados = async function () {
+      const contenedor = document.getElementById('presupuestos-guardados');
+      const snap = await getDocs(collection(db, 'presupuestos'));
+      const docs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      contenedor.innerHTML = `
+        <h2>Presupuestos guardados</h2>
+        <ul>
+          ${docs.map(p => `
+            <li class="item-presupuesto" id="presupuesto-${p.id}">
+              <div class="datos-presu">
+                <span class="nombre">${p.nombre}</span>
+                <span class="fecha">${p.fecha}</span>
+                <span class="total">Total: $<span class="monto">${formatearMoneda(parseFloat(p.total))}</span></span>
+              </div>
+
+              ${(p.imagenes || []).map(url => `
+                <a href="${url}" target="_blank">
+                  <img src="${url}" alt="Imagen presupuesto" style="width: 100px; border-radius: 6px; margin: 10px 0;">
+                </a>
+              `).join('')}
+
+              <div class="menu-wrapper">
+                <button class="abrir-menu" data-id="${p.id}">Opciones</button>
+                <div class="menu-acciones hidden" id="menu-${p.id}">
+                  <button onclick="consultarPresupuesto('${p.id}')">Ver / Editar</button>
+                  <button onclick="compartirPresupuesto('${p.id}')">Enviar por WhatsApp</button>
+                  <button onclick="eliminarPresupuesto('${p.id}')">Eliminar</button>
+                  <button onclick="refrescarPresupuesto('${p.id}')">🔄 Refrescar</button>
+                </div>
+              </div>
+            </li>
+          `).join('')}
+        </ul>
+      `;
+
+      // Opcional: lógica para botones de opciones
       setTimeout(() => {
-        contenedorSeleccion.innerHTML = '';
-        contenedorSeleccion.classList.remove('fade-out');
-      }, 700);
-    });
-  }, 0);
-}
-
-    function renderPresupuesto() {
-      presupuestoUl.innerHTML = '';
-      let total = 0;
-
-      presupuesto.forEach((item, i) => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-  <div>
-    <span style="color: #f39c12; font-weight: bold;">${item.nombre}</span>,
-    ${item.cantidad.toFixed(2)} ${item.unidad === 'metro' ? 'mt' : item.unidad === 'superficie' ? 'm²' : 'ud.'},
-    <span style="color: #ccc;">$${formatearMoneda(item.precioPorUnidad)} x <strong>${item.multiplicadorTotal.toFixed(2)}</strong></span>,
-    <span style="color: #ccc;">Subtotal: <strong>$${formatearMoneda(item.subtotal)}</strong></span>
-  </div>
-  <button class="boton-rojo" onclick="eliminarItem(${i})">Eliminar</button>
-`;
-        presupuestoUl.appendChild(li);
-        total += item.subtotal;
-      });
-
-     const totalRedondeado = redondearADecena(total);
-totalSpan.textContent = formatearMoneda(totalRedondeado);
-    }
-
-    window.eliminarItem = (i) => {
-      presupuesto.splice(i, 1);
-      renderPresupuesto();
+        document.querySelectorAll('.abrir-menu').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            const menu = document.getElementById(`menu-${id}`);
+            document.querySelectorAll('.menu-acciones').forEach(m => {
+              if (m !== menu) m.classList.add('hidden');
+            });
+            menu.classList.toggle('hidden');
+          });
+        });
+      }, 0);
     };
 
-   import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
-import { storage } from './firebase-config.js';
+    function formatearMoneda(valor) {
+      return Math.round(valor).toLocaleString('es-AR');
+    }
 
-btnGuardar.addEventListener('click', async () => {
-  const nombre = nombrePresupuesto.value.trim();
-  if (!nombre) return alert('Poné un nombre al presupuesto.');
+    function redondearADecena(valor) {
+      return Math.round(valor / 100) * 100;
+    }
 
-  const archivo1 = document.getElementById('imagen1-presupuesto').files[0];
-  const archivo2 = document.getElementById('imagen2-presupuesto').files[0];
-  let imagenes = [];
-
-  const subirImagen = async (archivo) => {
-    const refImagen = ref(storage, `presupuestos/${Date.now()}_${archivo.name}`);
-    const snap = await uploadBytes(refImagen, archivo);
-    return await getDownloadURL(snap.ref);
-  };
-
-  if (archivo1) imagenes.push(await subirImagen(archivo1));
-  if (archivo2) imagenes.push(await subirImagen(archivo2));
-
-  const fechaActual = new Date();
-  const data = {
-    nombre,
-    fecha: fechaActual.toLocaleDateString('es-AR'),
-    fechaOrden: fechaActual.toISOString(),
-    total: redondearADecena(parseFloat(totalSpan.textContent.replace(/\./g, ''))).toFixed(0),
-    items: presupuesto,
-    imagenes // 👈 se guardan las URLs aquí
-  };
-
-  if (presupuestoIdActual) {
-    await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
-    alert(`Presupuesto "${nombre}" actualizado.`);
-  } else {
-    const docRef = await addDoc(collection(db, 'presupuestos'), data);
-    presupuestoIdActual = docRef.id;
-    alert(`Presupuesto "${nombre}" guardado.`);
-  }
-
-  presupuesto = [];
-  renderPresupuesto();
-  nombrePresupuesto.value = '';
-  presupuestoIdActual = null;
-  cargarPresupuestosGuardados();
-});
-let ordenSeleccionado = 'fecha-desc';
-
-const toggleOrdenBtn = document.getElementById('toggle-orden');
-const listaOrden = document.querySelector('#menu-orden .trabajos-lista');
-
-toggleOrdenBtn.addEventListener('click', () => {
-  listaOrden.classList.toggle('hidden');
-});
-
-document.querySelectorAll('input[name="orden"]').forEach(radio => {
-  radio.addEventListener('change', (e) => {
-    ordenSeleccionado = e.target.value;
-    toggleOrdenBtn.textContent = `Orden: ${e.target.nextSibling.textContent.trim()}`;
-    window.cargarPresupuestosGuardados(); // vuelve a cargar aplicando el nuevo orden
-    listaOrden.classList.add('hidden');
-  });
-});
-  window.cargarPresupuestosGuardados = async function () {
-  const contenedor = document.getElementById('presupuestos-guardados');
-  const snap = await getDocs(collection(db, 'presupuestos'));
-
-let docs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-docs.sort((a, b) => {
-  switch (ordenSeleccionado) {
-   case 'fecha-asc': return new Date(a.fechaOrden) - new Date(b.fechaOrden);
-case 'fecha-desc': return new Date(b.fechaOrden) - new Date(a.fechaOrden);
-    case 'nombre-asc': return a.nombre.localeCompare(b.nombre);
-    case 'nombre-desc': return b.nombre.localeCompare(a.nombre);
-    case 'total-asc': return parseFloat(a.total) - parseFloat(b.total);
-    case 'total-desc': return parseFloat(b.total) - parseFloat(a.total);
-    default: return 0;
-  }
-});
-
-contenedor.innerHTML = `
-  <h2>Presupuestos guardados</h2>
-  <ul>
-    ${docs.map(p => `
-      <li class="item-presupuesto" id="presupuesto-${p.id}">
-        <div class="datos-presu">
-          <span class="nombre">${p.nombre}</span>
-          <span class="fecha">${p.fecha}</span>
-          <span class="total">Total: $<span class="monto">${formatearMoneda(parseFloat(p.total))}</span></span>
-        </div>
-         ${(p.imagenes || []).map(url => `
-    <img src="${url}" alt="Imagen presupuesto" style="width: 100px; margin-top: 10px; border-radius: 6px;">
-  `).join('')}
-        <div class="menu-wrapper">
-          <button class="abrir-menu" data-id="${p.id}">Opciones</button>
-          <div class="menu-acciones hidden" id="menu-${p.id}">
-            <button onclick="consultarPresupuesto('${p.id}')">Ver / Editar</button>
-            <button onclick="compartirPresupuesto('${p.id}')">Enviar por WhatsApp</button>
-            <button onclick="eliminarPresupuesto('${p.id}')">Eliminar</button>
-            <button onclick="refrescarPresupuesto('${p.id}')">🔄 Refrescar</button>
-          </div>
-        </div>
-      </li>
-    `).join('')}
-  </ul>
-`;
-  setTimeout(() => {
-    document.querySelectorAll('.abrir-menu').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        const menu = document.getElementById(`menu-${id}`);
-        document.querySelectorAll('.menu-acciones').forEach(m => {
-          if (m !== menu) m.classList.add('hidden');
-        });
-        menu.classList.toggle('hidden');
-      });
-    });
-  }, 0);
-
-  window.addEventListener('click', () => {
-    document.querySelectorAll('.menu-acciones').forEach(m => m.classList.add('hidden'));
-  });
-};
-
-window.consultarPresupuesto = async (id) => {
-  const snap = await getDocs(collection(db, 'presupuestos'));
-  let p = null;
-  snap.forEach(doc => {
-    if (doc.id === id) p = { id: doc.id, ...doc.data() };
-  });
-  if (!p) return alert('Presupuesto no encontrado');
-
-  presupuesto = p.items;
-  nombrePresupuesto.value = p.nombre;
-  presupuestoIdActual = p.id;
-  renderPresupuesto();
-};
-
-window.eliminarPresupuesto = async (id) => {
-  if (!confirm("¿Seguro que querés eliminar este presupuesto?")) return;
-  await deleteDoc(doc(db, 'presupuestos', id));
-  alert("Presupuesto eliminado.");
-  window.cargarPresupuestosGuardados();
-};
-
-window.compartirPresupuesto = async (id) => {
-  const snap = await getDocs(collection(db, 'presupuestos'));
-  let p = null;
-  snap.forEach(doc => {
-    if (doc.id === id) p = { id: doc.id, ...doc.data() };
-  });
-  if (!p) return alert('Presupuesto no encontrado');
-
-const materiales = [...new Set(p.items.map(item => item.nombre))];
-const totalRedondeado = redondearADecena(parseFloat(p.total));
-
-const mensaje = `
---------------------------------------------------------------
-🛠 *Presupuesto: ${p.nombre}*
-_Fecha: ${p.fecha}_
-
-📋 *Materiales:*
-${materiales.map(m => `- _${m}_`).join('\n')}
-
-💰 *Total:* *$${formatearMoneda(totalRedondeado)}*
-
-_Gracias por tu consulta!!_
-*Linda Herrería*
---------------------------------------------------------------
-`.trim();
-const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-  window.open(url, '_blank');
-};
-    await cargarTareas();
-    await cargarMateriales();
     await window.cargarPresupuestosGuardados();
-    window.refrescarPresupuesto = async (id) => {
-  const presupuestoSnap = await getDocs(collection(db, 'presupuestos'));
-  const materialesSnap = await getDocs(collection(db, 'materiales'));
-
-  const preciosActuales = {};
-  materialesSnap.forEach(doc => {
-    const mat = doc.data();
-    preciosActuales[mat.nombre] = mat.precio / mat.fraccionamiento;
-  });
-
-  let presupuestoActual = null;
-  presupuestoSnap.forEach(doc => {
-    if (doc.id === id) presupuestoActual = { id: doc.id, ref: doc.ref, ...doc.data() };
-  });
-
-  if (!presupuestoActual) return alert('Presupuesto no encontrado.');
-
-  const nuevoTotal = presupuestoActual.items.reduce((acc, item) => {
-    const precio = preciosActuales[item.nombre] || item.precioPorUnidad;
-    return acc + precio * item.cantidad * item.multiplicadorTotal;
-  }, 0);
-
-  const totalAnterior = parseFloat(presupuestoActual.total);
-  if (Math.abs(nuevoTotal - totalAnterior) > 0.01) {
-    await updateDoc(presupuestoActual.ref, {
-      total: nuevoTotal.toFixed(2)
-    });
-
-    document.querySelector(`#presupuesto-${id} .monto`).textContent = formatearMoneda(nuevoTotal);
-    alert(`Presupuesto "${presupuestoActual.nombre}" actualizado con nuevo total.`);
-  } else {
-    alert('✅ El presupuesto ya está actualizado.');
-  }
-};
-    lucide.createIcons();
   </script>
-<script>
-function toggleMenu() {
-  const menu = document.getElementById('menuOpciones');
-  menu.classList.toggle('hidden');
-  lucide.createIcons(); // <<<<<< ACTIVAR ICONOS
-}
-
-// Cerrar menú si clickeás fuera
-window.addEventListener('click', function(e) {
-  const menu = document.getElementById('menuOpciones');
-  const hamburguesa = document.querySelector('.menu-hamburguesa');
-  
-  // Si el clic no fue sobre el menú ni sobre el botón hamburguesa
-  if (!menu.contains(e.target) && !hamburguesa.contains(e.target)) {
-    menu.classList.add('hidden');
-  }
-});
-</script>
 </body>
-</html>
