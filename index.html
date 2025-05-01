@@ -50,6 +50,11 @@
   <hr />
   <h2>Presupuesto Actual</h2>
 <input type="text" id="nombre-presupuesto" placeholder="Nombre presupuesto" />
+  <label style="margin-top: 1rem; display: block;">Imagen 1 (opcional)</label>
+<input type="file" id="imagen1-presupuesto" accept="image/*" />
+
+<label style="margin-top: 1rem; display: block;">Imagen 2 (opcional)</label>
+<input type="file" id="imagen2-presupuesto" accept="image/*" />
   <button id="guardar-presupuesto" class="boton-naranja">Guardar presupuesto</button>
 
   <ul id="presupuesto"></ul>
@@ -340,39 +345,51 @@ totalSpan.textContent = formatearMoneda(totalRedondeado);
       renderPresupuesto();
     };
 
-    btnGuardar.addEventListener('click', async () => {
-  const nombre = nombrePresupuesto.value.trim(); // ✅ ahora está definida correctamente
+   import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
+import { storage } from './firebase-config.js';
+
+btnGuardar.addEventListener('click', async () => {
+  const nombre = nombrePresupuesto.value.trim();
   if (!nombre) return alert('Poné un nombre al presupuesto.');
 
+  const archivo1 = document.getElementById('imagen1-presupuesto').files[0];
+  const archivo2 = document.getElementById('imagen2-presupuesto').files[0];
+  let imagenes = [];
+
+  const subirImagen = async (archivo) => {
+    const refImagen = ref(storage, `presupuestos/${Date.now()}_${archivo.name}`);
+    const snap = await uploadBytes(refImagen, archivo);
+    return await getDownloadURL(snap.ref);
+  };
+
+  if (archivo1) imagenes.push(await subirImagen(archivo1));
+  if (archivo2) imagenes.push(await subirImagen(archivo2));
+
   const fechaActual = new Date();
-  const fecha = fechaActual.toLocaleDateString('es-AR');
-  const fechaOrden = fechaActual.toISOString();
-  const totalTexto = totalSpan.textContent;
-const totalNum = parseFloat(totalTexto.replace(/\./g, '').replace(',', '.'));
-const totalRedondeado = redondearADecena(totalNum);
+  const data = {
+    nombre,
+    fecha: fechaActual.toLocaleDateString('es-AR'),
+    fechaOrden: fechaActual.toISOString(),
+    total: redondearADecena(parseFloat(totalSpan.textContent.replace(/\./g, ''))).toFixed(0),
+    items: presupuesto,
+    imagenes // 👈 se guardan las URLs aquí
+  };
 
-const data = {
-  nombre,
-  fecha,
-  fechaOrden,
-  total: totalRedondeado.toFixed(0),
-  items: presupuesto
-};
-      if (presupuestoIdActual) {
-        await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
-        alert(`Presupuesto "${nombre}" actualizado.`);
-      } else {
-        const docRef = await addDoc(collection(db, 'presupuestos'), data);
-        presupuestoIdActual = docRef.id;
-        alert(`Presupuesto "${nombre}" guardado.`);
-      }
+  if (presupuestoIdActual) {
+    await updateDoc(doc(db, 'presupuestos', presupuestoIdActual), data);
+    alert(`Presupuesto "${nombre}" actualizado.`);
+  } else {
+    const docRef = await addDoc(collection(db, 'presupuestos'), data);
+    presupuestoIdActual = docRef.id;
+    alert(`Presupuesto "${nombre}" guardado.`);
+  }
 
-      presupuesto = [];
-      renderPresupuesto();
-      nombrePresupuesto.value = '';
-      presupuestoIdActual = null;
-      cargarPresupuestosGuardados();
-    });
+  presupuesto = [];
+  renderPresupuesto();
+  nombrePresupuesto.value = '';
+  presupuestoIdActual = null;
+  cargarPresupuestosGuardados();
+});
 let ordenSeleccionado = 'fecha-desc';
 
 const toggleOrdenBtn = document.getElementById('toggle-orden');
@@ -418,6 +435,9 @@ contenedor.innerHTML = `
           <span class="fecha">${p.fecha}</span>
           <span class="total">Total: $<span class="monto">${formatearMoneda(parseFloat(p.total))}</span></span>
         </div>
+         ${(p.imagenes || []).map(url => `
+    <img src="${url}" alt="Imagen presupuesto" style="width: 100px; margin-top: 10px; border-radius: 6px;">
+  `).join('')}
         <div class="menu-wrapper">
           <button class="abrir-menu" data-id="${p.id}">Opciones</button>
           <div class="menu-acciones hidden" id="menu-${p.id}">
