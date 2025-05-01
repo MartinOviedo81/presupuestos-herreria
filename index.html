@@ -503,18 +503,32 @@ window.consultarPresupuesto = async (id) => {
 presupuestoIdActual = p.id;
 renderPresupuesto();
 
-// Mostrar ícono visual de actualización al lado del input de nombre
+// Crear un contenedor para el ícono
+const iconoWrapper = document.createElement('div');
+iconoWrapper.style.display = 'flex';
+iconoWrapper.style.alignItems = 'center';
+
+// Crear el ícono Lucide
 const icono = document.createElement('i');
 icono.setAttribute('data-lucide', 'refresh-ccw');
 icono.style.color = '#f1c40f';
 icono.style.opacity = '0.9';
+icono.style.cursor = 'default';
+icono.title = 'Precios actualizados'; // 👈 Tooltip opcional
 
+// Insertar el ícono en el contenedor
+iconoWrapper.appendChild(icono);
+
+// Agregar al lado del input
 const wrapper = document.getElementById('nombre-wrapper');
-wrapper.appendChild(icono);
+wrapper.appendChild(iconoWrapper);
+
+// Renderizar ícono Lucide
 lucide.createIcons();
 
+// Eliminar ícono completo luego de 3 segundos
 setTimeout(() => {
-  icono.remove();
+  iconoWrapper.remove();
 }, 3000);
 };
 
