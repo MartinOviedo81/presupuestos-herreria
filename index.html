@@ -498,8 +498,23 @@ window.consultarPresupuesto = async (id) => {
   });
 
   nombrePresupuesto.value = p.nombre;
-  presupuestoIdActual = p.id;
-  renderPresupuesto();
+presupuestoIdActual = p.id;
+renderPresupuesto();
+
+// Mostrar ícono visual de actualización al lado del input de nombre
+const icono = document.createElement('i');
+icono.setAttribute('data-lucide', 'refresh-ccw'); // o 'history', 'alert-circle', etc.
+icono.style.marginLeft = '8px';
+icono.style.color = '#f1c40f';
+icono.style.verticalAlign = 'middle';
+icono.style.opacity = '0.8';
+
+nombrePresupuesto.parentNode.appendChild(icono);
+lucide.createIcons(); // Re-renderiza el ícono
+
+setTimeout(() => {
+  icono.remove();
+}, 3000); // Ocultarlo después de 3 segundos
 };
 
 window.eliminarPresupuesto = async (id) => {
