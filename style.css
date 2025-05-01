@@ -145,7 +145,7 @@ button:hover {
   opacity: 0.9;
 }
 
-/* BOTONES DE NAVEGACIÓN SUPERIORES */
+/* BOTONES DE NAVEGACIÃ“N SUPERIORES */
 .botones-nav {
   display: flex;
   flex-wrap: wrap;
@@ -207,11 +207,8 @@ button:hover {
   }
 }
 .menu-wrapper {
-  position: absolute;
-  top: 0;
-  left: 8px;
-  z-index: 10;
-  margin: 0;     /* ✅ muy importante para que no lo empuje más abajo */
+  position: relative;
+  margin-top: 10px;
 }
 
 .abrir-menu {
@@ -235,11 +232,9 @@ button:hover {
   background: #2c2c2c;
   border: 1px solid #444;
   border-radius: 6px;
-  min-width: 120px; /* ✅ asegura que no sea estrecho */
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;
-  gap: 6px;
   width: 100%;
   z-index: 10;
 }
@@ -252,9 +247,6 @@ button:hover {
   font-size: 0.9rem;
   width: 100%;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 .menu-acciones button:hover {
   background-color: #444;
@@ -284,15 +276,15 @@ textarea:focus {
   outline: none;
 }
 
-/* Solo para el textarea (para darle más altura) */
+/* Solo para el textarea (para darle mÃ¡s altura) */
 textarea {
-  min-height: 100px; /* Aproximadamente 4 líneas */
+  min-height: 100px; /* Aproximadamente 4 lÃ­neas */
   resize: vertical; /* Permite al usuario agrandarlo hacia abajo si quiere */
 }
 .hidden {
   display: none;
 }
-/* Animación para desvanecer */
+/* AnimaciÃ³n para desvanecer */
 .fade-out {
   animation: fadeOut 0.7s forwards;
 }
@@ -318,7 +310,7 @@ textarea {
   border: 1px solid #555;
   border-radius: 6px;
 }
-/* ESTILO PARA MENÚ DE TRABAJOS EN TARJETA EXPANDIDA */
+/* ESTILO PARA MENÃš DE TRABAJOS EN TARJETA EXPANDIDA */
 .tarjeta-expandida details {
   background-color: #1e1e1e;
   border: 1px solid #555;
@@ -433,7 +425,7 @@ textarea {
 .opciones-menu a {
   display: flex;
   align-items: center;
-  gap: 8px; /* Separación entre ícono y texto */
+  gap: 8px; /* SeparaciÃ³n entre Ã­cono y texto */
 }
 
 .opciones-menu i {
@@ -475,7 +467,7 @@ textarea {
 }
 
 .btn-mini i svg {
-  stroke: #ccc !important; /* Fuerza ícono gris clarito */
+  stroke: #ccc !important; /* Fuerza Ã­cono gris clarito */
 }
 
 .btn-mini:hover i svg {
@@ -498,34 +490,4 @@ textarea {
   border: 1px solid #555;
   background-color: #2c2c2c;
   color: white;
-}
-.item-presupuesto {
-  position: relative;
-  padding: 12px;          /* margen general */
-  padding-top: 48px;      /* espacio reservado solo para el botón ⋮ */
-  border-radius: 10px;
-  margin-bottom: 12px;
-}
-
-.menu-wrapper.esquina-izquierda {
-  position: absolute;
-  top: 2px;     /* ✅ más pegado arriba */
-  left: 8px;
-  z-index: 10;
-}
-.menu-wrapper.esquina-izquierda .menu-acciones {
-  left: 0;
-  right: auto;
-}
-
-#toggle-form {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-#toggle-form i {
-  width: 20px;
-  height: 20px;
-  vertical-align: middle;
 }
