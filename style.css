@@ -491,3 +491,14 @@ textarea {
   background-color: #2c2c2c;
   color: white;
 }
+.boton-celeste {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px; /* Espacio entre icono y texto */
+}
+
+.boton-celeste i {
+  width: 20px;
+  height: 20px;
+}
