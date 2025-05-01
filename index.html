@@ -49,7 +49,9 @@
 
   <hr />
   <h2>Presupuesto Actual</h2>
-<input type="text" id="nombre-presupuesto" placeholder="Nombre presupuesto" />
+<div id="nombre-wrapper" style="display: flex; align-items: center; gap: 8px;">
+  <input type="text" id="nombre-presupuesto" placeholder="Nombre presupuesto" />
+</div>
   <button id="guardar-presupuesto" class="boton-naranja">Guardar presupuesto</button>
 
   <ul id="presupuesto"></ul>
@@ -503,18 +505,17 @@ renderPresupuesto();
 
 // Mostrar ícono visual de actualización al lado del input de nombre
 const icono = document.createElement('i');
-icono.setAttribute('data-lucide', 'refresh-ccw'); // o 'history', 'alert-circle', etc.
-icono.style.marginLeft = '8px';
+icono.setAttribute('data-lucide', 'refresh-ccw');
 icono.style.color = '#f1c40f';
-icono.style.verticalAlign = 'middle';
-icono.style.opacity = '0.8';
+icono.style.opacity = '0.9';
 
-nombrePresupuesto.parentNode.appendChild(icono);
-lucide.createIcons(); // Re-renderiza el ícono
+const wrapper = document.getElementById('nombre-wrapper');
+wrapper.appendChild(icono);
+lucide.createIcons();
 
 setTimeout(() => {
   icono.remove();
-}, 3000); // Ocultarlo después de 3 segundos
+}, 3000);
 };
 
 window.eliminarPresupuesto = async (id) => {
