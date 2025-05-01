@@ -216,7 +216,7 @@ function renderSeleccion(mat) {
 
   const precioPorUnidad = mat.precio / mat.fraccionamiento;
 
-  const trabajosActivosPorDefecto = ['Corte y soldadura', 'Pintura', 'Venta y enbalado'];
+  const trabajosActivosPorDefecto = ['Corte y soldadura', 'Pintura', 'Venta y embalado'];
 
   const trabajosInputs = Object.entries(trabajos).map(([nombre, mult]) => {
     const checked = trabajosActivosPorDefecto.includes(nombre) ? 'checked' : '';
@@ -252,7 +252,7 @@ function renderSeleccion(mat) {
   `;
 
   contenedorSeleccion.innerHTML = html;
-
+lucide.createIcons();
   setTimeout(() => {
     const labelMultiplicador = document.getElementById('multiplicador-acumulado');
     const checkboxes = contenedorSeleccion.querySelectorAll('.check-trabajo');
