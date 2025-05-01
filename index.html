@@ -216,26 +216,33 @@ function renderSeleccion(mat) {
 
   const precioPorUnidad = mat.precio / mat.fraccionamiento;
 
-  const trabajosInputs = Object.entries(trabajos).map(([nombre, mult]) => `
-    <label>
-      <input type="checkbox" class="check-trabajo" data-nombre="${nombre}">
-      ${nombre} × ${mult}
-    </label>
-  `).join('<br>');
+  const trabajosActivosPorDefecto = ['Corte y soldadura', 'Pintura', 'Venta y enbalado'];
+
+  const trabajosInputs = Object.entries(trabajos).map(([nombre, mult]) => {
+    const checked = trabajosActivosPorDefecto.includes(nombre) ? 'checked' : '';
+    return `
+      <label>
+        <input type="checkbox" class="check-trabajo" data-nombre="${nombre}" ${checked}>
+        ${nombre} × ${mult}
+      </label>
+    `;
+  }).join('<br>');
 
   const html = `
     <div class="tarjeta-expandida">
       <h3>${mat.nombre}</h3>
-     <p class="detalle-precio-expandido">
-  <strong>$${formatearMoneda(mat.precio)}</strong> → 
-  $${formatearMoneda(precioPorUnidad)} x ${
-    mat.unidad === 'metro' ? 'mt' : mat.unidad === 'superficie' ? 'm²' : 'u'
-  }
-</p>
+      <p class="detalle-precio-expandido">
+        <strong>$${formatearMoneda(mat.precio)}</strong> → 
+        $${formatearMoneda(precioPorUnidad)} x ${
+          mat.unidad === 'metro' ? 'mt' : mat.unidad === 'superficie' ? 'm²' : 'u'
+        }
+      </p>
       <input type="text" id="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5..." />
       <div class="trabajos-contenedor">
         <div id="trabajos-menu" class="trabajos-menu-custom">
-          <button id="toggle-trabajos" class="boton-gris">🔧 Trabajos</button>
+          <button id="toggle-trabajos" class="boton-gris">
+            <i data-lucide="hammer"></i> Trabajos
+          </button>
           <div class="trabajos-lista hidden">${trabajosInputs}</div>
         </div>
         <span id="multiplicador-acumulado" class="label-multiplicador">× 0</span>
@@ -255,9 +262,11 @@ function renderSeleccion(mat) {
     toggleBtn.addEventListener('click', () => {
       trabajosLista.classList.toggle('hidden');
     });
-document.getElementById('input-detalle').addEventListener('focus', () => {
-  trabajosLista.classList.add('hidden');
-});
+
+    document.getElementById('input-detalle').addEventListener('focus', () => {
+      trabajosLista.classList.add('hidden');
+    });
+
     checkboxes.forEach((checkbox) => {
       checkbox.addEventListener('change', () => {
         let total = 0;
@@ -270,6 +279,16 @@ document.getElementById('input-detalle').addEventListener('focus', () => {
         labelMultiplicador.textContent = `× ${total.toFixed(2)}`;
       });
     });
+
+    // ✅ Calcular total inicial con los prechequeados
+    let totalInicial = 0;
+    checkboxes.forEach((check) => {
+      if (check.checked) {
+        const nombre = check.dataset.nombre;
+        totalInicial += trabajos[nombre];
+      }
+    });
+    labelMultiplicador.textContent = `× ${totalInicial.toFixed(2)}`;
 
     document.getElementById('btn-agregar').addEventListener('click', () => {
       const texto = document.getElementById('input-detalle').value.trim();
