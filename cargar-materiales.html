@@ -10,7 +10,10 @@
   
 <body class="modo-oscuro">
   <h2>Agregar o Editar Material</h2>
-
+<h3>Cargar materiales desde Excel</h3>
+<input type="file" id="excelFile" accept=".xlsx" />
+<button id="btn-importar" class="boton-verde">📥 Importar materiales</button>
+<hr>
   <form id="form-material">
     <label>Nombre del material:
       <input type="text" id="nombre" required>
@@ -55,7 +58,7 @@
   <hr>
   <h2>Materiales cargados</h2>
   <ul id="lista-materiales"></ul>
-
+<script type="module" src="https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs"></script>
   <script type="module">
     import { db } from './firebase-config.js';
     import {
@@ -166,6 +169,47 @@ const data = {
     });
 
     cargarMateriales();
+    import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs";
+
+const fileInput = document.getElementById("excelFile");
+const btnImportar = document.getElementById("btn-importar");
+
+btnImportar.addEventListener("click", async () => {
+  const file = fileInput.files[0];
+  if (!file) return alert("Seleccioná un archivo Excel primero.");
+
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data);
+  const hoja = workbook.Sheets[workbook.SheetNames[0]];
+  const materiales = XLSX.utils.sheet_to_json(hoja);
+
+  for (let m of materiales) {
+    const q = query(collection(db, "materiales"), where("nombre", "==", m.nombre));
+    const snap = await getDocs(q);
+
+    const materialData = {
+      nombre: m.nombre,
+      unidad: m.unidad,
+      fraccionamiento: parseFloat(m.fraccionamiento),
+      precio: parseFloat(m.precio),
+      descripcion: m.descripcion || "",
+      categoria: m.categoria || "",
+      fecha: new Date().toLocaleString()
+    };
+
+    if (!snap.empty) {
+      const docRef = snap.docs[0].ref;
+      await updateDoc(docRef, materialData);
+      console.log("Actualizado:", m.nombre);
+    } else {
+      await addDoc(collection(db, "materiales"), materialData);
+      console.log("Agregado:", m.nombre);
+    }
+  }
+
+  alert("✅ Materiales importados correctamente.");
+  location.reload();
+});
   </script>
 </body>
 </html>
