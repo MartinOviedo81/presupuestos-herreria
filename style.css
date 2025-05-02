@@ -502,3 +502,18 @@ textarea {
   width: 20px;
   height: 20px;
 }
+boton-verde-oscuro {
+  background-color: #105823;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.boton-verde-oscuro:hover {
+  background-color: #0d4a1c;
+}
