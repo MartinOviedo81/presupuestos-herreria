@@ -502,7 +502,7 @@ textarea {
   width: 20px;
   height: 20px;
 }
-boton-verde-oscuro {
+.boton-verde-oscuro {
   background-color: #105823;
   color: white;
   border: none;
