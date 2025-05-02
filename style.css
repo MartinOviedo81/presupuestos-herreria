@@ -517,3 +517,13 @@ textarea {
 .boton-verde-oscuro:hover {
   background-color: #0d4a1c;
 }
+.boton-verde-oscuro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px; /* Espacio entre ícono y texto */
+}
+.boton-verde-oscuro i {
+  width: 20px;
+  height: 20px;
+}
