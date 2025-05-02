@@ -599,7 +599,8 @@ const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
     await cargarTareas();
     await cargarMateriales();
     await window.cargarPresupuestosGuardados();
-    window.refrescarPresupuesto = async (id) => {
+   
+window.refrescarPresupuesto = async (id) => {
   const presupuestoSnap = await getDocs(collection(db, 'presupuestos'));
   const materialesSnap = await getDocs(collection(db, 'materiales'));
 
@@ -616,15 +617,18 @@ const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
 
   if (!presupuestoActual) return alert('Presupuesto no encontrado.');
 
-  const nuevoTotal = presupuestoActual.items.reduce((acc, item) => {
+  let nuevoTotal = presupuestoActual.items.reduce((acc, item) => {
     const precio = preciosActuales[item.nombre] || item.precioPorUnidad;
     return acc + precio * item.cantidad * item.multiplicadorTotal;
   }, 0);
 
-  const totalAnterior = parseFloat(presupuestoActual.total);
-  if (Math.abs(nuevoTotal - totalAnterior) > 0.01) {
+  nuevoTotal = redondearADecena(nuevoTotal); // ✅ aplicar redondeo
+
+  const totalAnterior = redondearADecena(parseFloat(presupuestoActual.total)); // ✅ comparar redondeado
+
+  if (nuevoTotal !== totalAnterior) {
     await updateDoc(presupuestoActual.ref, {
-      total: nuevoTotal.toFixed(2)
+      total: nuevoTotal.toFixed(0) // ✅ sin decimales
     });
 
     document.querySelector(`#presupuesto-${id} .monto`).textContent = formatearMoneda(nuevoTotal);
@@ -633,7 +637,8 @@ const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
     alert('✅ El presupuesto ya está actualizado.');
   }
 };
-    lucide.createIcons();
+   
+  lucide.createIcons();
   </script>
 <script>
 function toggleMenu() {
