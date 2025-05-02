@@ -525,3 +525,14 @@ textarea {
 .boton-verde-oscuro i svg {
   stroke: #709b7b !important;
 }
+.boton-naranja {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px; /* Espacio entre icono y texto */
+}
+
+.boton-naranja i {
+  width: 20px;
+  height: 20px;
+}
