@@ -504,26 +504,24 @@ textarea {
 }
 .boton-verde-oscuro {
   background-color: #105823;
-  color: white;
+  color: #709b7b;
   border: none;
   border-radius: 6px;
   padding: 10px 16px;
   font-size: 0.95rem;
   cursor: pointer;
   width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   transition: background-color 0.3s ease;
 }
 
 .boton-verde-oscuro:hover {
   background-color: #0d4a1c;
 }
-.boton-verde-oscuro {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px; /* Espacio entre ícono y texto */
-}
-.boton-verde-oscuro i {
-  width: 20px;
-  height: 20px;
+
+.boton-verde-oscuro i svg {
+  stroke: #709b7b !important;
 }
