@@ -9,6 +9,16 @@
 </head>
   
 <body class="modo-oscuro">
+  <!-- Ícono para abrir el menú lateral -->
+<div class="menu-excel-icon" onclick="toggleSidebar()">📁</div>
+  <div id="sidebar" class="sidebar">
+  <h3>Opciones</h3>
+  <label>
+    Importar desde Excel:
+    <input type="file" id="excelInput" accept=".xlsx,.xls">
+  </label>
+  <!-- Más opciones futuras aquí -->
+</div>
   <h2>Agregar o Editar Material</h2>
 <h3>Cargar materiales desde Excel</h3>
 <input type="file" id="excelFile" accept=".xlsx" />
@@ -58,6 +68,20 @@
   <hr>
   <h2>Materiales cargados</h2>
   <ul id="lista-materiales"></ul>
+  <script>
+  // Muestra/oculta el sidebar
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('visible');
+  }
+  // Cierra al hacer clic fuera
+  window.addEventListener('click', function(e) {
+    const sidebar = document.getElementById('sidebar');
+    const icon = document.querySelector('.menu-excel-icon');
+    if (!sidebar.contains(e.target) && !icon.contains(e.target)) {
+      sidebar.classList.remove('visible');
+    }
+  });
+</script>
 <script type="module" src="https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs"></script>
   <script type="module">
     import { db } from './firebase-config.js';
