@@ -6,15 +6,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="lindaherreriaMC2.png" />
   <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  window.onload = () => {
+    lucide.createIcons();
+  }
+</script>
 </head>
   
 <body class="modo-oscuro">
+  <nav class="tabs-bar">
+  <button class="tab-button active" data-tab="manual"><i class="lucide lucide-pencil"></i> Carga manual</button>
+  <button class="tab-button" data-tab="excel"><i class="lucide lucide-file-up"></i> Importar Excel</button>
+  <button class="tab-button" data-tab="lista"><i class="lucide lucide-list"></i> Lista materiales</button>
+</nav>
 
-  <h2>Agregar o Editar Material</h2>
-<h3>Cargar materiales desde Excel</h3>
-<input type="file" id="excelFile" accept=".xlsx" />
-<button id="btn-importar" class="boton-verde">📥 Importar materiales</button>
-<hr>
+  
+<div id="seccion-excel" style="display: none;">
+  <h3>Cargar materiales desde Excel</h3>
+  <input type="file" id="excelFile" accept=".xlsx" />
+  <button id="btn-importar" class="boton-verde">📥 Importar materiales</button>
+</div>
+  <div id="seccion-manual">
+<h2>Agregar o Editar Material</h2>
   <form id="form-material">
     <label>Nombre del material:
       <input type="text" id="nombre" required>
@@ -55,11 +69,12 @@
   </form>
 
   <p id="mensaje"></p>
-
+</div>
   <hr>
+  <div id="seccion-lista" style="display: none;">
   <h2>Materiales cargados</h2>
   <ul id="lista-materiales"></ul>
- 
+ </div>
 <script type="module" src="https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs"></script>
   <script type="module">
     import { db } from './firebase-config.js';
@@ -212,6 +227,17 @@ btnImportar.addEventListener("click", async () => {
 
   alert("✅ Materiales importados correctamente.");
   location.reload();
+});
+    document.querySelectorAll('.tab-button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const target = btn.getAttribute('data-tab');
+    document.getElementById('seccion-manual').style.display = (target === 'manual') ? 'block' : 'none';
+    document.getElementById('seccion-excel').style.display = (target === 'excel') ? 'block' : 'none';
+    document.getElementById('seccion-lista').style.display = (target === 'lista') ? 'block' : 'none';
+  });
 });
   </script>
 </body>
