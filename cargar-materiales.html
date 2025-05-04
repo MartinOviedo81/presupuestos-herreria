@@ -57,7 +57,6 @@
   <select id="categoria" required>
     <option value="">Seleccionar categoría</option>
     <option value="caños estructurales">1 - Caños estructurales</option>
-<option value="caños estructurales redondos">1b - Caños estructurales redondos</option>
     <option value="hierros cuadrados">2 - Hierros cuadrados</option>
     <option value="hierros redondos">3 - Hierros redondos</option>
     <option value="planchuelas">4 - Planchuelas</option>
@@ -161,17 +160,14 @@ function formatearMoneda(valor) {
       const fecha = new Date().toLocaleString();
 
 const data = {
-    nombre: nombreInput.value,
-    categoria: categoriaInput.value,
-    descripcion: descripcionInput.value,
-    precio: parseFloat(precioInput.value),
-    unidad: unidadInput.value,
-    imagenURL,
-};
-
-if (idPersonalizado !== null) {
-    data.idPersonalizado = idPersonalizado;
-}
+  nombre,
+  unidad,
+  fraccionamiento: fraccion,
+  precio,
+  descripcion,
+  categoria: categoriaInput.value,
+  fecha
+}; 
 
       try {
         if (idMaterialEditando) {
