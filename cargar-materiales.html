@@ -161,15 +161,17 @@ function formatearMoneda(valor) {
       const fecha = new Date().toLocaleString();
 
 const data = {
-    ...(idPersonalizado !== null && { idPersonalizado }),
-  nombre,
-  unidad,
-  fraccionamiento: fraccion,
-  precio,
-  descripcion,
-  categoria: categoriaInput.value,
-  fecha
-}; 
+    nombre: nombreInput.value,
+    categoria: categoriaInput.value,
+    descripcion: descripcionInput.value,
+    precio: parseFloat(precioInput.value),
+    unidad: unidadInput.value,
+    imagenURL,
+};
+
+if (idPersonalizado !== null) {
+    data.idPersonalizado = idPersonalizado;
+}
 
       try {
         if (idMaterialEditando) {
