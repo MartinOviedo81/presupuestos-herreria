@@ -219,10 +219,15 @@ btnImportar.addEventListener("click", async () => {
   const materiales = XLSX.utils.sheet_to_json(hoja);
 
   for (let m of materiales) {
-    const q = query(collection(db, "materiales"), where("nombre", "==", m.nombre));
-    const snap = await getDocs(q);
+    const materialID = m.id?.trim();
+
+    if (!materialID) {
+      console.warn(`❌ El material "${m.nombre}" no tiene ID. Se omite.`);
+      continue;
+    }
 
     const materialData = {
+      id: materialID,
       nombre: m.nombre,
       unidad: m.unidad,
       fraccionamiento: parseFloat(m.fraccionamiento),
@@ -232,13 +237,15 @@ btnImportar.addEventListener("click", async () => {
       fecha: new Date().toLocaleString()
     };
 
-    if (!snap.empty) {
-      const docRef = snap.docs[0].ref;
+    const docRef = doc(db, "materiales", materialID);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
       await updateDoc(docRef, materialData);
-      console.log("Actualizado:", m.nombre);
+      console.log("🔁 Actualizado:", materialID);
     } else {
-      await addDoc(collection(db, "materiales"), materialData);
-      console.log("Agregado:", m.nombre);
+      await setDoc(docRef, materialData);
+      console.log("➕ Agregado:", materialID);
     }
   }
 
