@@ -19,15 +19,14 @@
   <button class="tab-button" data-tab="excel"><i class="lucide lucide-file-up"></i> Importar Excel</button>
   <button class="tab-button" data-tab="lista"><i class="lucide lucide-list"></i> Lista materiales</button>
 </nav>
-
-  <h2>Agregar o Editar Material</h2>
+<hr>
   <div id="seccion-excel" style="display: none;">
 <h3>Cargar materiales desde Excel</h3>
 <input type="file" id="excelFile" accept=".xlsx" />
 <button id="btn-importar" class="boton-verde">📥 Importar materiales</button>
   </div>  
  <div id="seccion-manual">
-  <hr>
+    <h2>Agregar o Editar Material</h2>
   <form id="form-material">
     <label>Nombre del material:
       <input type="text" id="nombre" required>
@@ -69,7 +68,7 @@
 
   <p id="mensaje"></p>
   </div>  
-  <hr>
+
   <div id="seccion-lista" style="display: none;">
   <h2>Materiales cargados</h2>
   <ul id="lista-materiales"></ul>
