@@ -8,17 +8,16 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script>
-  window.onload = () => {
-    lucide.createIcons();
-  }
-</script>
-</head>
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+  </script>
   
 <body class="modo-oscuro">
 <nav class="tabs-bar">
-  <button class="tab-button active" data-tab="manual"><i class="lucide lucide-pencil"></i> Carga manual</button>
-  <button class="tab-button" data-tab="excel"><i class="lucide lucide-file-up"></i> Importar Excel</button>
-  <button class="tab-button" data-tab="lista"><i class="lucide lucide-list"></i> Lista materiales</button>
+  <button class="tab-button active" data-tab="manual"><i data-lucide="pencil"></i> Carga manual</button>
+  <button class="tab-button" data-tab="excel"><i data-lucide="file-up"></i> Importar Excel</button>
+  <button class="tab-button" data-tab="lista"><i data-lucide="list"></i> Lista materiales</button>
 </nav>
 <hr>
   <div id="seccion-excel" style="display: none;">
