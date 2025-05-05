@@ -77,11 +77,10 @@
 <script type="module" src="https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs"></script>
   <script type="module">
     import { db } from './firebase-config.js';
-    import {
-  collection, getDocs, addDoc, deleteDoc, doc, updateDoc,
-  query, where
-} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-
+   import {
+  getFirestore, collection, getDocs, getDoc, setDoc,
+  query, where, addDoc, updateDoc, deleteDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     const form = document.getElementById('form-material');
     const mensaje = document.getElementById('mensaje');
     const lista = document.getElementById('lista-materiales');
