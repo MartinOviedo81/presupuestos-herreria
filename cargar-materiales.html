@@ -193,8 +193,8 @@ const data = {
             id: idGenerado
           };
 
-          await addDoc(collection(db, 'materiales'), dataConId);
-          mensaje.textContent = `✅ Material "${nombre}" guardado con ID ${idGenerado}.`;
+         await setDoc(doc(db, 'materiales', idGenerado), dataConId);
+mensaje.textContent = `✅ Material "${nombre}" guardado con ID ${idGenerado}.`;
         }
         form.reset();
         cargarMateriales();
