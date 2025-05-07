@@ -149,14 +149,35 @@ function formatearMoneda(valor) {
     };
 
     
+const PREFIJOS_CATEGORIA = {
+  "caño estructural cuadrado": "CAQ",
+  "caño estructural redondo": "CAR",
+  "hierro cuadrado": "HIQ",
+  "hierro redondo": "HIR",
+  "planchuela": "PLA",
+  "angulo": "ANG",
+  "laminas": "LAM",
+  "herrajes": "HER"
+};
+
 async function generarIdMaterial(categoria) {
-  const prefijo = categoria.toUpperCase().substring(0, 4); // CAÑO, ANGULO, etc.
+  const prefijo = PREFIJOS_CATEGORIA[categoria] || categoria.toUpperCase().substring(0, 3);
   const materialesRef = collection(db, "materiales");
   const q = query(materialesRef, where("categoria", "==", categoria));
   const snapshot = await getDocs(q);
 
-  const count = snapshot.size + 1;
-  const numero = count.toString().padStart(5, "0");
+  let max = 0;
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    if (data.id && data.id.startsWith(prefijo)) {
+      const num = parseInt(data.id.split("-")[1]);
+      if (!isNaN(num) && num > max) {
+        max = num;
+      }
+    }
+  });
+
+  const numero = (max + 1).toString().padStart(5, "0");
   return `${prefijo}-${numero}`;
 }
 
@@ -210,6 +231,8 @@ mensaje.textContent = `✅ Material "${nombre}" guardado con ID ${idGenerado}.`;
 const fileInput = document.getElementById("excelFile");
 const btnImportar = document.getElementById("btn-importar");
 
+
+
 btnImportar.addEventListener("click", async () => {
   const file = fileInput.files[0];
   if (!file) return alert("Seleccioná un archivo Excel primero.");
@@ -220,10 +243,19 @@ btnImportar.addEventListener("click", async () => {
   const materiales = XLSX.utils.sheet_to_json(hoja);
 
   for (let m of materiales) {
-    const materialID = m.id?.trim();
+    let materialID = m.id?.trim();
 
     if (!materialID) {
-      console.warn(`❌ El material "${m.nombre}" no tiene ID. Se omite.`);
+      // Si no hay ID, generamos uno con prefijo
+      if (!m.categoria) {
+        console.warn(`⛔ No se puede generar ID sin categoría: ${m.nombre}`);
+        continue;
+      }
+     materialID = await generarIdMaterial(m.categoria.trim());
+    }
+
+    if (!m.unidad || !m.fraccionamiento) {
+      console.warn(`⛔ Material ignorado por datos incompletos: ${materialID}`);
       continue;
     }
 
