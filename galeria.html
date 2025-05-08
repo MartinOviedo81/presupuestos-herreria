@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Galería de imágenes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="modo-oscuro">
+  <h2>Galería de imágenes</h2>
+
+  <div class="tarjeta-expandida">
+    <input type="file" id="input-file" />
+    <input type="text" id="input-etiqueta" placeholder="Etiqueta (ej: portón, reja, etc.)" />
+    <button class="boton-verde" id="subir-imagen">Subir imagen</button>
+  </div>
+
+  <div id="galeria" class="galeria-grid"></div>
+
+  <script type="module">
+    import { db, storage } from './firebase-config.js';
+    import {
+      collection, addDoc, getDocs, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import {
+      ref, uploadBytes, getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
+
+    const inputFile = document.getElementById('input-file');
+    const inputEtiqueta = document.getElementById('input-etiqueta');
+    const subirBtn = document.getElementById('subir-imagen');
+    const galeria = document.getElementById('galeria');
+
+    subirBtn.addEventListener('click', async () => {
+      const file = inputFile.files[0];
+      const etiqueta = inputEtiqueta.value.trim();
+      if (!file || !etiqueta) return alert('Completá todos los campos.');
+
+      subirBtn.disabled = true;
+      subirBtn.textContent = 'Subiendo...';
+
+      const storageRef = ref(storage, `imagenes/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+
+      await addDoc(collection(db, 'imagenes'), {
+        url,
+        etiqueta,
+        nombre: file.name,
+        timestamp: serverTimestamp()
+      });
+
+      alert('Imagen subida.');
+      inputFile.value = '';
+      inputEtiqueta.value = '';
+      subirBtn.disabled = false;
+      subirBtn.textContent = 'Subir imagen';
+      mostrarGaleria();
+    });
+
+    async function mostrarGaleria() {
+      galeria.innerHTML = '';
+      const snap = await getDocs(collection(db, 'imagenes'));
+      const docs = snap.docs.map(doc => doc.data());
+
+      docs.sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds);
+
+      for (const img of docs) {
+        const div = document.createElement('div');
+        div.className = 'tarjeta imagen-item';
+        div.innerHTML = `
+          <img src="${img.url}" alt="${img.nombre}" class="imagen-preview" />
+          <p class="etiqueta">${img.etiqueta}</p>
+        `;
+        galeria.appendChild(div);
+      }
+    }
+
+    mostrarGaleria();
+  </script>
+</body>
+</html>
