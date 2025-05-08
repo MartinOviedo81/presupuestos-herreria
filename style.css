@@ -608,3 +608,34 @@ textarea {
   border-bottom: 2px solid #00bcd4;
   font-weight: bold;
 }
+
+    /* Si querés mover esto a style.css podés copiarlo allá */
+    .galeria-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      padding: 20px;
+    }
+
+    .imagen-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #2c2c2c;
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .imagen-preview {
+      max-width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .etiqueta {
+      font-size: 0.9em;
+      color: #ccc;
+    }
+  
