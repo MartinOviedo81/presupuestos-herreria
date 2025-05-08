@@ -2,7 +2,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-//import { getStorage } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js"; // 👈 AGREGADO
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js"; // 👈 AGREGADO
 
 const firebaseConfig = {
   apiKey: "AIzaSyDirRKj8_-oleUdIhDl7LUud-Y9I_T7THQ",
@@ -15,6 +15,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-//const storage = getStorage(app); // 👈 INSTANCIAR STORAGE
+const storage = getStorage(app); // 👈 INSTANCIAR STORAGE
 
-export { db }; //, storage }; // 👈 EXPORTAR AMBOS
+export { db , storage }; // 👈 EXPORTAR AMBOS
