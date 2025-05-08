@@ -8,7 +8,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDirRKj8_-oleUdIhDl7LUud-Y9I_T7THQ",
   authDomain: "presupuestos-herreria.firebaseapp.com",
   projectId: "presupuestos-herreria",
- // storageBucket: "presupuestos-herreria.appspot.com", // 👈 NECESARIO PARA STORAGE
+  storageBucket: "presupuestos-herreria.appspot.com", // 👈 NECESARIO PARA STORAGE
   messagingSenderId: "824709991960",
   appId: "1:824709991960:web:2993a2886f6aa4def3bd6d"
 };
