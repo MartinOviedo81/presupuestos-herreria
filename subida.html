@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Subir imagen a Cloudinary</title>
+</head>
+<body>
+  <h2>Subir imagen a Cloudinary</h2>
+  <input type="file" id="fileInput" accept="image/*" />
+  <div id="galeria"></div>
+
+  <script>
+    const cloudName = "TU_CLOUD_NAME"; // ⚠️ Reemplazá esto con tu cloud_name
+    const uploadPreset = "preset_publico"; // ⚠️ Reemplazá con el nombre de tu preset
+
+    document.getElementById("fileInput").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", uploadPreset);
+
+      try {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.secure_url) {
+          console.log("Imagen subida:", data.secure_url);
+
+          // Mostrar la imagen subida
+          const img = document.createElement("img");
+          img.src = data.secure_url;
+          img.style.width = "150px";
+          img.style.margin = "10px";
+          document.getElementById("galeria").appendChild(img);
+        } else {
+          console.error("Error al subir:", data);
+        }
+      } catch (error) {
+        console.error("Error al subir la imagen:", error);
+      }
+    });
+  </script>
+</body>
+</html
