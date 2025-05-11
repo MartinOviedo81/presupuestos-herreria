@@ -1,17 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Subir imagen a Cloudinary</title>
+  <meta charset="UTF-8">
+  <title>Galería de imágenes</title>
+  <link rel="stylesheet" href="style.css"> <!-- Usá tu hoja de estilos -->
 </head>
 <body>
-  <h2>Subir imagen a Cloudinary</h2>
-  <input type="file" id="fileInput" accept="image/*" />
-  <div id="galeria"></div>
+  <h2>Galería de Imágenes</h2>
+  <input type="file" id="fileInput" accept="image/*" class="boton-celeste" />
+  
+  <div class="galeria-grid" id="galeria"></div>
 
   <script>
-    const cloudName = "dkqmx6xei"; // ⚠️ Reemplazá esto con tu cloud_name
-    const uploadPreset = "preset_publico"; // ⚠️ Reemplazá con el nombre de tu preset
+    const cloudName = "dkqmx6xei";        // Reemplazá con tu Cloud Name
+    const uploadPreset = "preset_publico";    // Reemplazá con tu Upload Preset
 
+    // Función para subir imagen a Cloudinary
     document.getElementById("fileInput").addEventListener("change", async (event) => {
       const file = event.target.files[0];
       if (!file) return;
@@ -29,21 +33,40 @@
         const data = await res.json();
 
         if (data.secure_url) {
-          console.log("Imagen subida:", data.secure_url);
-
-          // Mostrar la imagen subida
-          const img = document.createElement("img");
-          img.src = data.secure_url;
-          img.style.width = "150px";
-          img.style.margin = "10px";
-          document.getElementById("galeria").appendChild(img);
-        } else {
-          console.error("Error al subir:", data);
+          guardarImagenEnLocalStorage(data.secure_url); // Opcional: guardarla localmente
+          mostrarImagenEnGaleria(data.secure_url);
         }
       } catch (error) {
-        console.error("Error al subir la imagen:", error);
+        console.error("Error al subir imagen:", error);
       }
     });
+
+    // Mostrar una imagen en la galería
+    function mostrarImagenEnGaleria(url) {
+      const contenedor = document.getElementById("galeria");
+      const div = document.createElement("div");
+      div.className = "imagen-item";
+      div.innerHTML = `
+        <img src="${url}" class="imagen-preview" />
+        <span class="etiqueta">Subida</span>
+      `;
+      contenedor.prepend(div); // la más reciente al principio
+    }
+
+    // Guardar en localStorage (simulación hasta que uses Firebase u otra BD)
+    function guardarImagenEnLocalStorage(url) {
+      const imagenes = JSON.parse(localStorage.getItem("imagenesPresupuestos")) || [];
+      imagenes.push(url);
+      localStorage.setItem("imagenesPresupuestos", JSON.stringify(imagenes));
+    }
+
+    // Cargar galería al iniciar
+    function cargarGaleria() {
+      const imagenes = JSON.parse(localStorage.getItem("imagenesPresupuestos")) || [];
+      imagenes.reverse().forEach(mostrarImagenEnGaleria);
+    }
+
+    cargarGaleria();
   </script>
 </body>
-</html
+</html>
