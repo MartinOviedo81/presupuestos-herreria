@@ -1,82 +1,121 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Galería de imágenes</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Galería de Imágenes</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="modo-oscuro">
+<body>
   <h2>Galería de imágenes</h2>
+  <input type="file" id="fileInput" accept="image/*" class="boton-celeste" />
+  <div class="galeria-grid" id="galeria"></div>
 
-  <div class="tarjeta-expandida">
-    <input type="file" id="input-file" />
-    <input type="text" id="input-etiqueta" placeholder="Etiqueta (ej: portón, reja, etc.)" />
-    <button class="boton-verde" id="subir-imagen">Subir imagen</button>
-  </div>
-
-  <div id="galeria" class="galeria-grid"></div>
+  <!-- Firebase y Cloudinary -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js" type="module"></script>
 
   <script type="module">
-    import { db, storage } from './firebase-config.js';
-    import {
-      collection, addDoc, getDocs, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-    import {
-      ref, uploadBytes, getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
 
-    const inputFile = document.getElementById('input-file');
-    const inputEtiqueta = document.getElementById('input-etiqueta');
-    const subirBtn = document.getElementById('subir-imagen');
-    const galeria = document.getElementById('galeria');
+    const firebaseConfig = {
+      apiKey: "AIzaSyDirRKj8_-oleUdIhDl7LUud-Y9I_T7THQ",
+      authDomain: "presupuestos-herreria.firebaseapp.com",
+      projectId: "presupuestos-herreria",
+      appId: "1:824709991960:web:2993a2886f6aa4def3bd6d"
+    };
 
-    subirBtn.addEventListener('click', async () => {
-      const file = inputFile.files[0];
-      const etiqueta = inputEtiqueta.value.trim();
-      if (!file || !etiqueta) return alert('Completá todos los campos.');
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-      subirBtn.disabled = true;
-      subirBtn.textContent = 'Subiendo...';
+    const cloudName = "dkqmx6xei";
+    const uploadPreset = "preset_publico";
 
-      const storageRef = ref(storage, `imagenes/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+    const fileInput = document.getElementById("fileInput");
+    const galeria = document.getElementById("galeria");
 
-      await addDoc(collection(db, 'imagenes'), {
-        url,
-        etiqueta,
-        nombre: file.name,
-        timestamp: serverTimestamp()
+    fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", uploadPreset);
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: "POST",
+        body: formData
       });
 
-      alert('Imagen subida.');
-      inputFile.value = '';
-      inputEtiqueta.value = '';
-      subirBtn.disabled = false;
-      subirBtn.textContent = 'Subir imagen';
-      mostrarGaleria();
+      const data = await res.json();
+      const url = data.secure_url;
+
+      const docRef = await addDoc(collection(db, "imagenes"), {
+        url,
+        presupuestos: []
+      });
+
+      renderImagen({ id: docRef.id, url, presupuestos: [] });
     });
 
-    async function mostrarGaleria() {
-      galeria.innerHTML = '';
-      const snap = await getDocs(collection(db, 'imagenes'));
-      const docs = snap.docs.map(doc => doc.data());
-
-      docs.sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds);
-
-      for (const img of docs) {
-        const div = document.createElement('div');
-        div.className = 'tarjeta imagen-item';
-        div.innerHTML = `
-          <img src="${img.url}" alt="${img.nombre}" class="imagen-preview" />
-          <p class="etiqueta">${img.etiqueta}</p>
-        `;
-        galeria.appendChild(div);
-      }
+    async function cargarImagenes() {
+      const snap = await getDocs(collection(db, "imagenes"));
+      snap.forEach(doc => {
+        renderImagen({ id: doc.id, ...doc.data() });
+      });
     }
 
-    mostrarGaleria();
+    async function renderImagen(imagen) {
+      const div = document.createElement("div");
+      div.className = "imagen-item";
+      div.innerHTML = `
+        <img src="${imagen.url}" class="imagen-preview" />
+        <span class="etiqueta">Asignar a:</span>
+        <select id="select-${imagen.id}"></select>
+        <button class="boton-verde" onclick="asignar('${imagen.id}', '${imagen.url}')">Asignar</button>
+      `;
+      galeria.prepend(div);
+
+      const select = div.querySelector(`select`);
+      const snap = await getDocs(collection(db, "presupuestos"));
+      snap.forEach(p => {
+        const option = document.createElement("option");
+        option.value = p.id;
+        option.textContent = p.data().nombre;
+        select.appendChild(option);
+      });
+    }
+
+    window.asignar = async (imagenId, url) => {
+      const select = document.getElementById(`select-${imagenId}`);
+      const presupuestoId = select.value;
+
+      // Agregar imagen al documento de imagen
+      const imgRef = doc(db, "imagenes", imagenId);
+      const imagenSnap = await getDocs(collection(db, "imagenes"));
+      let presupuestos = [];
+      imagenSnap.forEach(d => {
+        if (d.id === imagenId) {
+          presupuestos = d.data().presupuestos || [];
+        }
+      });
+      if (!presupuestos.includes(presupuestoId)) presupuestos.push(presupuestoId);
+      await updateDoc(imgRef, { presupuestos });
+
+      // (opcional) también podés guardar la imagen en el presupuesto
+      const presRef = doc(db, "presupuestos", presupuestoId);
+      const presSnap = await getDocs(collection(db, "presupuestos"));
+      let imagenes = [];
+      presSnap.forEach(d => {
+        if (d.id === presupuestoId) {
+          imagenes = d.data().imagenes || [];
+        }
+      });
+      if (!imagenes.includes(imagenId)) imagenes.push(imagenId);
+      await updateDoc(presRef, { imagenes });
+
+      alert("Imagen asignada correctamente.");
+    };
+
+    cargarImagenes();
   </script>
 </body>
 </html>
