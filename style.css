@@ -638,4 +638,26 @@ textarea {
       font-size: 0.9em;
       color: #ccc;
     }
-  
+  /* Estilo responsivo para la galería en pantallas pequeñas */
+@media (max-width: 600px) {
+  .galeria-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .imagen-preview {
+    max-height: 220px; /* más grande que en escritorio */
+    width: 100%;
+    height: auto;
+  }
+
+  .imagen-item {
+    padding: 8px;
+  }
+
+  .imagen-item select,
+  .imagen-item button {
+    font-size: 0.9rem;
+    width: 100%;
+  }
+}
