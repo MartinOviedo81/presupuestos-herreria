@@ -5,11 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Galería de Imágenes</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <h2>Galería de imágenes</h2>
-  <input type="file" id="fileInput" accept="image/*" class="boton-celeste" />
- <div class="galeria-scroll" id="galeria"></div>
+  <label for="fileInput" class="boton-celeste" style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; width: fit-content;">
+  <i data-lucide="upload"></i> Subir imagen
+</label>
+<input type="file" id="fileInput" accept="image/*" style="display: none;" />
+<span id="nombreArchivo" style="display: block; margin-top: 10px; color: #ccc;"></span>
+ 
+  <div class="galeria-scroll" id="galeria"></div>
 
   <!-- Firebase y Cloudinary -->
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js" type="module"></script>
@@ -37,6 +43,7 @@
 
     fileInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
+      document.getElementById("nombreArchivo").textContent = file.name;
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", uploadPreset);
@@ -118,5 +125,8 @@
 
     cargarImagenes();
   </script>
+  <script>
+  lucide.createIcons();
+</script>
 </body>
 </html>
