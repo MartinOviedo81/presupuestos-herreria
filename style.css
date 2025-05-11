@@ -638,26 +638,47 @@ textarea {
       font-size: 0.9em;
       color: #ccc;
     }
-  /* Estilo responsivo para la galería en pantallas pequeñas */
 @media (max-width: 600px) {
   .galeria-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .imagen-item {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    background-color: #2c2c2c;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 12px;
     gap: 12px;
   }
 
   .imagen-preview {
-    max-height: 220px; /* más grande que en escritorio */
-    width: 100%;
+    width: 40%;
     height: auto;
-  }
-
-  .imagen-item {
-    padding: 8px;
+    object-fit: cover;
+    border-radius: 6px;
   }
 
   .imagen-item select,
-  .imagen-item button {
-    font-size: 0.9rem;
+  .imagen-item button,
+  .imagen-item .etiqueta {
+    font-size: 1rem;
     width: 100%;
   }
+
+  .imagen-item > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+.galeria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
