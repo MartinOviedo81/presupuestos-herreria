@@ -10,131 +10,123 @@
 <body>
   <h2>Galería de imágenes</h2>
   <label for="fileInput" class="boton-celeste subir-imagen-label">
-  <i data-lucide="upload"></i> Subir imagen
-</label>
-<input type="file" id="fileInput" accept="image/*" style="display: none;" />
-<span id="nombreArchivo" style="display: block; margin-top: 10px; color: #ccc;"></span>
- 
+    <i data-lucide="upload"></i> Subir imagen
+  </label>
+  <input type="file" id="fileInput" accept="image/*" style="display: none;" />
+  <span id="nombreArchivo" style="display: block; margin-top: 10px; color: #ccc;"></span>
+
   <div class="galeria-scroll" id="galeria"></div>
 
   <!-- Firebase y Cloudinary -->
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js" type="module"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js';
+    import {
+      getFirestore, collection, addDoc, getDocs,
+      updateDoc, doc, arrayUnion
+    } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
 
- <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js';
-  import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+    const firebaseConfig = {
+      apiKey: "AIzaSyDirRKj8_-oleUdIhDl7LUud-Y9I_T7THQ",
+      authDomain: "presupuestos-herreria.firebaseapp.com",
+      projectId: "presupuestos-herreria",
+      appId: "1:824709991960:web:2993a2886f6aa4def3bd6d"
+    };
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDirRKj8_-oleUdIhDl7LUud-Y9I_T7THQ",
-    authDomain: "presupuestos-herreria.firebaseapp.com",
-    projectId: "presupuestos-herreria",
-    appId: "1:824709991960:web:2993a2886f6aa4def3bd6d"
-  };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    const cloudName = "dkqmx6xei";
+    const uploadPreset = "preset_publico";
+    const galeria = document.getElementById("galeria");
+    const fileInput = document.getElementById("fileInput");
+    const params = new URLSearchParams(window.location.search);
+    const presupuestoId = params.get("presupuesto");
 
-  const cloudName = "dkqmx6xei";
-  const uploadPreset = "preset_publico";
-  const galeria = document.getElementById("galeria");
-  const fileInput = document.getElementById("fileInput");
-  const params = new URLSearchParams(window.location.search);
-  const presupuestoId = params.get("presupuesto");
+    fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", uploadPreset);
 
-  fileInput.addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", uploadPreset);
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: "POST",
+        body: formData
+      });
 
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-      method: "POST",
-      body: formData
+      const data = await res.json();
+      const url = data.secure_url;
+
+      const docRef = await addDoc(collection(db, "imagenes"), {
+        url,
+        presupuestos: []
+      });
+
+      renderImagen({ id: docRef.id, url, presupuestos: [] });
     });
 
-    const data = await res.json();
-    const url = data.secure_url;
+    async function cargarImagenes() {
+      const snap = await getDocs(collection(db, "imagenes"));
+      snap.forEach(doc => {
+        renderImagen({ id: doc.id, ...doc.data() });
+      });
 
-    const docRef = await addDoc(collection(db, "imagenes"), {
-      url,
-      presupuestos: []
-    });
+      if (presupuestoId) mostrarBotonAsignar();
+    }
 
-    renderImagen({ id: docRef.id, url, presupuestos: [] });
-  });
+    function renderImagen(imagen) {
+      const div = document.createElement("div");
+      div.className = "imagen-item";
 
-  async function cargarImagenes() {
-    const snap = await getDocs(collection(db, "imagenes"));
-    snap.forEach(doc => {
-      renderImagen({ id: doc.id, ...doc.data() });
-    });
+      const checkbox = presupuestoId
+        ? `<label><input type="checkbox" class="img-check" data-id="${imagen.id}" /> Seleccionar</label>`
+        : "";
 
-    if (presupuestoId) mostrarBotonAsignar();
-  }
+      div.innerHTML = `
+        <img src="${imagen.url}" class="imagen-preview" />
+        ${checkbox}
+      `;
+      galeria.prepend(div);
+    }
 
-  function renderImagen(imagen) {
-    const div = document.createElement("div");
-    div.className = "imagen-item";
+    function mostrarBotonAsignar() {
+      const boton = document.createElement("button");
+      boton.textContent = "Asignar imágenes seleccionadas al presupuesto";
+      boton.className = "boton-verde";
+      boton.style.marginTop = "20px";
 
-    const checkbox = presupuestoId
-      ? `<label><input type="checkbox" class="img-check" data-id="${imagen.id}" /> Seleccionar</label>`
-      : "";
+      boton.addEventListener("click", async () => {
+        const seleccionadas = [...document.querySelectorAll(".img-check:checked")];
+        if (seleccionadas.length === 0) {
+          alert("Seleccioná al menos una imagen.");
+          return;
+        }
 
-    div.innerHTML = `
-      <img src="${imagen.url}" class="imagen-preview" />
-      ${checkbox}
-    `;
-    galeria.prepend(div);
-  }
+        for (let check of seleccionadas) {
+          const imagenId = check.dataset.id;
 
-  function mostrarBotonAsignar() {
-    const boton = document.createElement("button");
-    boton.textContent = "Asignar imágenes seleccionadas al presupuesto";
-    boton.className = "boton-verde";
-    boton.style.marginTop = "20px";
+          // Asignar imagen al presupuesto sin duplicar
+          const imgDoc = doc(db, "imagenes", imagenId);
+          await updateDoc(imgDoc, {
+            presupuestos: arrayUnion(presupuestoId)
+          });
 
-    boton.addEventListener("click", async () => {
-      const seleccionadas = [...document.querySelectorAll(".img-check:checked")];
-      if (seleccionadas.length === 0) {
-        alert("Seleccioná al menos una imagen.");
-        return;
-      }
+          const presDoc = doc(db, "presupuestos", presupuestoId);
+          await updateDoc(presDoc, {
+            imagenes: arrayUnion(imagenId)
+          });
+        }
 
-      for (let check of seleccionadas) {
-        const imagenId = check.dataset.id;
+        alert("Imágenes asignadas correctamente.");
+      });
 
-        // Actualizar imagen
-        const imgDoc = doc(db, "imagenes", imagenId);
-        const imgSnap = await getDocs(collection(db, "imagenes"));
-        let presupuestos = [];
-        imgSnap.forEach(d => {
-          if (d.id === imagenId) presupuestos = d.data().presupuestos || [];
-        });
-        if (!presupuestos.includes(presupuestoId)) presupuestos.push(presupuestoId);
-        await updateDoc(imgDoc, { presupuestos });
+      galeria.after(boton);
+    }
 
-        // Actualizar presupuesto
-        const presDoc = doc(db, "presupuestos", presupuestoId);
-        const presSnap = await getDocs(collection(db, "presupuestos"));
-        let imagenes = [];
-        presSnap.forEach(d => {
-          if (d.id === presupuestoId) imagenes = d.data().imagenes || [];
-        });
-        if (!imagenes.includes(imagenId)) imagenes.push(imagenId);
-        await updateDoc(presDoc, { imagenes });
-      }
+    cargarImagenes();
+  </script>
 
-      alert("Imágenes asignadas correctamente.");
-    });
-
-    galeria.after(boton);
-  }
-
-  cargarImagenes();
-</script>
   <script>
-  lucide.createIcons();
-</script>
+    lucide.createIcons();
+  </script>
 </body>
 </html>
