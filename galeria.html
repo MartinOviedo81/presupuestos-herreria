@@ -21,110 +21,118 @@
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js" type="module"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js" type="module"></script>
 
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+ <script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js';
+  import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDirRKj8_-oleUdIhDl7LUud-Y9I_T7THQ",
-      authDomain: "presupuestos-herreria.firebaseapp.com",
-      projectId: "presupuestos-herreria",
-      appId: "1:824709991960:web:2993a2886f6aa4def3bd6d"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyDirRKj8_-oleUdIhDl7LUud-Y9I_T7THQ",
+    authDomain: "presupuestos-herreria.firebaseapp.com",
+    projectId: "presupuestos-herreria",
+    appId: "1:824709991960:web:2993a2886f6aa4def3bd6d"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    const cloudName = "dkqmx6xei";
-    const uploadPreset = "preset_publico";
+  const cloudName = "dkqmx6xei";
+  const uploadPreset = "preset_publico";
+  const galeria = document.getElementById("galeria");
+  const fileInput = document.getElementById("fileInput");
+  const params = new URLSearchParams(window.location.search);
+  const presupuestoId = params.get("presupuesto");
 
-    const fileInput = document.getElementById("fileInput");
-    const galeria = document.getElementById("galeria");
+  fileInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
 
-    fileInput.addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      document.getElementById("nombreArchivo").textContent = file.name;
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", uploadPreset);
-
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: "POST",
-        body: formData
-      });
-
-      const data = await res.json();
-      const url = data.secure_url;
-
-      const docRef = await addDoc(collection(db, "imagenes"), {
-        url,
-        presupuestos: []
-      });
-
-      renderImagen({ id: docRef.id, url, presupuestos: [] });
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: "POST",
+      body: formData
     });
 
-    async function cargarImagenes() {
-      const snap = await getDocs(collection(db, "imagenes"));
-      snap.forEach(doc => {
-        renderImagen({ id: doc.id, ...doc.data() });
-      });
-    }
+    const data = await res.json();
+    const url = data.secure_url;
 
-    async function renderImagen(imagen) {
-      const div = document.createElement("div");
-      div.className = "imagen-item";
-      div.innerHTML = `
-        <img src="${imagen.url}" class="imagen-preview" />
-        <span class="etiqueta">Asignar a:</span>
-        <select id="select-${imagen.id}"></select>
-        <button class="boton-verde" onclick="asignar('${imagen.id}', '${imagen.url}')">Asignar</button>
-      `;
-      galeria.prepend(div);
+    const docRef = await addDoc(collection(db, "imagenes"), {
+      url,
+      presupuestos: []
+    });
 
-      const select = div.querySelector(`select`);
-      const snap = await getDocs(collection(db, "presupuestos"));
-      snap.forEach(p => {
-        const option = document.createElement("option");
-        option.value = p.id;
-        option.textContent = p.data().nombre;
-        select.appendChild(option);
-      });
-    }
+    renderImagen({ id: docRef.id, url, presupuestos: [] });
+  });
 
-    window.asignar = async (imagenId, url) => {
-      const select = document.getElementById(`select-${imagenId}`);
-      const presupuestoId = select.value;
+  async function cargarImagenes() {
+    const snap = await getDocs(collection(db, "imagenes"));
+    snap.forEach(doc => {
+      renderImagen({ id: doc.id, ...doc.data() });
+    });
 
-      // Agregar imagen al documento de imagen
-      const imgRef = doc(db, "imagenes", imagenId);
-      const imagenSnap = await getDocs(collection(db, "imagenes"));
-      let presupuestos = [];
-      imagenSnap.forEach(d => {
-        if (d.id === imagenId) {
-          presupuestos = d.data().presupuestos || [];
-        }
-      });
-      if (!presupuestos.includes(presupuestoId)) presupuestos.push(presupuestoId);
-      await updateDoc(imgRef, { presupuestos });
+    if (presupuestoId) mostrarBotonAsignar();
+  }
 
-      // (opcional) también podés guardar la imagen en el presupuesto
-      const presRef = doc(db, "presupuestos", presupuestoId);
-      const presSnap = await getDocs(collection(db, "presupuestos"));
-      let imagenes = [];
-      presSnap.forEach(d => {
-        if (d.id === presupuestoId) {
-          imagenes = d.data().imagenes || [];
-        }
-      });
-      if (!imagenes.includes(imagenId)) imagenes.push(imagenId);
-      await updateDoc(presRef, { imagenes });
+  function renderImagen(imagen) {
+    const div = document.createElement("div");
+    div.className = "imagen-item";
 
-      alert("Imagen asignada correctamente.");
-    };
+    const checkbox = presupuestoId
+      ? `<label><input type="checkbox" class="img-check" data-id="${imagen.id}" /> Seleccionar</label>`
+      : "";
 
-    cargarImagenes();
-  </script>
+    div.innerHTML = `
+      <img src="${imagen.url}" class="imagen-preview" />
+      ${checkbox}
+    `;
+    galeria.prepend(div);
+  }
+
+  function mostrarBotonAsignar() {
+    const boton = document.createElement("button");
+    boton.textContent = "Asignar imágenes seleccionadas al presupuesto";
+    boton.className = "boton-verde";
+    boton.style.marginTop = "20px";
+
+    boton.addEventListener("click", async () => {
+      const seleccionadas = [...document.querySelectorAll(".img-check:checked")];
+      if (seleccionadas.length === 0) {
+        alert("Seleccioná al menos una imagen.");
+        return;
+      }
+
+      for (let check of seleccionadas) {
+        const imagenId = check.dataset.id;
+
+        // Actualizar imagen
+        const imgDoc = doc(db, "imagenes", imagenId);
+        const imgSnap = await getDocs(collection(db, "imagenes"));
+        let presupuestos = [];
+        imgSnap.forEach(d => {
+          if (d.id === imagenId) presupuestos = d.data().presupuestos || [];
+        });
+        if (!presupuestos.includes(presupuestoId)) presupuestos.push(presupuestoId);
+        await updateDoc(imgDoc, { presupuestos });
+
+        // Actualizar presupuesto
+        const presDoc = doc(db, "presupuestos", presupuestoId);
+        const presSnap = await getDocs(collection(db, "presupuestos"));
+        let imagenes = [];
+        presSnap.forEach(d => {
+          if (d.id === presupuestoId) imagenes = d.data().imagenes || [];
+        });
+        if (!imagenes.includes(imagenId)) imagenes.push(imagenId);
+        await updateDoc(presDoc, { imagenes });
+      }
+
+      alert("Imágenes asignadas correctamente.");
+    });
+
+    galeria.after(boton);
+  }
+
+  cargarImagenes();
+</script>
   <script>
   lucide.createIcons();
 </script>
