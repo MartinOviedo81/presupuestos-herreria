@@ -670,14 +670,19 @@ textarea {
 }
 .miniaturas {
   display: flex;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 6px;
   flex-wrap: wrap;
 }
 .mini-imagen {
-  width: 40px;
-  height: 40px;
+  width: 70px;
+  height: 70px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid #ccc;
+  transition: transform 0.2s;
+}
+.mini-imagen:hover {
+  transform: scale(1.05);
+  cursor: pointer;
 }
