@@ -470,14 +470,20 @@ case 'fecha-desc': return new Date(b.fechaOrden) - new Date(a.fechaOrden);
 contenedor.innerHTML = `
   <h2>Presupuestos guardados</h2>
   <ul>
-    ${docs.map(p => `
-      <li class="item-presupuesto" id="presupuesto-${p.id}">
-        <div class="datos-presu">
-          <span class="nombre">${p.nombre}</span>
-          <span class="fecha">${p.fecha}</span>
-          <span class="total">Total: $<span class="monto">${formatearMoneda(parseFloat(p.total))}</span></span>
-          ${htmlImagenes}
-        </div>
+   ${docs.map(p => {
+  const imagenes = mapaImagenesPorPresupuesto[p.id] || [];
+  const htmlImagenes = imagenes.length
+    ? `<div class="miniaturas">${imagenes.map(url => `<img src="${url}" class="mini-imagen" />`).join('')}</div>`
+    : '';
+
+  return `
+    <li class="item-presupuesto" id="presupuesto-${p.id}">
+      <div class="datos-presu">
+        <span class="nombre">${p.nombre}</span>
+        <span class="fecha">${p.fecha}</span>
+        <span class="total">Total: $<span class="monto">${formatearMoneda(parseFloat(p.total))}</span></span>
+        ${htmlImagenes}
+      </div>
         <div class="menu-wrapper">
           <button class="abrir-menu" data-id="${p.id}">Opciones</button>
           <div class="menu-acciones hidden" id="menu-${p.id}">
