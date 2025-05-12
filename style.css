@@ -668,3 +668,16 @@ textarea {
 .subir-imagen-label:hover {
   opacity: 0.9;
 }
+.miniaturas {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.mini-imagen {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
