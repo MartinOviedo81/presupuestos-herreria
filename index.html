@@ -440,7 +440,20 @@ document.querySelectorAll('input[name="orden"]').forEach(radio => {
   const contenedor = document.getElementById('presupuestos-guardados');
   const snap = await getDocs(collection(db, 'presupuestos'));
 
+    
 let docs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const imagenesSnap = await getDocs(collection(db, 'imagenes'));
+const mapaImagenesPorPresupuesto = {};
+
+imagenesSnap.forEach(doc => {
+  const data = doc.data();
+  (data.presupuestos || []).forEach(pid => {
+    if (!mapaImagenesPorPresupuesto[pid]) {
+      mapaImagenesPorPresupuesto[pid] = [];
+    }
+    mapaImagenesPorPresupuesto[pid].push(data.url);
+  });
+});
 
 docs.sort((a, b) => {
   switch (ordenSeleccionado) {
@@ -463,6 +476,7 @@ contenedor.innerHTML = `
           <span class="nombre">${p.nombre}</span>
           <span class="fecha">${p.fecha}</span>
           <span class="total">Total: $<span class="monto">${formatearMoneda(parseFloat(p.total))}</span></span>
+          ${htmlImagenes}
         </div>
         <div class="menu-wrapper">
           <button class="abrir-menu" data-id="${p.id}">Opciones</button>
