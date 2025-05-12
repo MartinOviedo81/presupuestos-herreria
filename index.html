@@ -471,6 +471,7 @@ contenedor.innerHTML = `
             <button onclick="compartirPresupuesto('${p.id}')">Enviar por WhatsApp</button>
             <button onclick="eliminarPresupuesto('${p.id}')">Eliminar</button>
             <button onclick="refrescarPresupuesto('${p.id}')">🔄 Refrescar</button>
+            <button onclick="asignarImagenes('${p.id}')">📸 Asignar imágenes</button>
           </div>
         </div>
       </li>
@@ -640,7 +641,9 @@ window.refrescarPresupuesto = async (id) => {
     alert('✅ El presupuesto ya está actualizado.');
   }
 };
-   
+   window.asignarImagenes = (id) => {
+  window.location.href = `galeria.html?presupuesto=${id}`;
+};
   lucide.createIcons();
   </script>
 <script>
