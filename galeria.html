@@ -42,28 +42,36 @@
     const params = new URLSearchParams(window.location.search);
     const presupuestoId = params.get("presupuesto");
 
-    fileInput.addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", uploadPreset);
+   fileInput.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: "POST",
-        body: formData
-      });
+  const nombre = prompt("¿Cómo querés nombrar esta imagen?");
+  if (!nombre) return alert("Tenés que asignar un nombre.");
 
-      const data = await res.json();
-      const url = data.secure_url;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", uploadPreset);
 
-      const docRef = await addDoc(collection(db, "imagenes"), {
-        url,
-        presupuestos: []
-      });
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: "POST",
+    body: formData
+  });
 
-      renderImagen({ id: docRef.id, url, presupuestos: [] });
-    });
+  const data = await res.json();
 
+  const docRef = await addDoc(collection(db, "imagenes"), {
+    nombre,
+    url: data.secure_url,
+    created_at: data.created_at,
+    bytes: data.bytes,
+    format: data.format,
+    presupuestos: [],
+    oculta: false
+  });
+
+  renderImagen({ id: docRef.id, nombre, url: data.secure_url, presupuestos: [], oculta: false });
+});
     async function cargarImagenes() {
       const snap = await getDocs(collection(db, "imagenes"));
       snap.forEach(doc => {
@@ -74,19 +82,40 @@
     }
 
     function renderImagen(imagen) {
-      const div = document.createElement("div");
-      div.className = "imagen-item";
+  const div = document.createElement("div");
+  div.className = "imagen-item";
 
-      const checkbox = presupuestoId
-        ? `<label><input type="checkbox" class="img-check" data-id="${imagen.id}" /> Seleccionar</label>`
-        : "";
+  // Calcular edad
+  let edad = "";
+  if (imagen.created_at) {
+    const fecha = new Date(imagen.created_at);
+    const ahora = new Date();
+    const dias = Math.floor((ahora - fecha) / (1000 * 60 * 60 * 24));
+    if (dias === 0) edad = "Subida hoy";
+    else if (dias === 1) edad = "Hace 1 día";
+    else edad = `Hace ${dias} días`;
+  }
 
-      div.innerHTML = `
-        <img src="${imagen.url}" class="imagen-preview" />
-        ${checkbox}
-      `;
-      galeria.prepend(div);
-    }
+  // Peso en KB
+  const pesoKB = imagen.bytes ? Math.round(imagen.bytes / 1024) + " KB" : "";
+
+  // Formato
+  const formato = imagen.format ? imagen.format.toUpperCase() : "";
+
+  const checkbox = presupuestoId
+    ? `<label><input type="checkbox" class="img-check" data-id="${imagen.id}" /> Seleccionar</label>`
+    : "";
+
+  div.innerHTML = `
+    <img src="${imagen.url}" class="imagen-preview" />
+    <div class="info-imagen">
+      <strong>${imagen.nombre || 'Sin nombre'}</strong><br>
+      <small>${edad} ${pesoKB ? `• ${pesoKB}` : ""} ${formato ? `• ${formato}` : ""}</small>
+    </div>
+    ${checkbox}
+  `;
+  galeria.prepend(div);
+}
 
     function mostrarBotonAsignar() {
       const contenedor = document.createElement("div");
