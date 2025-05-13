@@ -181,8 +181,39 @@
     }
 
     cargarImagenes();
-  </script>
+const btnMigrar = document.createElement("button");
+btnMigrar.textContent = "🛠 Ejecutar migración imágenes viejas";
+btnMigrar.className = "boton-rojo";
+btnMigrar.style.marginTop = "20px";
+btnMigrar.onclick = migrarImagenesViejas;
+galeria.before(btnMigrar);
+async function migrarImagenesViejas() {
+  const snap = await getDocs(collection(db, "imagenes"));
 
+  for (const docSnap of snap.docs) {
+    const data = docSnap.data();
+    const ref = doc(db, "imagenes", docSnap.id);
+
+    const actualizaciones = {};
+
+    // Solo agregar si no existen
+    if (!("nombre" in data)) actualizaciones.nombre = "Sin nombre";
+    if (!("oculta" in data)) actualizaciones.oculta = false;
+    if (!("created_at" in data)) actualizaciones.created_at = new Date().toISOString();
+    if (!("bytes" in data)) actualizaciones.bytes = null;
+    if (!("format" in data)) actualizaciones.format = null;
+
+    if (Object.keys(actualizaciones).length > 0) {
+      await updateDoc(ref, actualizaciones);
+      console.log(`📦 Imagen ${docSnap.id} actualizada`);
+    }
+  }
+
+  alert("Migración completa. Las imágenes viejas ahora tienen los campos nuevos.");
+}
+    
+  </script>
+  
   <script>
     lucide.createIcons();
   </script>
