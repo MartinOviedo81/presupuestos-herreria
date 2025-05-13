@@ -89,10 +89,17 @@
     }
 
     function mostrarBotonAsignar() {
+      const contenedor = document.createElement("div");
+      contenedor.style.marginTop = "20px";
+
+      const checkReemplazar = document.createElement("label");
+      checkReemplazar.innerHTML = `<input type="checkbox" id="reemplazarImagenes" /> Reemplazar imágenes anteriores`;
+      checkReemplazar.style.display = "block";
+      checkReemplazar.style.marginBottom = "10px";
+
       const boton = document.createElement("button");
       boton.textContent = "Asignar imágenes seleccionadas al presupuesto";
       boton.className = "boton-verde";
-      boton.style.marginTop = "20px";
 
       boton.addEventListener("click", async () => {
         const seleccionadas = [...document.querySelectorAll(".img-check:checked")];
@@ -101,16 +108,33 @@
           return;
         }
 
+        const reemplazar = document.getElementById("reemplazarImagenes").checked;
+        const presDoc = doc(db, "presupuestos", presupuestoId);
+
+        if (reemplazar) {
+          const snap = await getDocs(collection(db, "imagenes"));
+          for (const docSnap of snap.docs) {
+            const data = docSnap.data();
+            if (data.presupuestos && data.presupuestos.includes(presupuestoId)) {
+              const nuevaLista = data.presupuestos.filter(id => id !== presupuestoId);
+              await updateDoc(doc(db, "imagenes", docSnap.id), {
+                presupuestos: nuevaLista
+              });
+            }
+          }
+
+          await updateDoc(presDoc, {
+            imagenes: []
+          });
+        }
+
         for (let check of seleccionadas) {
           const imagenId = check.dataset.id;
-
-          // Asignar imagen al presupuesto sin duplicar
           const imgDoc = doc(db, "imagenes", imagenId);
           await updateDoc(imgDoc, {
             presupuestos: arrayUnion(presupuestoId)
           });
 
-          const presDoc = doc(db, "presupuestos", presupuestoId);
           await updateDoc(presDoc, {
             imagenes: arrayUnion(imagenId)
           });
@@ -119,7 +143,9 @@
         alert("Imágenes asignadas correctamente.");
       });
 
-      galeria.after(boton);
+      contenedor.appendChild(checkReemplazar);
+      contenedor.appendChild(boton);
+      galeria.after(contenedor);
     }
 
     cargarImagenes();
