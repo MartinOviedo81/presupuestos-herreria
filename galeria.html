@@ -112,21 +112,24 @@
         const presDoc = doc(db, "presupuestos", presupuestoId);
 
         if (reemplazar) {
-          const snap = await getDocs(collection(db, "imagenes"));
-          for (const docSnap of snap.docs) {
-            const data = docSnap.data();
-            if (data.presupuestos && data.presupuestos.includes(presupuestoId)) {
-              const nuevaLista = data.presupuestos.filter(id => id !== presupuestoId);
-              await updateDoc(doc(db, "imagenes", docSnap.id), {
-                presupuestos: nuevaLista
-              });
-            }
-          }
+  const confirmar = confirm("¿Estás seguro de que querés reemplazar todas las imágenes anteriores del presupuesto?");
+  if (!confirmar) return;
 
-          await updateDoc(presDoc, {
-            imagenes: []
-          });
-        }
+  const snap = await getDocs(collection(db, "imagenes"));
+  for (const docSnap of snap.docs) {
+    const data = docSnap.data();
+    if (data.presupuestos && data.presupuestos.includes(presupuestoId)) {
+      const nuevaLista = data.presupuestos.filter(id => id !== presupuestoId);
+      await updateDoc(doc(db, "imagenes", docSnap.id), {
+        presupuestos: nuevaLista
+      });
+    }
+  }
+
+  await updateDoc(presDoc, {
+    imagenes: []
+  });
+}
 
         for (let check of seleccionadas) {
           const imagenId = check.dataset.id;
