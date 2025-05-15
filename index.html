@@ -194,17 +194,58 @@ tarjeta.innerHTML = `
     }
 
     function calcularTotalDesdeTexto(texto) {
+      // Limpiamos el texto y lo convertimos a minúsculas
+      texto = texto.toLowerCase().trim();
+      
+      // Si el texto comienza con 'c ' es un cálculo de circunferencia
+      if (texto.startsWith('c ')) {
+        // Extraemos el diámetro y verificamos si hay un '+'
+        const partes = texto.substring(2).split('+');
+        const diametro = parseFloat(partes[0]);
+        if (isNaN(diametro)) return 0;
+        
+        // Calculamos la circunferencia (π × diámetro)
+        const circunferencia = Math.PI * diametro;
+        
+        // Si hay un '+', sumamos 0.20
+        return partes.length > 1 ? circunferencia + 0.20 : circunferencia;
+      }
+      
+      // Para el resto de los casos
       const partes = texto.split('+').join(',').split(/,|y/i).map(p => p.trim());
       let total = 0;
+      
       for (let parte of partes) {
-        const match = parte.match(/(\d+(?:[.,]\d+)?)\s*(?:x|de)?\s*(\d+(?:[.,]\d+)?)/i);
-        if (match) {
-          const cantidad = parseFloat(match[1].replace(',', '.'));
-          const medida = parseFloat(match[2].replace(',', '.'));
-          total += cantidad * medida;
+        // Manejo de expresiones con paréntesis
+        if (parte.includes('(')) {
+          // Extraemos la expresión dentro de los paréntesis y el multiplicador
+          const match = parte.match(/\((.*?)\)\s*(?:x|de)?\s*(\d+(?:[.,]\d+)?)?/i);
+          if (match) {
+            const expresionInterna = match[1];
+            const multiplicadorExterno = match[2] ? parseFloat(match[2].replace(',', '.')) : 1;
+            
+            // Calculamos el resultado de la expresión interna
+            const resultadoInterno = calcularExpresionSimple(expresionInterna);
+            total += resultadoInterno * multiplicadorExterno;
+          }
+        } else {
+          // Para expresiones simples sin paréntesis
+          total += calcularExpresionSimple(parte);
         }
       }
+      
       return total;
+    }
+
+    // Función auxiliar para calcular expresiones simples
+    function calcularExpresionSimple(expresion) {
+      const match = expresion.match(/(\d+(?:[.,]\d+)?)\s*(?:x|de)?\s*(\d+(?:[.,]\d+)?)/i);
+      if (match) {
+        const num1 = parseFloat(match[1].replace(',', '.'));
+        const num2 = parseFloat(match[2].replace(',', '.'));
+        return num1 * num2;
+      }
+      return 0;
     }
 function formatearMoneda(valor) {
   return Math.round(valor).toLocaleString('es-AR', {
