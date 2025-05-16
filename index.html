@@ -74,6 +74,13 @@
   </div>
 </div>
   <div id="presupuestos-guardados"></div>
+  
+  <!-- Modal para ver imágenes -->
+  <div id="imagen-modal" class="modal">
+    <span class="cerrar-modal">&times;</span>
+    <img class="modal-contenido" id="img-ampliada">
+  </div>
+
 <script src="https://unpkg.com/lucide@latest"></script>
   <script type="module">
     lucide.createIcons();
@@ -523,7 +530,9 @@ case 'fecha-desc': return new Date(b.fechaOrden) - new Date(a.fechaOrden);
       ${docs.map(p => {
         const imagenes = mapaImagenesPorPresupuesto[p.id] || [];
         const htmlImagenes = imagenes.length
-          ? `<div class="miniaturas">${imagenes.map(url => `<img src="${url}" class="mini-imagen" />`).join('')}</div>`
+          ? `<div class="miniaturas">${imagenes.map(url => 
+              `<img src="${url}" class="mini-imagen" onclick="abrirModal('${url}')" />`
+            ).join('')}</div>`
           : '';
 
         return `
@@ -732,6 +741,78 @@ window.addEventListener('click', function(e) {
   // Si el clic no fue sobre el menú ni sobre el botón hamburguesa
   if (!menu.contains(e.target) && !hamburguesa.contains(e.target)) {
     menu.classList.add('hidden');
+  }
+});
+</script>
+
+<style>
+/* Estilos para el modal de imágenes */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  padding-top: 50px;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.9);
+}
+
+.modal-contenido {
+  margin: auto;
+  display: block;
+  max-width: 90%;
+  max-height: 90vh;
+  object-fit: contain;
+}
+
+.cerrar-modal {
+  position: absolute;
+  right: 35px;
+  top: 15px;
+  color: #f1f1f1;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.mini-imagen {
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.mini-imagen:hover {
+  opacity: 0.8;
+}
+</style>
+
+<script>
+// Funciones para el modal de imágenes
+window.abrirModal = function(url) {
+  const modal = document.getElementById('imagen-modal');
+  const imgAmpliada = document.getElementById('img-ampliada');
+  imgAmpliada.src = url;
+  modal.style.display = "block";
+}
+
+// Cerrar modal al hacer clic en la X
+document.querySelector('.cerrar-modal').onclick = function() {
+  document.getElementById('imagen-modal').style.display = "none";
+}
+
+// Cerrar modal al hacer clic fuera de la imagen
+document.getElementById('imagen-modal').onclick = function(e) {
+  if (e.target === this) {
+    this.style.display = "none";
+  }
+}
+
+// Cerrar modal con la tecla Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.getElementById('imagen-modal').style.display = "none";
   }
 });
 </script>
