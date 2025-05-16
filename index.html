@@ -199,19 +199,37 @@ tarjeta.innerHTML = `
       let total = 0;
 
       for (let expresion of expresiones) {
-        // Si es una expresión de circunferencia
-        if (expresion.startsWith('c ')) {
+        // Si es solo un número (permite decimales con punto o coma)
+        if (/^\d+([.,]\d+)?$/.test(expresion)) {
+          total += parseFloat(expresion.replace(',', '.'));
+        }
+        // Si es una expresión con paréntesis que contiene una circunferencia
+        else if (expresion.match(/\(\s*c\s*\d+(?:[.,]\d+)?(?:\+)?\s*\)\s*(?:x|de)?\s*\d+(?:[.,]\d+)?/i)) {
+          const match = expresion.match(/\(\s*c\s*(\d+(?:[.,]\d+)?)(\+)?\s*\)\s*(?:x|de)?\s*(\d+(?:[.,]\d+)?)/i);
+          if (match) {
+            const diametro = parseFloat(match[1].replace(',', '.'));
+            const tieneExtra = match[2] === '+';
+            const multiplicador = parseFloat(match[3].replace(',', '.'));
+            const circunferencia = Math.PI * diametro;
+            // Si tiene el +, sumamos 0.20 antes de multiplicar
+            const subtotal = tieneExtra ? circunferencia + 0.20 : circunferencia;
+            total += subtotal * multiplicador;
+          }
+        }
+        // Si es una expresión de circunferencia simple (ahora acepta sin espacios)
+        else if (/^c\s*\d/.test(expresion)) {
           // Extraemos el diámetro y verificamos si hay un '+'
-          const partes = expresion.substring(2).split('+');
-          const diametro = parseFloat(partes[0].replace(',', '.'));
-          if (!isNaN(diametro)) {
+          const match = expresion.match(/^c\s*(\d+(?:[.,]\d+)?)(\+)?/);
+          if (match) {
+            const diametro = parseFloat(match[1].replace(',', '.'));
+            const tieneExtra = match[2] === '+';
             // Calculamos la circunferencia (π × diámetro)
             const circunferencia = Math.PI * diametro;
             // Si hay un '+', sumamos 0.20
-            total += partes.length > 1 ? circunferencia + 0.20 : circunferencia;
+            total += tieneExtra ? circunferencia + 0.20 : circunferencia;
           }
         } else if (expresion.includes('(')) {
-          // Manejo de expresiones con paréntesis
+          // Manejo de expresiones con paréntesis normales
           const match = expresion.match(/\((.*?)\)\s*(?:x|de)?\s*(\d+(?:[.,]\d+)?)?/i);
           if (match) {
             const expresionInterna = match[1];
