@@ -25,6 +25,16 @@
 
 <div id="contenedor-presupuestos">
   <h3>Seleccioná los presupuestos</h3>
+  <button id="btn-identificar-antiguos" class="boton-naranja" style="margin-bottom: 1rem;">
+    <i data-lucide="search"></i> Identificar presupuestos antiguos
+  </button>
+  <div id="presupuestos-antiguos" class="hidden">
+    <h4 style="color: #e74c3c;">Presupuestos con formato antiguo:</h4>
+    <ul id="lista-antiguos" style="margin-bottom: 1rem;"></ul>
+    <button id="btn-eliminar-antiguos" class="boton-rojo">
+      <i data-lucide="trash-2"></i> Eliminar todos los presupuestos antiguos
+    </button>
+  </div>
   <ul id="lista-presupuestos"></ul>
   <button id="btn-confirmar" class="boton-celeste">Confirmar selección</button>
 </div>
@@ -43,7 +53,7 @@
 
 <script type="module">
 import { db } from './firebase-config.js';
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const listaPresupuestos = document.getElementById('lista-presupuestos');
 const btnConfirmar = document.getElementById('btn-confirmar');
@@ -67,6 +77,9 @@ async function cargarDatos() {
 
   presupuestos = snapPresupuestos.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   materiales = snapMateriales.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+  console.log('Materiales cargados:', materiales);
+  console.log('Presupuestos cargados:', presupuestos);
 
   renderPresupuestos();
 }
@@ -102,28 +115,7 @@ btnConfirmar.addEventListener('click', () => {
     alert('Seleccioná al menos un presupuesto.');
     return;
   }
-// 💥 Agregar escuchador de eventos para botones mini
-listaCantidades.addEventListener('click', (e) => {
-  const btn = e.target.closest('button');
-  if (!btn) return;
 
-  const id = btn.dataset.id;
-  const input = listaCantidades.querySelector(`input[data-id="${id}"]`);
-  if (!input) return;
-
-  if (btn.classList.contains('boton-aumentar')) {
-    input.value = parseInt(input.value) + 1;
-  } else if (btn.classList.contains('boton-disminuir')) {
-    if (parseInt(input.value) > 1) {
-      input.value = parseInt(input.value) - 1;
-    }
-  } else if (btn.classList.contains('boton-eliminar')) {
-    if (confirm('¿Seguro que querés eliminar este presupuesto de la selección?')) {
-      btn.closest('li').remove();
-    }
-  }
-});
-  
   listaCantidades.innerHTML = seleccionados.map(id => {
     const presupuesto = presupuestos.find(p => p.id === id);
     return `
@@ -138,34 +130,36 @@ listaCantidades.addEventListener('click', (e) => {
       </li>
     `;
   }).join('');
-lucide.createIcons();
+
+  // Configurar event listeners para los botones una sola vez
+  listaCantidades.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+
+    const id = btn.dataset.id;
+    const input = listaCantidades.querySelector(`input[data-id="${id}"]`);
+    if (!input) return;
+
+    if (btn.classList.contains('boton-aumentar')) {
+      input.value = parseInt(input.value) + 1;
+    } else if (btn.classList.contains('boton-disminuir')) {
+      if (parseInt(input.value) > 1) {
+        input.value = parseInt(input.value) - 1;
+      }
+    } else if (btn.classList.contains('boton-eliminar')) {
+      if (confirm('¿Seguro que querés eliminar este presupuesto de la selección?')) {
+        btn.closest('li').remove();
+      }
+    }
+  });
+
   contenedorCantidades.classList.remove('hidden');
-  lucide.createIcons(); // <- esto es MUY importante para que se dibujen los íconos correctamente
+  lucide.createIcons();
 });
 
 btnGenerar.addEventListener('click', () => {
   seleccionadosConCantidad = [];
-  listaCantidades.addEventListener('click', (e) => {
-  const btn = e.target.closest('button');
-  if (!btn) return;
-
-  const id = btn.dataset.id;
-  const input = listaCantidades.querySelector(`input[data-id="${id}"]`);
-  if (!input) return;
-
-  if (btn.classList.contains('boton-aumentar')) {
-    input.value = parseInt(input.value) + 1;
-  } else if (btn.classList.contains('boton-disminuir')) {
-    if (parseInt(input.value) > 1) {
-      input.value = parseInt(input.value) - 1;
-    }
-  } else if (btn.classList.contains('boton-eliminar')) {
-    if (confirm('¿Seguro que querés eliminar este presupuesto de la selección?')) {
-      btn.closest('li').remove();
-    }
-  }
-});
-
+  
   listaCantidades.querySelectorAll('input[type="number"]').forEach(input => {
     const id = input.dataset.id;
     const cantidad = parseInt(input.value) || 1;
@@ -177,42 +171,87 @@ btnGenerar.addEventListener('click', () => {
 
 function generarListaMateriales() {
   const materialesNecesarios = {};
+  let total = 0;
 
+  console.log('Presupuestos seleccionados:', seleccionadosConCantidad);
+
+  // Acumulamos cantidades necesarias usando directamente los IDs
   seleccionadosConCantidad.forEach(({ id, cantidad }) => {
     const presupuesto = presupuestos.find(p => p.id === id);
-    if (!presupuesto) return;
+    console.log('Procesando presupuesto:', presupuesto);
+    if (!presupuesto) {
+      console.warn('No se encontró el presupuesto con ID:', id);
+      return;
+    }
 
+    console.log('Items en el presupuesto:', presupuesto.items);
     presupuesto.items.forEach(item => {
-      if (!materialesNecesarios[item.nombre]) {
-        materialesNecesarios[item.nombre] = 0;
+      console.log('Procesando item:', item);
+      if (!item.id) {
+        console.warn(`Item sin ID encontrado en presupuesto ${presupuesto.id}: ${item.nombre}`);
+        return;
       }
-      materialesNecesarios[item.nombre] += item.cantidad * cantidad;
+
+      const clave = item.id;
+      if (!materialesNecesarios[clave]) {
+        materialesNecesarios[clave] = {
+          id: item.id,
+          cantidad: 0,
+          unidad: item.unidad
+        };
+      }
+      materialesNecesarios[clave].cantidad += item.cantidad * cantidad;
     });
   });
 
+  console.log('Materiales necesarios acumulados:', materialesNecesarios);
+
+  // Agrupamos por categoría usando los IDs
   const materialesAgrupados = {};
 
-  for (let nombre in materialesNecesarios) {
-    const mat = materiales.find(m => m.nombre === nombre);
-    if (!mat) continue;
+  for (let clave in materialesNecesarios) {
+    const item = materialesNecesarios[clave];
+    const material = materiales.find(m => m.id === item.id);
+    
+    console.log('Buscando material con ID:', item.id);
+    console.log('Material encontrado:', material);
+    
+    if (!material) {
+      console.warn(`Material no encontrado con ID: ${item.id}`);
+      continue;
+    }
 
-    const cantidadNecesaria = materialesNecesarios[nombre];
-    const unidadesCompradas = Math.ceil(cantidadNecesaria / mat.fraccionamiento);
-    const subtotal = unidadesCompradas * mat.precio;
+    const cantidadNecesaria = item.cantidad;
+    const unidadesCompradas = Math.ceil(cantidadNecesaria / material.fraccionamiento);
+    const subtotal = unidadesCompradas * material.precio;
 
-    if (!materialesAgrupados[mat.categoria]) materialesAgrupados[mat.categoria] = [];
-
-    materialesAgrupados[mat.categoria].push({
-      nombre: mat.nombre,
-      unidad: mat.unidad,
-      metrosNecesarios: cantidadNecesaria,
-      unidades: unidadesCompradas,
-      precio: mat.precio,
+    console.log('Cálculos para', material.nombre, ':', {
+      cantidadNecesaria,
+      unidadesCompradas,
       subtotal
     });
+
+    const categoria = material.categoria?.toLowerCase() || 'otros';
+    if (!materialesAgrupados[categoria]) {
+      materialesAgrupados[categoria] = [];
+    }
+
+    materialesAgrupados[categoria].push({
+      id: material.id,
+      nombre: material.nombre,
+      unidad: material.unidad || item.unidad,
+      metrosNecesarios: cantidadNecesaria,
+      unidades: unidadesCompradas,
+      precio: material.precio,
+      subtotal
+    });
+
+    total += subtotal;
   }
 
   mostrarMateriales(materialesAgrupados);
+  resultado.classList.remove('hidden');
+  totalMateriales.textContent = formatearMoneda(total);
 }
 
 function mostrarMateriales(agrupados) {
@@ -237,7 +276,7 @@ function mostrarMateriales(agrupados) {
       materialesCat.forEach(m => {
         listaMateriales.innerHTML += `
           <div class="item-presupuesto">
-            <strong>${m.nombre}</strong><br>
+            <strong>${m.nombre}</strong> <small style="color: #95a5a6;">(ID: ${m.id})</small><br>
             ${m.unidades} unidad${m.unidades > 1 ? 'es' : ''} (${m.metrosNecesarios.toFixed(2)} ${m.unidad === 'metro' ? 'mt' : m.unidad === 'superficie' ? 'm²' : 'ud'})<br>
             Precio unitario: $${formatearMoneda(m.precio)}<br>
             Subtotal: <strong>$${formatearMoneda(m.subtotal)}</strong>
@@ -265,6 +304,64 @@ listaOrden.querySelectorAll('input[name="orden"]').forEach(radio => {
     listaOrden.classList.add('hidden');
   });
 });
+
+// Función para identificar presupuestos antiguos
+function identificarPresupuestosAntiguos() {
+  const presupuestosAntiguos = presupuestos.filter(p => {
+    // Un presupuesto es antiguo si tiene al menos un item sin ID
+    return p.items.some(item => !item.id);
+  });
+
+  const contenedorAntiguos = document.getElementById('presupuestos-antiguos');
+  const listaAntiguos = document.getElementById('lista-antiguos');
+
+  if (presupuestosAntiguos.length === 0) {
+    alert('No se encontraron presupuestos con formato antiguo! 👍');
+    contenedorAntiguos.classList.add('hidden');
+    return;
+  }
+
+  listaAntiguos.innerHTML = presupuestosAntiguos.map(p => `
+    <li class="item-presupuesto">
+      <strong>${p.nombre}</strong> (${p.fecha})<br>
+      <small style="color: #95a5a6;">ID: ${p.id}</small><br>
+      <small style="color: #e74c3c;">
+        Materiales sin ID: ${p.items.filter(item => !item.id).length} de ${p.items.length}
+      </small>
+    </li>
+  `).join('');
+
+  contenedorAntiguos.classList.remove('hidden');
+}
+
+// Función para eliminar presupuestos antiguos
+async function eliminarPresupuestosAntiguos() {
+  const presupuestosAntiguos = presupuestos.filter(p => 
+    p.items.some(item => !item.id)
+  );
+
+  if (!confirm(`¿Estás seguro que querés eliminar ${presupuestosAntiguos.length} presupuestos antiguos? Esta acción no se puede deshacer.`)) {
+    return;
+  }
+
+  let eliminados = 0;
+  for (const p of presupuestosAntiguos) {
+    try {
+      await deleteDoc(doc(db, 'presupuestos', p.id));
+      eliminados++;
+    } catch (error) {
+      console.error(`Error al eliminar presupuesto ${p.id}:`, error);
+    }
+  }
+
+  alert(`Se eliminaron ${eliminados} presupuestos antiguos exitosamente.`);
+  await cargarDatos(); // Recargar la lista
+  document.getElementById('presupuestos-antiguos').classList.add('hidden');
+}
+
+// Event listeners para los nuevos botones
+document.getElementById('btn-identificar-antiguos').addEventListener('click', identificarPresupuestosAntiguos);
+document.getElementById('btn-eliminar-antiguos').addEventListener('click', eliminarPresupuestosAntiguos);
 
 await cargarDatos();
 </script>
