@@ -49,6 +49,9 @@
   <h3>Materiales necesarios</h3>
   <div id="lista-materiales"></div>
   <h3>Total: $<span id="total-materiales">0</span></h3>
+  <button id="btn-compartir-lista" class="boton-verde" style="margin-top: 1rem;">
+    <i data-lucide="share"></i> Compartir por WhatsApp
+  </button>
 </div>
 
 <script type="module">
@@ -261,6 +264,35 @@ function generarListaMateriales() {
   totalMateriales.textContent = formatearMoneda(total);
 }
 
+function generarMensajeWhatsApp(materialesAgrupados, total) {
+  let mensaje = '🛠 *Lista de Materiales*\n\n';
+
+  // Primero agregamos los presupuestos seleccionados
+  mensaje += '*Presupuestos incluidos:*\n';
+  seleccionadosConCantidad.forEach(({ id, cantidad }) => {
+    const presupuesto = presupuestos.find(p => p.id === id);
+    mensaje += `- ${presupuesto.nombre} (${cantidad} unidad${cantidad > 1 ? 'es' : ''})\n`;
+  });
+
+  mensaje += '\n*Materiales necesarios:*\n';
+  
+  // Luego agregamos los materiales por categoría
+  ordenCategorias.forEach(cat => {
+    if (materialesAgrupados[cat] && materialesAgrupados[cat].length > 0) {
+      mensaje += `\n📦 *${cat.charAt(0).toUpperCase() + cat.slice(1)}*\n`;
+      materialesAgrupados[cat].forEach(m => {
+        mensaje += `- ${m.nombre}: ${m.metrosNecesarios.toFixed(2)} ${m.unidad === 'metro' ? 'mt' : m.unidad === 'superficie' ? 'm²' : 'ud'} `;
+        mensaje += `(${m.unidades} unidad${m.unidades > 1 ? 'es' : ''})\n`;
+      });
+    }
+  });
+
+  mensaje += `\n💰 *Total: $${formatearMoneda(total)}*\n`;
+  mensaje += '\n_Linda Herrería_';
+
+  return mensaje;
+}
+
 function mostrarMateriales(agrupados) {
   listaMateriales.innerHTML = '';
   let total = 0;
@@ -306,6 +338,13 @@ function mostrarMateriales(agrupados) {
   console.log('Total calculado:', total);
   totalMateriales.textContent = formatearMoneda(total);
   resultado.classList.remove('hidden');
+
+  // Configurar el botón de compartir
+  document.getElementById('btn-compartir-lista').onclick = () => {
+    const mensaje = generarMensajeWhatsApp(agrupados, total);
+    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+  };
 }
 
 // Botón de orden de presupuestos
