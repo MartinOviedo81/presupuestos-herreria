@@ -232,11 +232,14 @@ function generarListaMateriales() {
     });
 
     const categoria = material.categoria?.toLowerCase() || 'otros';
+    console.log('Categoría del material:', categoria);
+
     if (!materialesAgrupados[categoria]) {
+      console.log('Creando nueva categoría:', categoria);
       materialesAgrupados[categoria] = [];
     }
 
-    materialesAgrupados[categoria].push({
+    const materialAgrupado = {
       id: material.id,
       nombre: material.nombre,
       unidad: material.unidad || item.unidad,
@@ -244,10 +247,14 @@ function generarListaMateriales() {
       unidades: unidadesCompradas,
       precio: material.precio,
       subtotal
-    });
+    };
+    console.log('Agregando material a la categoría:', materialAgrupado);
+    materialesAgrupados[categoria].push(materialAgrupado);
 
     total += subtotal;
   }
+
+  console.log('Materiales agrupados final:', materialesAgrupados);
 
   mostrarMateriales(materialesAgrupados);
   resultado.classList.remove('hidden');
@@ -258,22 +265,31 @@ function mostrarMateriales(agrupados) {
   listaMateriales.innerHTML = '';
   let total = 0;
 
+  console.log('Materiales agrupados recibidos:', agrupados);
+
   const ordenCategorias = [
-    'caños estructurales',
-    'hierros cuadrados',
-    'hierros redondos',
-    'planchuelas',
-    'hierros angulo',
+    'caño estructural cuadrado',
+    'caño estructural redondo',
+    'hierro cuadrado',
+    'hierro redondo',
+    'planchuela',
+    'angulo',
     'laminas',
     'herrajes'
   ];
 
+  console.log('Categorías a mostrar:', ordenCategorias);
+
   ordenCategorias.forEach(cat => {
+    console.log('Procesando categoría:', cat);
+    console.log('Materiales en esta categoría:', agrupados[cat]);
+    
     if (agrupados[cat]) {
       listaMateriales.innerHTML += `<h3 style="color: #f39c12; margin-top: 1rem;">${cat.charAt(0).toUpperCase() + cat.slice(1)}</h3>`;
       const materialesCat = agrupados[cat].sort((a, b) => a.precio - b.precio);
 
       materialesCat.forEach(m => {
+        console.log('Agregando material a la lista:', m);
         listaMateriales.innerHTML += `
           <div class="item-presupuesto">
             <strong>${m.nombre}</strong> <small style="color: #95a5a6;">(ID: ${m.id})</small><br>
@@ -287,6 +303,7 @@ function mostrarMateriales(agrupados) {
     }
   });
 
+  console.log('Total calculado:', total);
   totalMateriales.textContent = formatearMoneda(total);
   resultado.classList.remove('hidden');
 }
