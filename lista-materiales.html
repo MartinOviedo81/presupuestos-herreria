@@ -340,11 +340,18 @@ function mostrarMateriales(agrupados) {
   resultado.classList.remove('hidden');
 
   // Configurar el botón de compartir
-  document.getElementById('btn-compartir-lista').onclick = () => {
+  const btnCompartir = document.getElementById('btn-compartir-lista');
+  btnCompartir.addEventListener('click', () => {
+    console.log('Botón compartir clickeado');
     const mensaje = generarMensajeWhatsApp(agrupados, total);
+    console.log('Mensaje generado:', mensaje);
     const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
-  };
+    console.log('URL generada:', url);
+    window.location.href = url; // Cambiamos window.open por window.location.href para mejor compatibilidad móvil
+  });
+
+  // Asegurarnos que el ícono se cree
+  lucide.createIcons();
 }
 
 // Botón de orden de presupuestos
