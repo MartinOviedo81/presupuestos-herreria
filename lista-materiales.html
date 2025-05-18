@@ -12,67 +12,106 @@
 
 <h2>Lista de Materiales</h2>
 
-<!-- Botón de ordenamiento -->
-<div id="menu-orden" class="trabajos-menu-custom">
-  <button id="toggle-orden" class="boton-gris">Ordenar presupuestos</button>
-  <div class="trabajos-lista hidden">
-    <label><input type="radio" name="orden" value="nombre-asc" checked> Nombre A-Z</label>
-    <label><input type="radio" name="orden" value="nombre-desc"> Nombre Z-A</label>
-    <label><input type="radio" name="orden" value="fecha-asc"> Fecha ascendente</label>
-    <label><input type="radio" name="orden" value="fecha-desc"> Fecha descendente</label>
+<!-- Indicador de Pasos -->
+<div class="pasos-proceso">
+  <div class="paso activo" data-paso="1">
+    <span>1</span>
+    Seleccionar Presupuestos
+  </div>
+  <div class="paso" data-paso="2">
+    <span>2</span>
+    Ajustar Cantidades
+  </div>
+  <div class="paso" data-paso="3">
+    <span>3</span>
+    Lista de Materiales
+  </div>
+  <div class="paso" data-paso="4">
+    <span>4</span>
+    Compartir
   </div>
 </div>
 
-<div id="contenedor-presupuestos">
-  <h3>Seleccioná los presupuestos</h3>
-  <button id="btn-identificar-antiguos" class="boton-naranja" style="margin-bottom: 1rem;">
-    <i data-lucide="search"></i> Identificar presupuestos antiguos
-  </button>
-  <div id="presupuestos-antiguos" class="hidden">
-    <h4 style="color: #e74c3c;">Presupuestos con formato antiguo:</h4>
-    <ul id="lista-antiguos" style="margin-bottom: 1rem;"></ul>
-    <button id="btn-eliminar-antiguos" class="boton-rojo">
-      <i data-lucide="trash-2"></i> Eliminar todos los presupuestos antiguos
-    </button>
+<!-- Paso 1: Selección de Presupuestos -->
+<div class="seccion-paso visible" id="paso-1">
+  <h3>Selecciona los presupuestos a incluir</h3>
+  <div id="menu-orden" class="trabajos-menu-custom">
+    <button id="toggle-orden" class="boton-gris">Ordenar presupuestos</button>
+    <div class="trabajos-lista hidden">
+      <label><input type="radio" name="orden" value="nombre-asc" checked> Nombre A-Z</label>
+      <label><input type="radio" name="orden" value="nombre-desc"> Nombre Z-A</label>
+      <label><input type="radio" name="orden" value="fecha-asc"> Fecha ascendente</label>
+      <label><input type="radio" name="orden" value="fecha-desc"> Fecha descendente</label>
+    </div>
   </div>
   <ul id="lista-presupuestos"></ul>
-  <button id="btn-confirmar" class="boton-celeste">Confirmar selección</button>
+  <div class="botones-navegacion">
+    <button class="btn-navegacion btn-siguiente" id="btn-confirmar">
+      Confirmar Selección <i data-lucide="arrow-right"></i>
+    </button>
+  </div>
 </div>
 
-<div id="contenedor-cantidades" class="hidden">
-  <h3>Cantidades de presupuestos seleccionados</h3>
-  <ul id="lista-cantidades"></ul>
-  <button id="btn-generar" class="boton-verde">Generar lista de materiales</button>
+<!-- Paso 2: Ajuste de Cantidades -->
+<div class="seccion-paso" id="paso-2">
+  <h3>Ajusta las cantidades necesarias</h3>
+  <div id="contenedor-cantidades">
+    <ul id="lista-cantidades"></ul>
+  </div>
+  <div class="botones-navegacion">
+    <button class="btn-navegacion btn-anterior" onclick="irAlPaso(1)">
+      <i data-lucide="arrow-left"></i> Volver
+    </button>
+    <button class="btn-navegacion btn-siguiente" id="btn-generar">
+      Generar Lista <i data-lucide="arrow-right"></i>
+    </button>
+  </div>
 </div>
 
-<div id="resultado" class="hidden">
-  <h3>Materiales necesarios</h3>
-  <div id="lista-materiales"></div>
-  <h3>Total: $<span id="total-materiales">0</span></h3>
-  <button id="btn-compartir-lista" class="boton-verde" style="margin-top: 1rem;">
-    <i data-lucide="share"></i> Compartir por WhatsApp
+<!-- Paso 3: Lista de Materiales -->
+<div class="seccion-paso" id="paso-3">
+  <h3>Lista de Materiales Necesarios</h3>
+  <div id="resultado">
+    <div id="lista-materiales"></div>
+    <p><strong>Total estimado: $<span id="total-materiales">0</span></strong></p>
+  </div>
+  <div class="botones-navegacion">
+    <button class="btn-navegacion btn-anterior" onclick="irAlPaso(2)">
+      <i data-lucide="arrow-left"></i> Ajustar Cantidades
+    </button>
+    <button class="btn-navegacion btn-siguiente" onclick="irAlPaso(4)">
+      Compartir <i data-lucide="arrow-right"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Paso 4: Compartir -->
+<div class="seccion-paso" id="paso-4">
+  <h3>Compartir Lista</h3>
+  <button class="btn-navegacion" id="btn-whatsapp">
+    <i data-lucide="message-circle"></i> Enviar por WhatsApp
   </button>
+  <div class="botones-navegacion">
+    <button class="btn-navegacion btn-anterior" onclick="irAlPaso(3)">
+      <i data-lucide="arrow-left"></i> Volver a la Lista
+    </button>
+  </div>
 </div>
 
 <script type="module">
 import { db } from './firebase-config.js';
 import { collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-const listaPresupuestos = document.getElementById('lista-presupuestos');
-const btnConfirmar = document.getElementById('btn-confirmar');
-const contenedorCantidades = document.getElementById('contenedor-cantidades');
-const listaCantidades = document.getElementById('lista-cantidades');
-const btnGenerar = document.getElementById('btn-generar');
-const listaMateriales = document.getElementById('lista-materiales');
-const resultado = document.getElementById('resultado');
-const totalMateriales = document.getElementById('total-materiales');
-const toggleOrdenBtn = document.getElementById('toggle-orden');
-const listaOrden = document.querySelector('#menu-orden .trabajos-lista');
-
+// Variables globales
 let presupuestos = [];
 let materiales = [];
 let ordenSeleccionado = 'nombre-asc';
 let seleccionadosConCantidad = [];
+
+// Referencias a elementos del DOM
+const listaMateriales = document.getElementById('lista-materiales');
+const resultado = document.getElementById('resultado');
+const totalMateriales = document.getElementById('total-materiales');
 
 // Definición global de ordenCategorias
 const ordenCategorias = [
@@ -86,6 +125,28 @@ const ordenCategorias = [
   'herrajes'
 ];
 
+// Función para navegar entre pasos
+window.irAlPaso = function(numeroPaso) {
+  // Ocultar todas las secciones
+  document.querySelectorAll('.seccion-paso').forEach(seccion => {
+    seccion.classList.remove('visible');
+  });
+  
+  // Mostrar la sección del paso actual
+  document.getElementById(`paso-${numeroPaso}`).classList.add('visible');
+  
+  // Actualizar indicadores de pasos
+  document.querySelectorAll('.paso').forEach(paso => {
+    const pasoPaso = parseInt(paso.dataset.paso);
+    paso.classList.remove('activo', 'completado');
+    if (pasoPaso === numeroPaso) {
+      paso.classList.add('activo');
+    } else if (pasoPaso < numeroPaso) {
+      paso.classList.add('completado');
+    }
+  });
+}
+
 async function cargarDatos() {
   const snapPresupuestos = await getDocs(collection(db, 'presupuestos'));
   const snapMateriales = await getDocs(collection(db, 'materiales'));
@@ -93,10 +154,8 @@ async function cargarDatos() {
   presupuestos = snapPresupuestos.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   materiales = snapMateriales.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-  console.log('Materiales cargados:', materiales);
-  console.log('Presupuestos cargados:', presupuestos);
-
   renderPresupuestos();
+  configurarEventListeners();
 }
 
 function formatearMoneda(valor) {
@@ -104,6 +163,7 @@ function formatearMoneda(valor) {
 }
 
 function renderPresupuestos() {
+  const listaPresupuestos = document.getElementById('lista-presupuestos');
   let lista = [...presupuestos];
 
   lista.sort((a, b) => {
@@ -124,84 +184,124 @@ function renderPresupuestos() {
   `).join('');
 }
 
-btnConfirmar.addEventListener('click', () => {
-  const seleccionados = Array.from(listaPresupuestos.querySelectorAll('input:checked')).map(input => input.value);
-  if (seleccionados.length === 0) {
-    alert('Seleccioná al menos un presupuesto.');
-    return;
+function configurarEventListeners() {
+  const btnConfirmar = document.getElementById('btn-confirmar');
+  const btnGenerar = document.getElementById('btn-generar');
+  const toggleOrdenBtn = document.getElementById('toggle-orden');
+  const listaOrden = document.querySelector('#menu-orden .trabajos-lista');
+  const btnWhatsapp = document.getElementById('btn-whatsapp');
+  const listaCantidades = document.getElementById('lista-cantidades');
+
+  // Verificar que los elementos existan antes de agregar los event listeners
+  if (btnConfirmar) {
+    btnConfirmar.addEventListener('click', () => {
+      const listaPresupuestos = document.getElementById('lista-presupuestos');
+      const seleccionados = Array.from(listaPresupuestos.querySelectorAll('input:checked')).map(input => input.value);
+      
+      if (seleccionados.length === 0) {
+        alert('Seleccioná al menos un presupuesto.');
+        return;
+      }
+
+      const listaCantidades = document.getElementById('lista-cantidades');
+      if (listaCantidades) {
+        listaCantidades.innerHTML = seleccionados.map(id => {
+          const presupuesto = presupuestos.find(p => p.id === id);
+          return `
+            <li class="item-presupuesto mini-controls" data-id="${id}">
+              <strong>${presupuesto.nombre}</strong> (${presupuesto.fecha})<br>
+              <div class="cantidad-controles">
+                <button class="btn-mini boton-disminuir" data-id="${id}"><i data-lucide="square-minus"></i></button>
+                <input type="number" min="1" value="1" class="input-cantidad" data-id="${id}">
+                <button class="btn-mini boton-aumentar" data-id="${id}"><i data-lucide="square-plus"></i></button>
+                <button class="btn-mini boton-eliminar" data-id="${id}"><i data-lucide="trash-2"></i></button>
+              </div>
+            </li>
+          `;
+        }).join('');
+
+        lucide.createIcons();
+        irAlPaso(2);
+      }
+    });
   }
 
-  listaCantidades.innerHTML = seleccionados.map(id => {
-    const presupuesto = presupuestos.find(p => p.id === id);
-    return `
-      <li class="item-presupuesto mini-controls" data-id="${id}">
-        <strong>${presupuesto.nombre}</strong> (${presupuesto.fecha})<br>
-        <div class="cantidad-controles">
-          <button class="btn-mini boton-disminuir" data-id="${id}"><i data-lucide="square-minus"></i></button>
-          <input type="number" min="1" value="1" class="input-cantidad" data-id="${id}">
-          <button class="btn-mini boton-aumentar" data-id="${id}"><i data-lucide="square-plus"></i></button>
-          <button class="btn-mini boton-eliminar" data-id="${id}"><i data-lucide="trash-2"></i></button>
-        </div>
-      </li>
-    `;
-  }).join('');
+  if (listaCantidades) {
+    listaCantidades.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
 
-  // Configurar event listeners para los botones una sola vez
-  listaCantidades.addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
+      const id = btn.dataset.id;
+      const input = document.querySelector(`input[data-id="${id}"]`);
+      if (!input) return;
 
-    const id = btn.dataset.id;
-    const input = listaCantidades.querySelector(`input[data-id="${id}"]`);
-    if (!input) return;
-
-    if (btn.classList.contains('boton-aumentar')) {
-      input.value = parseInt(input.value) + 1;
-    } else if (btn.classList.contains('boton-disminuir')) {
-      if (parseInt(input.value) > 1) {
-        input.value = parseInt(input.value) - 1;
+      if (btn.classList.contains('boton-aumentar')) {
+        input.value = parseInt(input.value) + 1;
+      } else if (btn.classList.contains('boton-disminuir')) {
+        if (parseInt(input.value) > 1) {
+          input.value = parseInt(input.value) - 1;
+        }
+      } else if (btn.classList.contains('boton-eliminar')) {
+        if (confirm('¿Seguro que querés eliminar este presupuesto de la selección?')) {
+          btn.closest('li').remove();
+        }
       }
-    } else if (btn.classList.contains('boton-eliminar')) {
-      if (confirm('¿Seguro que querés eliminar este presupuesto de la selección?')) {
-        btn.closest('li').remove();
-      }
-    }
-  });
+    });
+  }
 
-  contenedorCantidades.classList.remove('hidden');
-  lucide.createIcons();
-});
+  if (btnGenerar) {
+    btnGenerar.addEventListener('click', () => {
+      const listaCantidades = document.getElementById('lista-cantidades');
+      if (!listaCantidades) return;
 
-btnGenerar.addEventListener('click', () => {
-  seleccionadosConCantidad = [];
-  
-  listaCantidades.querySelectorAll('input[type="number"]').forEach(input => {
-    const id = input.dataset.id;
-    const cantidad = parseInt(input.value) || 1;
-    seleccionadosConCantidad.push({ id, cantidad });
-  });
+      seleccionadosConCantidad = [];
+      listaCantidades.querySelectorAll('input[type="number"]').forEach(input => {
+        const id = input.dataset.id;
+        const cantidad = parseInt(input.value) || 1;
+        seleccionadosConCantidad.push({ id, cantidad });
+      });
 
-  generarListaMateriales();
-});
+      generarListaMateriales();
+      irAlPaso(3);
+    });
+  }
+
+  if (toggleOrdenBtn && listaOrden) {
+    toggleOrdenBtn.addEventListener('click', () => {
+      listaOrden.classList.toggle('hidden');
+    });
+
+    listaOrden.querySelectorAll('input[name="orden"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        ordenSeleccionado = e.target.value;
+        toggleOrdenBtn.textContent = `Ordenar: ${e.target.nextSibling.textContent.trim()}`;
+        renderPresupuestos();
+        listaOrden.classList.add('hidden');
+      });
+    });
+  }
+
+  if (btnWhatsapp) {
+    btnWhatsapp.addEventListener('click', () => {
+      const mensaje = generarMensajeWhatsApp(materialesAgrupados, total);
+      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      window.location.href = url;
+    });
+  }
+}
 
 function generarListaMateriales() {
   const materialesNecesarios = {};
   let total = 0;
 
-  console.log('Presupuestos seleccionados:', seleccionadosConCantidad);
-
-  // Acumulamos cantidades necesarias usando directamente los IDs
   seleccionadosConCantidad.forEach(({ id, cantidad }) => {
     const presupuesto = presupuestos.find(p => p.id === id);
-    console.log('Procesando presupuesto:', presupuesto);
     if (!presupuesto) {
       console.warn('No se encontró el presupuesto con ID:', id);
       return;
     }
 
-    console.log('Items en el presupuesto:', presupuesto.items);
     presupuesto.items.forEach(item => {
-      console.log('Procesando item:', item);
       if (!item.id) {
         console.warn(`Item sin ID encontrado en presupuesto ${presupuesto.id}: ${item.nombre}`);
         return;
@@ -219,17 +319,11 @@ function generarListaMateriales() {
     });
   });
 
-  console.log('Materiales necesarios acumulados:', materialesNecesarios);
-
-  // Agrupamos por categoría usando los IDs
   const materialesAgrupados = {};
 
   for (let clave in materialesNecesarios) {
     const item = materialesNecesarios[clave];
     const material = materiales.find(m => m.id === item.id);
-    
-    console.log('Buscando material con ID:', item.id);
-    console.log('Material encontrado:', material);
     
     if (!material) {
       console.warn(`Material no encontrado con ID: ${item.id}`);
@@ -240,17 +334,9 @@ function generarListaMateriales() {
     const unidadesCompradas = Math.ceil(cantidadNecesaria / material.fraccionamiento);
     const subtotal = unidadesCompradas * material.precio;
 
-    console.log('Cálculos para', material.nombre, ':', {
-      cantidadNecesaria,
-      unidadesCompradas,
-      subtotal
-    });
-
     const categoria = material.categoria?.toLowerCase() || 'otros';
-    console.log('Categoría del material:', categoria);
 
     if (!materialesAgrupados[categoria]) {
-      console.log('Creando nueva categoría:', categoria);
       materialesAgrupados[categoria] = [];
     }
 
@@ -263,13 +349,10 @@ function generarListaMateriales() {
       precio: material.precio,
       subtotal
     };
-    console.log('Agregando material a la categoría:', materialAgrupado);
     materialesAgrupados[categoria].push(materialAgrupado);
 
     total += subtotal;
   }
-
-  console.log('Materiales agrupados final:', materialesAgrupados);
 
   mostrarMateriales(materialesAgrupados);
   resultado.classList.remove('hidden');
@@ -319,22 +402,21 @@ function generarMensajeWhatsApp(materialesAgrupados, total) {
 }
 
 function mostrarMateriales(agrupados) {
+  // Verificar que los elementos existan
+  if (!listaMateriales || !resultado || !totalMateriales) {
+    console.error('No se encontraron los elementos necesarios en el DOM');
+    return;
+  }
+
   listaMateriales.innerHTML = '';
   let total = 0;
 
-  console.log('Materiales agrupados recibidos:', agrupados);
-  console.log('Categorías a mostrar:', ordenCategorias);
-
   ordenCategorias.forEach(cat => {
-    console.log('Procesando categoría:', cat);
-    console.log('Materiales en esta categoría:', agrupados[cat]);
-    
     if (agrupados[cat]) {
       listaMateriales.innerHTML += `<h3 style="color: #f39c12; margin-top: 1rem;">${cat.charAt(0).toUpperCase() + cat.slice(1)}</h3>`;
       const materialesCat = agrupados[cat].sort((a, b) => a.precio - b.precio);
 
       materialesCat.forEach(m => {
-        console.log('Agregando material a la lista:', m);
         listaMateriales.innerHTML += `
           <div class="item-presupuesto">
             <strong>${m.nombre}</strong> <small style="color: #95a5a6;">(ID: ${m.id})</small><br>
@@ -348,98 +430,35 @@ function mostrarMateriales(agrupados) {
     }
   });
 
-  console.log('Total calculado:', total);
   totalMateriales.textContent = formatearMoneda(total);
   resultado.classList.remove('hidden');
 
-  // Configurar el botón de compartir
   const btnCompartir = document.getElementById('btn-compartir-lista');
-  btnCompartir.addEventListener('click', () => {
-    console.log('Botón compartir clickeado');
-    const mensaje = generarMensajeWhatsApp(agrupados, total);
-    console.log('Mensaje generado:', mensaje);
-    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-    console.log('URL generada:', url);
-    window.location.href = url; // Cambiamos window.open por window.location.href para mejor compatibilidad móvil
-  });
+  if (btnCompartir) {
+    btnCompartir.addEventListener('click', () => {
+      const mensaje = generarMensajeWhatsApp(agrupados, total);
+      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      window.location.href = url;
+    });
+  }
 
-  // Asegurarnos que el ícono se cree
   lucide.createIcons();
 }
 
-// Botón de orden de presupuestos
-toggleOrdenBtn.addEventListener('click', () => {
-  listaOrden.classList.toggle('hidden');
-});
+// Inicialización cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', async () => {
+  // Referencias a elementos del DOM
+  const listaMateriales = document.getElementById('lista-materiales');
+  const resultado = document.getElementById('resultado');
+  const totalMateriales = document.getElementById('total-materiales');
 
-listaOrden.querySelectorAll('input[name="orden"]').forEach(radio => {
-  radio.addEventListener('change', (e) => {
-    ordenSeleccionado = e.target.value;
-    toggleOrdenBtn.textContent = `Ordenar: ${e.target.nextSibling.textContent.trim()}`;
-    renderPresupuestos();
-    listaOrden.classList.add('hidden');
-  });
-});
-
-// Función para identificar presupuestos antiguos
-function identificarPresupuestosAntiguos() {
-  const presupuestosAntiguos = presupuestos.filter(p => {
-    // Un presupuesto es antiguo si tiene al menos un item sin ID
-    return p.items.some(item => !item.id);
-  });
-
-  const contenedorAntiguos = document.getElementById('presupuestos-antiguos');
-  const listaAntiguos = document.getElementById('lista-antiguos');
-
-  if (presupuestosAntiguos.length === 0) {
-    alert('No se encontraron presupuestos con formato antiguo! 👍');
-    contenedorAntiguos.classList.add('hidden');
+  if (!listaMateriales || !resultado || !totalMateriales) {
+    console.error('No se encontraron elementos críticos del DOM');
     return;
   }
 
-  listaAntiguos.innerHTML = presupuestosAntiguos.map(p => `
-    <li class="item-presupuesto">
-      <strong>${p.nombre}</strong> (${p.fecha})<br>
-      <small style="color: #95a5a6;">ID: ${p.id}</small><br>
-      <small style="color: #e74c3c;">
-        Materiales sin ID: ${p.items.filter(item => !item.id).length} de ${p.items.length}
-      </small>
-    </li>
-  `).join('');
-
-  contenedorAntiguos.classList.remove('hidden');
-}
-
-// Función para eliminar presupuestos antiguos
-async function eliminarPresupuestosAntiguos() {
-  const presupuestosAntiguos = presupuestos.filter(p => 
-    p.items.some(item => !item.id)
-  );
-
-  if (!confirm(`¿Estás seguro que querés eliminar ${presupuestosAntiguos.length} presupuestos antiguos? Esta acción no se puede deshacer.`)) {
-    return;
-  }
-
-  let eliminados = 0;
-  for (const p of presupuestosAntiguos) {
-    try {
-      await deleteDoc(doc(db, 'presupuestos', p.id));
-      eliminados++;
-    } catch (error) {
-      console.error(`Error al eliminar presupuesto ${p.id}:`, error);
-    }
-  }
-
-  alert(`Se eliminaron ${eliminados} presupuestos antiguos exitosamente.`);
-  await cargarDatos(); // Recargar la lista
-  document.getElementById('presupuestos-antiguos').classList.add('hidden');
-}
-
-// Event listeners para los nuevos botones
-document.getElementById('btn-identificar-antiguos').addEventListener('click', identificarPresupuestosAntiguos);
-document.getElementById('btn-eliminar-antiguos').addEventListener('click', eliminarPresupuestosAntiguos);
-
-await cargarDatos();
+  await cargarDatos();
+});
 </script>
 
 </body>
