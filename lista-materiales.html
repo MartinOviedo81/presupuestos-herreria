@@ -277,24 +277,37 @@ function generarListaMateriales() {
 }
 
 function generarMensajeWhatsApp(materialesAgrupados, total) {
-  let mensaje = '🛠 *Lista de Materiales*\n\n';
+  // Obtener la fecha actual en formato dd/mm/yyyy
+  const fecha = new Date().toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+
+  let mensaje = `🛠 *Lista de Materiales* (${fecha})\n\n`;
 
   // Primero agregamos los presupuestos seleccionados
   mensaje += '*Presupuestos incluidos:*\n';
   seleccionadosConCantidad.forEach(({ id, cantidad }) => {
     const presupuesto = presupuestos.find(p => p.id === id);
-    mensaje += `- ${presupuesto.nombre} (${cantidad} unidad${cantidad > 1 ? 'es' : ''})\n`;
+    mensaje += `${cantidad} - ${presupuesto.nombre}\n`;
   });
 
   mensaje += '\n*Materiales necesarios:*\n';
   
-  // Luego agregamos los materiales por categoría
+  // Luego agregamos los materiales por categoría, sin títulos
+  let primeraCategoria = true;
   ordenCategorias.forEach(cat => {
     if (materialesAgrupados[cat] && materialesAgrupados[cat].length > 0) {
-      mensaje += `\n📦 *${cat.charAt(0).toUpperCase() + cat.slice(1)}*\n`;
+      // Si no es la primera categoría, agregamos un espacio extra para separar
+      if (!primeraCategoria) {
+        mensaje += '\n';
+      }
+      primeraCategoria = false;
+
       materialesAgrupados[cat].forEach(m => {
-        mensaje += `- ${m.nombre}: ${m.metrosNecesarios.toFixed(2)} ${m.unidad === 'metro' ? 'mt' : m.unidad === 'superficie' ? 'm²' : 'ud'} `;
-        mensaje += `(${m.unidades} unidad${m.unidades > 1 ? 'es' : ''})\n`;
+        const unidadAbreviada = m.unidad === 'metro' ? 'mt' : m.unidad === 'superficie' ? 'm²' : 'ud';
+        mensaje += `${m.unidades} - ${m.nombre} - ${m.metrosNecesarios.toFixed(2)} ${unidadAbreviada}\n`;
       });
     }
   });
