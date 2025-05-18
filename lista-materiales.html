@@ -74,6 +74,18 @@ let materiales = [];
 let ordenSeleccionado = 'nombre-asc';
 let seleccionadosConCantidad = [];
 
+// Definición global de ordenCategorias
+const ordenCategorias = [
+  'caño estructural cuadrado',
+  'caño estructural redondo',
+  'hierro cuadrado',
+  'hierro redondo',
+  'planchuela',
+  'angulo',
+  'laminas',
+  'herrajes'
+];
+
 async function cargarDatos() {
   const snapPresupuestos = await getDocs(collection(db, 'presupuestos'));
   const snapMateriales = await getDocs(collection(db, 'materiales'));
@@ -298,18 +310,6 @@ function mostrarMateriales(agrupados) {
   let total = 0;
 
   console.log('Materiales agrupados recibidos:', agrupados);
-
-  const ordenCategorias = [
-    'caño estructural cuadrado',
-    'caño estructural redondo',
-    'hierro cuadrado',
-    'hierro redondo',
-    'planchuela',
-    'angulo',
-    'laminas',
-    'herrajes'
-  ];
-
   console.log('Categorías a mostrar:', ordenCategorias);
 
   ordenCategorias.forEach(cat => {
