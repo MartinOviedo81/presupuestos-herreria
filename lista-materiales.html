@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Lista de Materiales - Linda Herrería</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" type="image/png" href="lindaherreriaMC2.png" />
   <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -33,7 +33,7 @@
 </div>
 
 <!-- Paso 1: Selección de Presupuestos -->
-<div class="seccion-paso visible" id="paso-1">
+<div class="seccion-paso visible" id="paso1">
   <h3>Selecciona los presupuestos a incluir</h3>
   <div id="menu-orden" class="trabajos-menu-custom">
     <button id="toggle-orden" class="boton-gris">Ordenar presupuestos</button>
@@ -53,7 +53,7 @@
 </div>
 
 <!-- Paso 2: Ajuste de Cantidades -->
-<div class="seccion-paso" id="paso-2">
+<div class="seccion-paso" id="paso2">
   <h3>Ajusta las cantidades necesarias</h3>
   <div id="contenedor-cantidades">
     <ul id="lista-cantidades"></ul>
@@ -69,7 +69,7 @@
 </div>
 
 <!-- Paso 3: Lista de Materiales -->
-<div class="seccion-paso" id="paso-3">
+<div class="seccion-paso" id="paso3">
   <h3>Lista de Materiales Necesarios</h3>
   <div id="resultado">
     <div id="lista-materiales"></div>
@@ -86,7 +86,7 @@
 </div>
 
 <!-- Paso 4: Compartir -->
-<div class="seccion-paso" id="paso-4">
+<div class="seccion-paso" id="paso4">
   <h3>Compartir Lista</h3>
   <button class="btn-navegacion" id="btn-whatsapp">
     <i data-lucide="message-circle"></i> Enviar por WhatsApp
@@ -103,10 +103,13 @@ import { db } from './firebase-config.js';
 import { collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 // Variables globales
-let presupuestos = [];
-let materiales = [];
-let ordenSeleccionado = 'nombre-asc';
-let seleccionadosConCantidad = [];
+window.presupuestos = [];
+window.materiales = [];
+window.ordenSeleccionado = 'nombre-asc';
+window.seleccionadosConCantidad = [];
+window.materialesAgrupados = {};
+window.total = 0;
+window.pasoActual = 1;
 
 // Referencias a elementos del DOM
 const listaMateriales = document.getElementById('lista-materiales');
@@ -126,33 +129,67 @@ const ordenCategorias = [
 ];
 
 // Función para navegar entre pasos
+window.actualizarBotonesNavegacion = function() {
+  const btnAnterior = document.querySelector('.btn-anterior');
+  const btnSiguiente = document.querySelector('.btn-siguiente');
+  
+  if (btnAnterior) {
+    btnAnterior.style.display = window.pasoActual > 1 ? 'block' : 'none';
+  }
+  
+  if (btnSiguiente) {
+    btnSiguiente.style.display = window.pasoActual < 4 ? 'block' : 'none';
+  }
+};
+
 window.irAlPaso = function(numeroPaso) {
   // Ocultar todas las secciones
   document.querySelectorAll('.seccion-paso').forEach(seccion => {
     seccion.classList.remove('visible');
   });
   
-  // Mostrar la sección del paso actual
-  document.getElementById(`paso-${numeroPaso}`).classList.add('visible');
+  // Mostrar la sección seleccionada
+  const seccionActual = document.querySelector(`#paso${numeroPaso}`);
+  if (!seccionActual) {
+    console.error(`No se encontró la sección para el paso ${numeroPaso}`);
+    return;
+  }
+  seccionActual.classList.add('visible');
   
-  // Actualizar indicadores de pasos
-  document.querySelectorAll('.paso').forEach(paso => {
-    const pasoPaso = parseInt(paso.dataset.paso);
-    paso.classList.remove('activo', 'completado');
-    if (pasoPaso === numeroPaso) {
-      paso.classList.add('activo');
-    } else if (pasoPaso < numeroPaso) {
+  // Actualizar estados de los pasos
+  document.querySelectorAll('.paso').forEach((paso, index) => {
+    if (index + 1 < numeroPaso) {
       paso.classList.add('completado');
+      paso.classList.remove('activo');
+    } else if (index + 1 === numeroPaso) {
+      paso.classList.add('activo');
+      paso.classList.remove('completado');
+    } else {
+      paso.classList.remove('completado', 'activo');
     }
   });
-}
+  
+  // Scroll suave al inicio de la sección en móviles
+  if (window.innerWidth <= 768) {
+    const pasosProceso = document.querySelector('.pasos-proceso');
+    if (pasosProceso) {
+      window.scrollTo({
+        top: pasosProceso.offsetTop,
+        behavior: 'smooth'
+      });
+    }
+  }
+  
+  window.pasoActual = numeroPaso;
+  window.actualizarBotonesNavegacion();
+};
 
 async function cargarDatos() {
   const snapPresupuestos = await getDocs(collection(db, 'presupuestos'));
   const snapMateriales = await getDocs(collection(db, 'materiales'));
 
-  presupuestos = snapPresupuestos.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  materiales = snapMateriales.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  window.presupuestos = snapPresupuestos.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  window.materiales = snapMateriales.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
   renderPresupuestos();
   configurarEventListeners();
@@ -164,13 +201,13 @@ function formatearMoneda(valor) {
 
 function renderPresupuestos() {
   const listaPresupuestos = document.getElementById('lista-presupuestos');
-  let lista = [...presupuestos];
+  let lista = [...window.presupuestos];
 
   lista.sort((a, b) => {
-    if (ordenSeleccionado === 'nombre-asc') return a.nombre.localeCompare(b.nombre);
-    if (ordenSeleccionado === 'nombre-desc') return b.nombre.localeCompare(a.nombre);
-    if (ordenSeleccionado === 'fecha-asc') return new Date(a.fechaOrden) - new Date(b.fechaOrden);
-    if (ordenSeleccionado === 'fecha-desc') return new Date(b.fechaOrden) - new Date(a.fechaOrden);
+    if (window.ordenSeleccionado === 'nombre-asc') return a.nombre.localeCompare(b.nombre);
+    if (window.ordenSeleccionado === 'nombre-desc') return b.nombre.localeCompare(a.nombre);
+    if (window.ordenSeleccionado === 'fecha-asc') return new Date(a.fechaOrden) - new Date(b.fechaOrden);
+    if (window.ordenSeleccionado === 'fecha-desc') return new Date(b.fechaOrden) - new Date(a.fechaOrden);
     return 0;
   });
 
@@ -206,7 +243,7 @@ function configurarEventListeners() {
       const listaCantidades = document.getElementById('lista-cantidades');
       if (listaCantidades) {
         listaCantidades.innerHTML = seleccionados.map(id => {
-          const presupuesto = presupuestos.find(p => p.id === id);
+          const presupuesto = window.presupuestos.find(p => p.id === id);
           return `
             <li class="item-presupuesto mini-controls" data-id="${id}">
               <strong>${presupuesto.nombre}</strong> (${presupuesto.fecha})<br>
@@ -254,11 +291,11 @@ function configurarEventListeners() {
       const listaCantidades = document.getElementById('lista-cantidades');
       if (!listaCantidades) return;
 
-      seleccionadosConCantidad = [];
+      window.seleccionadosConCantidad = [];
       listaCantidades.querySelectorAll('input[type="number"]').forEach(input => {
         const id = input.dataset.id;
         const cantidad = parseInt(input.value) || 1;
-        seleccionadosConCantidad.push({ id, cantidad });
+        window.seleccionadosConCantidad.push({ id, cantidad });
       });
 
       generarListaMateriales();
@@ -273,7 +310,7 @@ function configurarEventListeners() {
 
     listaOrden.querySelectorAll('input[name="orden"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
-        ordenSeleccionado = e.target.value;
+        window.ordenSeleccionado = e.target.value;
         toggleOrdenBtn.textContent = `Ordenar: ${e.target.nextSibling.textContent.trim()}`;
         renderPresupuestos();
         listaOrden.classList.add('hidden');
@@ -283,7 +320,7 @@ function configurarEventListeners() {
 
   if (btnWhatsapp) {
     btnWhatsapp.addEventListener('click', () => {
-      const mensaje = generarMensajeWhatsApp(materialesAgrupados, total);
+      const mensaje = window.generarMensajeWhatsApp(window.materialesAgrupados, window.total);
       const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
       window.location.href = url;
     });
@@ -294,8 +331,8 @@ function generarListaMateriales() {
   const materialesNecesarios = {};
   let total = 0;
 
-  seleccionadosConCantidad.forEach(({ id, cantidad }) => {
-    const presupuesto = presupuestos.find(p => p.id === id);
+  window.seleccionadosConCantidad.forEach(({ id, cantidad }) => {
+    const presupuesto = window.presupuestos.find(p => p.id === id);
     if (!presupuesto) {
       console.warn('No se encontró el presupuesto con ID:', id);
       return;
@@ -319,11 +356,11 @@ function generarListaMateriales() {
     });
   });
 
-  const materialesAgrupados = {};
+  window.materialesAgrupados = {};
 
   for (let clave in materialesNecesarios) {
     const item = materialesNecesarios[clave];
-    const material = materiales.find(m => m.id === item.id);
+    const material = window.materiales.find(m => m.id === item.id);
     
     if (!material) {
       console.warn(`Material no encontrado con ID: ${item.id}`);
@@ -336,8 +373,8 @@ function generarListaMateriales() {
 
     const categoria = material.categoria?.toLowerCase() || 'otros';
 
-    if (!materialesAgrupados[categoria]) {
-      materialesAgrupados[categoria] = [];
+    if (!window.materialesAgrupados[categoria]) {
+      window.materialesAgrupados[categoria] = [];
     }
 
     const materialAgrupado = {
@@ -349,17 +386,17 @@ function generarListaMateriales() {
       precio: material.precio,
       subtotal
     };
-    materialesAgrupados[categoria].push(materialAgrupado);
+    window.materialesAgrupados[categoria].push(materialAgrupado);
 
     total += subtotal;
   }
 
-  mostrarMateriales(materialesAgrupados);
+  mostrarMateriales(window.materialesAgrupados);
   resultado.classList.remove('hidden');
   totalMateriales.textContent = formatearMoneda(total);
 }
 
-function generarMensajeWhatsApp(materialesAgrupados, total) {
+window.generarMensajeWhatsApp = function(materialesAgrupados, total) {
   // Obtener la fecha actual en formato dd/mm/yyyy
   const fecha = new Date().toLocaleDateString('es-AR', {
     day: '2-digit',
@@ -371,18 +408,17 @@ function generarMensajeWhatsApp(materialesAgrupados, total) {
 
   // Primero agregamos los presupuestos seleccionados
   mensaje += '*Presupuestos incluidos:*\n';
-  seleccionadosConCantidad.forEach(({ id, cantidad }) => {
-    const presupuesto = presupuestos.find(p => p.id === id);
+  window.seleccionadosConCantidad.forEach(({ id, cantidad }) => {
+    const presupuesto = window.presupuestos.find(p => p.id === id);
     mensaje += `${cantidad} - ${presupuesto.nombre}\n`;
   });
 
   mensaje += '\n*Materiales necesarios:*\n';
   
-  // Luego agregamos los materiales por categoría, sin títulos
+  // Luego agregamos los materiales por categoría
   let primeraCategoria = true;
   ordenCategorias.forEach(cat => {
     if (materialesAgrupados[cat] && materialesAgrupados[cat].length > 0) {
-      // Si no es la primera categoría, agregamos un espacio extra para separar
       if (!primeraCategoria) {
         mensaje += '\n';
       }
@@ -399,7 +435,7 @@ function generarMensajeWhatsApp(materialesAgrupados, total) {
   mensaje += '\n_Linda Herrería_';
 
   return mensaje;
-}
+};
 
 function mostrarMateriales(agrupados) {
   // Verificar que los elementos existan
@@ -436,7 +472,7 @@ function mostrarMateriales(agrupados) {
   const btnCompartir = document.getElementById('btn-compartir-lista');
   if (btnCompartir) {
     btnCompartir.addEventListener('click', () => {
-      const mensaje = generarMensajeWhatsApp(agrupados, total);
+      const mensaje = window.generarMensajeWhatsApp(agrupados, total);
       const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
       window.location.href = url;
     });
