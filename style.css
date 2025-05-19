@@ -997,19 +997,4 @@ textarea {
     padding: 12px 16px;
   }
 
-  /* Ajustes para el contenido scrolleable */
-  body {
-    padding-bottom: 70px;
-  }
 
-  /* Ajustes para las tarjetas en el carrusel */
-  .carrusel {
-    padding: 0.5rem;
-    gap: 0.5rem;
-  }
-
-  .tarjeta {
-    min-width: 160px;
-    padding: 0.8rem;
-  }
-}
