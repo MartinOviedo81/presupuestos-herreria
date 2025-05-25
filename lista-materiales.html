@@ -196,7 +196,7 @@ async function cargarDatos() {
 }
 
 function formatearMoneda(valor) {
-  return Math.round(valor).toLocaleString('es-AR');
+  return new Intl.NumberFormat('es-AR').format(Math.round(valor));
 }
 
 function renderPresupuestos() {
@@ -320,7 +320,10 @@ function configurarEventListeners() {
 
   if (btnWhatsapp) {
     btnWhatsapp.addEventListener('click', () => {
-      const mensaje = window.generarMensajeWhatsApp(window.materialesAgrupados, window.total);
+      const totalTexto = totalMateriales.textContent;
+      const totalLimpio = totalTexto.replace(/\./g, '');
+      const totalNumerico = parseInt(totalLimpio);
+      const mensaje = window.generarMensajeWhatsApp(window.materialesAgrupados, totalNumerico);
       const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
       window.location.href = url;
     });
