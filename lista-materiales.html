@@ -424,23 +424,18 @@ function generarMensajeCompleto() {
   mensaje += '*Presupuestos incluidos:*\n';
   window.seleccionadosConCantidad.forEach(({ id, cantidad }) => {
     const presupuesto = window.presupuestos.find(p => p.id === id);
-    mensaje += `${cantidad} - ${presupuesto.nombre}\n`;
+    mensaje += `${cantidad}- ${presupuesto.nombre}\n`;
   });
 
   mensaje += '\n*Materiales necesarios:*\n';
   
   // Luego agregamos los materiales por categoría
-  let primeraCategoria = true;
   ordenCategorias.forEach(cat => {
     if (window.materialesAgrupados[cat] && window.materialesAgrupados[cat].length > 0) {
-      if (!primeraCategoria) {
-        mensaje += '\n';
-      }
-      primeraCategoria = false;
-
+      mensaje += '\n';
       window.materialesAgrupados[cat].forEach(m => {
         const unidadAbreviada = m.unidad === 'metro' ? 'mt' : m.unidad === 'superficie' ? 'm²' : 'ud';
-        mensaje += `${m.unidades} - ${m.nombre} - ${m.metrosNecesarios.toFixed(2)} ${unidadAbreviada}\n`;
+        mensaje += `${m.unidades}- ${m.nombre} (${m.metrosNecesarios.toFixed(2)} ${unidadAbreviada})\n`;
       });
     }
   });
@@ -453,13 +448,13 @@ function generarMensajeCompleto() {
 
 function generarMensajeSimple() {
   let mensaje = '';
-  let contador = 1;
   
-  Object.entries(window.materialesAgrupados).forEach(([categoria, items]) => {
-    items.forEach(item => {
-      mensaje += `${contador} - ${item.nombre}\n`;
-      contador++;
-    });
+  ordenCategorias.forEach(cat => {
+    if (window.materialesAgrupados[cat] && window.materialesAgrupados[cat].length > 0) {
+      window.materialesAgrupados[cat].forEach(m => {
+        mensaje += `${m.unidades}- ${m.nombre}\n`;
+      });
+    }
   });
   
   return mensaje;
