@@ -411,27 +411,43 @@ function generarListaMateriales() {
 }
 
 function generarMensajeCompleto() {
-  const fecha = new Date().toLocaleDateString();
-  let mensaje = `*Lista de Materiales - ${fecha}*\n\n`;
+  // Obtener la fecha actual en formato dd/mm/yyyy
+  const fecha = new Date().toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+
+  let mensaje = `🛠 *Lista de Materiales* (${fecha})\n\n`;
   
-  // Agregar presupuestos incluidos
-  mensaje += "*Presupuestos incluidos:*\n";
-  window.seleccionadosConCantidad.forEach(item => {
-    mensaje += `- ${item.nombre} (${item.cantidad})\n`;
-  });
-  mensaje += "\n";
-
-  // Agregar materiales necesarios
-  mensaje += "*Materiales necesarios:*\n";
-  Object.entries(window.materialesAgrupados).forEach(([categoria, items]) => {
-    mensaje += `\n${categoria.toUpperCase()}:\n`;
-    items.forEach(item => {
-      mensaje += `- ${item.nombre}: ${item.cantidad} ${item.unidad} ($${formatearMoneda(item.subtotal)})\n`;
-    });
+  // Primero agregamos los presupuestos seleccionados
+  mensaje += '*Presupuestos incluidos:*\n';
+  window.seleccionadosConCantidad.forEach(({ id, cantidad }) => {
+    const presupuesto = window.presupuestos.find(p => p.id === id);
+    mensaje += `${cantidad} - ${presupuesto.nombre}\n`;
   });
 
-  // Agregar total
-  mensaje += `\n*Total estimado: $${formatearMoneda(window.total)}*`;
+  mensaje += '\n*Materiales necesarios:*\n';
+  
+  // Luego agregamos los materiales por categoría
+  let primeraCategoria = true;
+  ordenCategorias.forEach(cat => {
+    if (window.materialesAgrupados[cat] && window.materialesAgrupados[cat].length > 0) {
+      if (!primeraCategoria) {
+        mensaje += '\n';
+      }
+      primeraCategoria = false;
+
+      window.materialesAgrupados[cat].forEach(m => {
+        const unidadAbreviada = m.unidad === 'metro' ? 'mt' : m.unidad === 'superficie' ? 'm²' : 'ud';
+        mensaje += `${m.unidades} - ${m.nombre} - ${m.metrosNecesarios.toFixed(2)} ${unidadAbreviada}\n`;
+      });
+    }
+  });
+
+  mensaje += `\n💰 *Total: $${formatearMoneda(window.total)}*\n`;
+  mensaje += '\n_Linda Herrería_';
+  
   return mensaje;
 }
 
