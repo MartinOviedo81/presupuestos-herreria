@@ -88,9 +88,14 @@
 <!-- Paso 4: Compartir -->
 <div class="seccion-paso" id="paso4">
   <h3>Compartir Lista</h3>
-  <button class="btn-navegacion" id="btn-whatsapp">
-    <i data-lucide="message-circle"></i> Enviar por WhatsApp
-  </button>
+  <div class="botones-whatsapp">
+    <button class="btn-navegacion" id="btn-whatsapp">
+      <i data-lucide="message-circle"></i> Enviar lista completa por WhatsApp
+    </button>
+    <button class="btn-navegacion" id="btn-whatsapp-simple">
+      <i data-lucide="message-circle"></i> Enviar solo cantidades por WhatsApp
+    </button>
+  </div>
   <div class="botones-navegacion">
     <button class="btn-navegacion btn-anterior" onclick="irAlPaso(3)">
       <i data-lucide="arrow-left"></i> Volver a la Lista
@@ -227,6 +232,7 @@ function configurarEventListeners() {
   const toggleOrdenBtn = document.getElementById('toggle-orden');
   const listaOrden = document.querySelector('#menu-orden .trabajos-lista');
   const btnWhatsapp = document.getElementById('btn-whatsapp');
+  const btnWhatsappSimple = document.getElementById('btn-whatsapp-simple');
   const listaCantidades = document.getElementById('lista-cantidades');
 
   // Verificar que los elementos existan antes de agregar los event listeners
@@ -320,12 +326,17 @@ function configurarEventListeners() {
 
   if (btnWhatsapp) {
     btnWhatsapp.addEventListener('click', () => {
-      const totalTexto = totalMateriales.textContent;
-      const totalLimpio = totalTexto.replace(/\./g, '');
-      const totalNumerico = parseInt(totalLimpio);
-      const mensaje = window.generarMensajeWhatsApp(window.materialesAgrupados, totalNumerico);
-      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-      window.location.href = url;
+      const mensaje = generarMensajeCompleto();
+      const urlWhatsapp = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      window.open(urlWhatsapp, '_blank');
+    });
+  }
+
+  if (btnWhatsappSimple) {
+    btnWhatsappSimple.addEventListener('click', () => {
+      const mensaje = generarMensajeSimple();
+      const urlWhatsapp = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      window.open(urlWhatsapp, '_blank');
     });
   }
 }
@@ -399,46 +410,44 @@ function generarListaMateriales() {
   totalMateriales.textContent = formatearMoneda(total);
 }
 
-window.generarMensajeWhatsApp = function(materialesAgrupados, total) {
-  // Obtener la fecha actual en formato dd/mm/yyyy
-  const fecha = new Date().toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-
-  let mensaje = `🛠 *Lista de Materiales* (${fecha})\n\n`;
-
-  // Primero agregamos los presupuestos seleccionados
-  mensaje += '*Presupuestos incluidos:*\n';
-  window.seleccionadosConCantidad.forEach(({ id, cantidad }) => {
-    const presupuesto = window.presupuestos.find(p => p.id === id);
-    mensaje += `${cantidad} - ${presupuesto.nombre}\n`;
-  });
-
-  mensaje += '\n*Materiales necesarios:*\n';
+function generarMensajeCompleto() {
+  const fecha = new Date().toLocaleDateString();
+  let mensaje = `*Lista de Materiales - ${fecha}*\n\n`;
   
-  // Luego agregamos los materiales por categoría
-  let primeraCategoria = true;
-  ordenCategorias.forEach(cat => {
-    if (materialesAgrupados[cat] && materialesAgrupados[cat].length > 0) {
-      if (!primeraCategoria) {
-        mensaje += '\n';
-      }
-      primeraCategoria = false;
+  // Agregar presupuestos incluidos
+  mensaje += "*Presupuestos incluidos:*\n";
+  window.seleccionadosConCantidad.forEach(item => {
+    mensaje += `- ${item.nombre} (${item.cantidad})\n`;
+  });
+  mensaje += "\n";
 
-      materialesAgrupados[cat].forEach(m => {
-        const unidadAbreviada = m.unidad === 'metro' ? 'mt' : m.unidad === 'superficie' ? 'm²' : 'ud';
-        mensaje += `${m.unidades} - ${m.nombre} - ${m.metrosNecesarios.toFixed(2)} ${unidadAbreviada}\n`;
-      });
-    }
+  // Agregar materiales necesarios
+  mensaje += "*Materiales necesarios:*\n";
+  Object.entries(window.materialesAgrupados).forEach(([categoria, items]) => {
+    mensaje += `\n${categoria.toUpperCase()}:\n`;
+    items.forEach(item => {
+      mensaje += `- ${item.nombre}: ${item.cantidad} ${item.unidad} ($${formatearMoneda(item.subtotal)})\n`;
+    });
   });
 
-  mensaje += `\n💰 *Total: $${formatearMoneda(total)}*\n`;
-  mensaje += '\n_Linda Herrería_';
-
+  // Agregar total
+  mensaje += `\n*Total estimado: $${formatearMoneda(window.total)}*`;
   return mensaje;
-};
+}
+
+function generarMensajeSimple() {
+  let mensaje = '';
+  let contador = 1;
+  
+  Object.entries(window.materialesAgrupados).forEach(([categoria, items]) => {
+    items.forEach(item => {
+      mensaje += `${contador} - ${item.nombre}\n`;
+      contador++;
+    });
+  });
+  
+  return mensaje;
+}
 
 function mostrarMateriales(agrupados) {
   // Verificar que los elementos existan
@@ -471,15 +480,6 @@ function mostrarMateriales(agrupados) {
 
   totalMateriales.textContent = formatearMoneda(total);
   resultado.classList.remove('hidden');
-
-  const btnCompartir = document.getElementById('btn-compartir-lista');
-  if (btnCompartir) {
-    btnCompartir.addEventListener('click', () => {
-      const mensaje = window.generarMensajeWhatsApp(agrupados, total);
-      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-      window.location.href = url;
-    });
-  }
 
   lucide.createIcons();
 }

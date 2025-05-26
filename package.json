@@ -4,5 +4,20 @@
   "description": "Sistema de presupuestos para Linda Herrería",
   "scripts": {
     "start": "live-server --port=5500 --no-browser"
+  },
+  "main": "firebase-config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MartinOviedo81/presupuestos-herreria.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MartinOviedo81/presupuestos-herreria/issues"
+  },
+  "homepage": "https://github.com/MartinOviedo81/presupuestos-herreria#readme",
+  "devDependencies": {
+    "live-server": "^1.2.2"
   }
-} 
+}
