@@ -430,17 +430,19 @@ function generarMensajeCompleto() {
   mensaje += '\n*Materiales necesarios:*\n';
   
   // Luego agregamos los materiales por categoría
+  let totalCalculado = 0;
   ordenCategorias.forEach(cat => {
     if (window.materialesAgrupados[cat] && window.materialesAgrupados[cat].length > 0) {
       mensaje += '\n';
       window.materialesAgrupados[cat].forEach(m => {
         const unidadAbreviada = m.unidad === 'metro' ? 'mt' : m.unidad === 'superficie' ? 'm²' : 'ud';
         mensaje += `${m.unidades}- ${m.nombre} (${m.metrosNecesarios.toFixed(2)} ${unidadAbreviada})\n`;
+        totalCalculado += m.subtotal;
       });
     }
   });
 
-  mensaje += `\n💰 *Total: $${formatearMoneda(window.total)}*\n`;
+  mensaje += `\n💰 *Total: $${formatearMoneda(totalCalculado)}*\n`;
   mensaje += '\n_Linda Herrería_';
   
   return mensaje;
