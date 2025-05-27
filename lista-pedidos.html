@@ -20,13 +20,72 @@
     .estado-confirmado { background: #2ecc71; color: #fff; }
     .estado-finalizado { background: #95a5a6; color: #000; }
 
+    /* Estilos para los botones de filtro */
+    .filtros-estado {
+      display: flex;
+      gap: 8px;
+      margin: 1rem 0;
+    }
+
+    .btn-filtro {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .btn-filtro i {
+      width: 20px;
+      height: 20px;
+      stroke: white;
+      stroke-width: 2.5;
+    }
+
+    .btn-filtro.espera {
+      background: rgba(241, 196, 15, 0.3);
+      border-color: #f1c40f;
+    }
+    .btn-filtro.espera.active {
+      background: #f1c40f;
+    }
+
+    .btn-filtro.presupuestado {
+      background: rgba(52, 152, 219, 0.3);
+      border-color: #3498db;
+    }
+    .btn-filtro.presupuestado.active {
+      background: #3498db;
+    }
+
+    .btn-filtro.confirmado {
+      background: rgba(46, 204, 113, 0.3);
+      border-color: #2ecc71;
+    }
+    .btn-filtro.confirmado.active {
+      background: #2ecc71;
+    }
+
+    .btn-filtro.finalizado {
+      background: rgba(149, 165, 166, 0.3);
+      border-color: #95a5a6;
+    }
+    .btn-filtro.finalizado.active {
+      background: #95a5a6;
+    }
+
     #contenedor-formulario {
       overflow: hidden;
       transition: all 0.3s ease;
     }
 
     .hidden {
-      display: none;
+      display: none !important;
     }
 
     #toggle-form {
@@ -82,15 +141,19 @@
 
 <h3>Pedidos Guardados</h3>
 
-<div class="mini-controls">
-  <label for="filtro-estado">Filtrar por estado:</label>
-  <select id="filtro-estado">
-    <option value="Todos">Todos</option>
-    <option value="En espera">En espera</option>
-    <option value="Presupuestado">Presupuestado</option>
-    <option value="Confirmado">Confirmado</option>
-    <option value="Finalizado">Finalizado</option>
-  </select>
+<div class="filtros-estado">
+  <button class="btn-filtro espera active" data-estado="En espera" title="En espera">
+    <i data-lucide="clock"></i>
+  </button>
+  <button class="btn-filtro presupuestado active" data-estado="Presupuestado" title="Presupuestado">
+    <i data-lucide="calculator"></i>
+  </button>
+  <button class="btn-filtro confirmado active" data-estado="Confirmado" title="Confirmado">
+    <i data-lucide="check-circle"></i>
+  </button>
+  <button class="btn-filtro finalizado active" data-estado="Finalizado" title="Finalizado">
+    <i data-lucide="check-square"></i>
+  </button>
 </div>
 
 <div id="menu-orden" class="trabajos-menu-custom">
@@ -124,6 +187,7 @@ const toggleFormBtn = document.getElementById('toggle-form');
 let idPedidoEditando = null;
 let ordenSeleccionado = 'fecha-desc';
 const estados = ['En espera', 'Presupuestado', 'Confirmado', 'Finalizado'];
+let filtrosActivos = new Set(['En espera', 'Presupuestado', 'Confirmado', 'Finalizado']);
 
 toggleFormBtn.addEventListener('click', () => {
   contenedorForm.classList.toggle('hidden');
@@ -144,13 +208,11 @@ function formatearFecha(fechaISO) {
 }
 
 async function cargarPedidos() {
-  const filtro = document.getElementById('filtro-estado').value;
   const snap = await getDocs(collection(db, 'pedidos'));
   let pedidos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-  if (filtro !== 'Todos') {
-    pedidos = pedidos.filter(p => p.estado === filtro);
-  }
+  // Filtrar por estados activos
+  pedidos = pedidos.filter(p => filtrosActivos.has(p.estado));
 
   pedidos.sort((a, b) => {
     switch (ordenSeleccionado) {
@@ -158,7 +220,7 @@ async function cargarPedidos() {
       case 'fecha-desc': return new Date(b.fechaCreacion) - new Date(a.fechaCreacion);
       case 'cliente-asc': return a.cliente.localeCompare(b.cliente);
       case 'cliente-desc': return b.cliente.localeCompare(a.cliente);
-      case 'estado': return a.estado.localeCompare(b.estado);
+      case 'estado': return estados.indexOf(a.estado) - estados.indexOf(b.estado);
       default: return 0;
     }
   });
@@ -287,7 +349,21 @@ document.querySelectorAll('input[name="orden"]').forEach(radio => {
   });
 });
 
-document.getElementById('filtro-estado').addEventListener('change', cargarPedidos);
+// Configurar los botones de filtro
+document.querySelectorAll('.btn-filtro').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const estado = btn.dataset.estado;
+    btn.classList.toggle('active');
+    
+    if (btn.classList.contains('active')) {
+      filtrosActivos.add(estado);
+    } else {
+      filtrosActivos.delete(estado);
+    }
+    
+    cargarPedidos();
+  });
+});
 
 cargarPedidos();
 </script>
