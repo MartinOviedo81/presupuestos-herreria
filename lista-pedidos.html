@@ -109,16 +109,19 @@
       transform: rotate(-90deg);
     }
 
+    /* Estilos para el contador de estados */
     .contadores-estado {
       display: flex;
-      gap: 20px;
+      gap: 10px;
       margin: 1rem 0;
-      padding: 15px;
+      padding: 10px;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 8px;
       transition: all 0.3s ease;
       max-height: 500px;
       overflow: hidden;
+      flex-wrap: wrap;  /* Permite que los contadores se envuelvan en móviles */
+      justify-content: center;  /* Centra los contadores */
     }
 
     .contadores-estado.collapsed {
@@ -131,9 +134,12 @@
     .contador {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 5px 10px;
+      gap: 6px;
+      padding: 4px 8px;
       border-radius: 6px;
+      font-size: 0.85rem;
+      min-width: 120px;
+      justify-content: center;
     }
 
     .contador.espera {
@@ -156,9 +162,34 @@
       color: #95a5a6;
     }
 
+    .contador i {
+      width: 16px;
+      height: 16px;
+    }
+
     .contador .numero {
       font-weight: bold;
-      font-size: 1.2em;
+      font-size: 1.1em;
+      margin: 0 4px;
+    }
+
+    /* Media query para móviles */
+    @media (max-width: 480px) {
+      .contadores-estado {
+        gap: 6px;
+        padding: 6px;
+      }
+
+      .contador {
+        font-size: 0.8rem;
+        padding: 3px 6px;
+        min-width: calc(50% - 6px);
+      }
+
+      .contador i {
+        width: 14px;
+        height: 14px;
+      }
     }
 
     #contenedor-formulario {
