@@ -15,7 +15,22 @@
   <input type="file" id="fileInput" accept="image/*" style="display: none;" />
   <span id="nombreArchivo" style="display: block; margin-top: 10px; color: #ccc;"></span>
 
+  <div class="vista-botones">
+    <button class="boton-vista activo" data-vista="carrusel">
+      <i data-lucide="scroll-text"></i> Vista Carrusel
+    </button>
+    <button class="boton-vista" data-vista="grid">
+      <i data-lucide="grid"></i> Vista Grid
+    </button>
+  </div>
+
   <div class="galeria-scroll" id="galeria"></div>
+
+  <!-- Modal para ver imágenes -->
+  <div id="imagen-modal" class="modal">
+    <span class="cerrar-modal">&times;</span>
+    <img class="modal-contenido" id="img-ampliada">
+  </div>
 
   <!-- Firebase y Cloudinary -->
   <script type="module">
@@ -42,36 +57,73 @@
     const params = new URLSearchParams(window.location.search);
     const presupuestoId = params.get("presupuesto");
 
+    // Modal elements
+    const modal = document.getElementById("imagen-modal");
+    const modalImg = document.getElementById("img-ampliada");
+    const span = document.getElementsByClassName("cerrar-modal")[0];
+
+    // Vista elements
+    const botonesVista = document.querySelectorAll('.boton-vista');
+    let vistaActual = 'carrusel';
+
+    // Cambiar vista
+    botonesVista.forEach(boton => {
+      boton.addEventListener('click', () => {
+        const nuevaVista = boton.dataset.vista;
+        if (nuevaVista === vistaActual) return;
+
+        // Actualizar botones
+        botonesVista.forEach(b => b.classList.remove('activo'));
+        boton.classList.add('activo');
+
+        // Actualizar vista
+        vistaActual = nuevaVista;
+        galeria.className = nuevaVista === 'carrusel' ? 'galeria-scroll' : 'galeria-grid';
+      });
+    });
+
+    // Cerrar modal
+    span.onclick = function() {
+      modal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+
    fileInput.addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+      const file = e.target.files[0];
+      if (!file) return;
 
-  const nombre = prompt("¿Cómo querés nombrar esta imagen?");
-  if (!nombre) return alert("Tenés que asignar un nombre.");
+      const nombre = prompt("¿Cómo querés nombrar esta imagen?");
+      if (!nombre) return alert("Tenés que asignar un nombre.");
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", uploadPreset);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", uploadPreset);
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-    method: "POST",
-    body: formData
-  });
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: "POST",
+        body: formData
+      });
 
-  const data = await res.json();
+      const data = await res.json();
 
-  const docRef = await addDoc(collection(db, "imagenes"), {
-    nombre,
-    url: data.secure_url,
-    created_at: data.created_at,
-    bytes: data.bytes,
-    format: data.format,
-    presupuestos: [],
-    oculta: false
-  });
+      const docRef = await addDoc(collection(db, "imagenes"), {
+        nombre,
+        url: data.secure_url,
+        created_at: data.created_at,
+        bytes: data.bytes,
+        format: data.format,
+        presupuestos: [],
+        oculta: false
+      });
 
-  renderImagen({ id: docRef.id, nombre, url: data.secure_url, presupuestos: [], oculta: false });
-});
+      renderImagen({ id: docRef.id, nombre, url: data.secure_url, presupuestos: [], oculta: false });
+    });
+
     async function cargarImagenes() {
       const snap = await getDocs(collection(db, "imagenes"));
       snap.forEach(doc => {
@@ -82,40 +134,48 @@
     }
 
     function renderImagen(imagen) {
-  const div = document.createElement("div");
-  div.className = "imagen-item";
+      const div = document.createElement("div");
+      div.className = "imagen-item";
 
-  // Calcular edad
-  let edad = "";
-  if (imagen.created_at) {
-    const fecha = new Date(imagen.created_at);
-    const ahora = new Date();
-    const dias = Math.floor((ahora - fecha) / (1000 * 60 * 60 * 24));
-    if (dias === 0) edad = "Subida hoy";
-    else if (dias === 1) edad = "Hace 1 día";
-    else edad = `Hace ${dias} días`;
-  }
+      // Calcular edad
+      let edad = "";
+      if (imagen.created_at) {
+        const fecha = new Date(imagen.created_at);
+        const ahora = new Date();
+        const dias = Math.floor((ahora - fecha) / (1000 * 60 * 60 * 24));
+        if (dias === 0) edad = "Subida hoy";
+        else if (dias === 1) edad = "Hace 1 día";
+        else edad = `Hace ${dias} días`;
+      }
 
-  // Peso en KB
-  const pesoKB = imagen.bytes ? Math.round(imagen.bytes / 1024) + " KB" : "";
+      // Peso en KB
+      const pesoKB = imagen.bytes ? Math.round(imagen.bytes / 1024) + " KB" : "";
 
-  // Formato
-  const formato = imagen.format ? imagen.format.toUpperCase() : "";
+      // Formato
+      const formato = imagen.format ? imagen.format.toUpperCase() : "";
 
-  const checkbox = presupuestoId
-    ? `<label><input type="checkbox" class="img-check" data-id="${imagen.id}" /> Seleccionar</label>`
-    : "";
+      const checkbox = presupuestoId
+        ? `<label><input type="checkbox" class="img-check" data-id="${imagen.id}" /> Seleccionar</label>`
+        : "";
 
-  div.innerHTML = `
-    <img src="${imagen.url}" class="imagen-preview" />
-    <div class="info-imagen">
-      <strong>${imagen.nombre || 'Sin nombre'}</strong><br>
-      <small>${edad} ${pesoKB ? `• ${pesoKB}` : ""} ${formato ? `• ${formato}` : ""}</small>
-    </div>
-    ${checkbox}
-  `;
-  galeria.prepend(div);
-}
+      div.innerHTML = `
+        <img src="${imagen.url}" class="imagen-preview" />
+        <div class="info-imagen">
+          <strong>${imagen.nombre || 'Sin nombre'}</strong><br>
+          <small>${edad} ${pesoKB ? `• ${pesoKB}` : ""} ${formato ? `• ${formato}` : ""}</small>
+        </div>
+        ${checkbox}
+      `;
+
+      // Agregar evento click para abrir modal
+      const img = div.querySelector('.imagen-preview');
+      img.onclick = function() {
+        modal.style.display = "block";
+        modalImg.src = imagen.url;
+      }
+
+      galeria.prepend(div);
+    }
 
     function mostrarBotonAsignar() {
       const contenedor = document.createElement("div");
@@ -141,24 +201,24 @@
         const presDoc = doc(db, "presupuestos", presupuestoId);
 
         if (reemplazar) {
-  const confirmar = confirm("¿Estás seguro de que querés reemplazar todas las imágenes anteriores del presupuesto?");
-  if (!confirmar) return;
+          const confirmar = confirm("¿Estás seguro de que querés reemplazar todas las imágenes anteriores del presupuesto?");
+          if (!confirmar) return;
 
-  const snap = await getDocs(collection(db, "imagenes"));
-  for (const docSnap of snap.docs) {
-    const data = docSnap.data();
-    if (data.presupuestos && data.presupuestos.includes(presupuestoId)) {
-      const nuevaLista = data.presupuestos.filter(id => id !== presupuestoId);
-      await updateDoc(doc(db, "imagenes", docSnap.id), {
-        presupuestos: nuevaLista
-      });
-    }
-  }
+          const snap = await getDocs(collection(db, "imagenes"));
+          for (const docSnap of snap.docs) {
+            const data = docSnap.data();
+            if (data.presupuestos && data.presupuestos.includes(presupuestoId)) {
+              const nuevaLista = data.presupuestos.filter(id => id !== presupuestoId);
+              await updateDoc(doc(db, "imagenes", docSnap.id), {
+                presupuestos: nuevaLista
+              });
+            }
+          }
 
-  await updateDoc(presDoc, {
-    imagenes: []
-  });
-}
+          await updateDoc(presDoc, {
+            imagenes: []
+          });
+        }
 
         for (let check of seleccionadas) {
           const imagenId = check.dataset.id;
@@ -181,37 +241,6 @@
     }
 
     cargarImagenes();
-const btnMigrar = document.createElement("button");
-btnMigrar.textContent = "🛠 Ejecutar migración imágenes viejas";
-btnMigrar.className = "boton-rojo";
-btnMigrar.style.marginTop = "20px";
-btnMigrar.onclick = migrarImagenesViejas;
-galeria.before(btnMigrar);
-async function migrarImagenesViejas() {
-  const snap = await getDocs(collection(db, "imagenes"));
-
-  for (const docSnap of snap.docs) {
-    const data = docSnap.data();
-    const ref = doc(db, "imagenes", docSnap.id);
-
-    const actualizaciones = {};
-
-    // Solo agregar si no existen
-    if (!("nombre" in data)) actualizaciones.nombre = "Sin nombre";
-    if (!("oculta" in data)) actualizaciones.oculta = false;
-    if (!("created_at" in data)) actualizaciones.created_at = new Date().toISOString();
-    if (!("bytes" in data)) actualizaciones.bytes = null;
-    if (!("format" in data)) actualizaciones.format = null;
-
-    if (Object.keys(actualizaciones).length > 0) {
-      await updateDoc(ref, actualizaciones);
-      console.log(`📦 Imagen ${docSnap.id} actualizada`);
-    }
-  }
-
-  alert("Migración completa. Las imágenes viejas ahora tienen los campos nuevos.");
-}
-    
   </script>
   
   <script>
