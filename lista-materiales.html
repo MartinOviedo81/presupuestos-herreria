@@ -9,6 +9,16 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="modo-oscuro">
+  <!-- Menú hamburguesa -->
+  <div class="menu-hamburguesa" id="btnMenu">
+    <i data-lucide="menu"></i>
+  </div>
+
+  <div class="opciones-menu hidden" id="menuOpciones">
+    <a href="index.html">
+      <i data-lucide="home"></i> Inicio
+    </a>
+  </div>
 
 <h2>Lista de Materiales</h2>
 
@@ -511,6 +521,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await cargarDatos();
 });
+</script>
+
+<script>
+  lucide.createIcons();
+
+  // Funcionalidad del menú hamburguesa
+  const btnMenu = document.getElementById('btnMenu');
+  const menuOpciones = document.getElementById('menuOpciones');
+
+  btnMenu.addEventListener('click', () => {
+    menuOpciones.classList.toggle('hidden');
+  });
+
+  // Cerrar menú al hacer clic fuera
+  document.addEventListener('click', (e) => {
+    if (!btnMenu.contains(e.target) && !menuOpciones.contains(e.target)) {
+      menuOpciones.classList.add('hidden');
+    }
+  });
 </script>
 
 </body>

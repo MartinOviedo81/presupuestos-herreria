@@ -8,28 +8,44 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-  <h2>Galería de imágenes</h2>
-  <label for="fileInput" class="boton-celeste subir-imagen-label">
-    <i data-lucide="upload"></i> Subir imagen
-  </label>
-  <input type="file" id="fileInput" accept="image/*" style="display: none;" />
-  <span id="nombreArchivo" style="display: block; margin-top: 10px; color: #ccc;"></span>
-
-  <div class="vista-botones">
-    <button class="boton-vista activo" data-vista="carrusel">
-      <i data-lucide="scroll-text"></i> Vista Carrusel
-    </button>
-    <button class="boton-vista" data-vista="grid">
-      <i data-lucide="grid"></i> Vista Grid
-    </button>
+  <!-- Menú hamburguesa -->
+  <div class="menu-hamburguesa" id="btnMenu">
+    <i data-lucide="menu"></i>
   </div>
 
-  <div class="galeria-scroll" id="galeria"></div>
+  <div class="opciones-menu hidden" id="menuOpciones">
+    <a href="index.html">
+      <i data-lucide="home"></i> Inicio
+    </a>
+  </div>
 
-  <!-- Modal para ver imágenes -->
-  <div id="imagen-modal" class="modal">
-    <span class="cerrar-modal">&times;</span>
-    <img class="modal-contenido" id="img-ampliada">
+  <h2>Galería de imágenes</h2>
+
+  <div class="galeria-contenedor">
+    <div style="text-align: center;">
+      <label for="fileInput" class="boton-celeste subir-imagen-label">
+        <i data-lucide="upload"></i> Subir imagen
+      </label>
+      <input type="file" id="fileInput" accept="image/*" style="display: none;" />
+      <span id="nombreArchivo" style="display: block; margin-top: 10px; color: #ccc;"></span>
+    </div>
+
+    <div class="vista-botones">
+      <button class="boton-vista activo" data-vista="carrusel">
+        <i data-lucide="scroll-text"></i> Vista Carrusel
+      </button>
+      <button class="boton-vista" data-vista="grid">
+        <i data-lucide="grid"></i> Vista Grid
+      </button>
+    </div>
+
+    <div class="galeria-scroll" id="galeria"></div>
+
+    <!-- Modal para ver imágenes -->
+    <div id="imagen-modal" class="modal">
+      <span class="cerrar-modal">&times;</span>
+      <img class="modal-contenido" id="img-ampliada">
+    </div>
   </div>
 
   <!-- Firebase y Cloudinary -->
@@ -245,6 +261,21 @@
   
   <script>
     lucide.createIcons();
+
+    // Funcionalidad del menú hamburguesa
+    const btnMenu = document.getElementById('btnMenu');
+    const menuOpciones = document.getElementById('menuOpciones');
+
+    btnMenu.addEventListener('click', () => {
+      menuOpciones.classList.toggle('hidden');
+    });
+
+    // Cerrar menú al hacer clic fuera
+    document.addEventListener('click', (e) => {
+      if (!btnMenu.contains(e.target) && !menuOpciones.contains(e.target)) {
+        menuOpciones.classList.add('hidden');
+      }
+    });
   </script>
 </body>
 </html>

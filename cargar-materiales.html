@@ -14,6 +14,17 @@
   </script>
   
 <body class="modo-oscuro">
+  <!-- Menú hamburguesa -->
+  <div class="menu-hamburguesa" id="btnMenu">
+    <i data-lucide="menu"></i>
+  </div>
+
+  <div class="opciones-menu hidden" id="menuOpciones">
+    <a href="index.html">
+      <i data-lucide="home"></i> Inicio
+    </a>
+  </div>
+
 <nav class="tabs-bar">
   <button class="tab-button active" data-tab="manual"><i data-lucide="pencil"></i> Carga manual</button>
   <button class="tab-button" data-tab="excel"><i data-lucide="file-up"></i> Importar Excel</button>
@@ -296,7 +307,22 @@ btnImportar.addEventListener("click", async () => {
     document.getElementById('seccion-lista').style.display = (target === 'lista') ? 'block' : 'none';
     });
 });
-</script>
+
+    // Funcionalidad del menú hamburguesa
+    const btnMenu = document.getElementById('btnMenu');
+    const menuOpciones = document.getElementById('menuOpciones');
+
+    btnMenu.addEventListener('click', () => {
+      menuOpciones.classList.toggle('hidden');
+    });
+
+    // Cerrar menú al hacer clic fuera
+    document.addEventListener('click', (e) => {
+      if (!btnMenu.contains(e.target) && !menuOpciones.contains(e.target)) {
+        menuOpciones.classList.add('hidden');
+      }
+    });
+  </script>
 
 </body>
 </html>

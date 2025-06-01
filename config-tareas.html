@@ -6,8 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="lindaherreriaColor.png" />
   <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="modo-oscuro">
+  <!-- Menú hamburguesa -->
+  <div class="menu-hamburguesa" id="btnMenu">
+    <i data-lucide="menu"></i>
+  </div>
+
+  <div class="opciones-menu hidden" id="menuOpciones">
+    <a href="index.html">
+      <i data-lucide="home"></i> Inicio
+    </a>
+  </div>
+
   <h2>Agregar o Editar Tarea</h2>
 
   <form id="form-tarea">
@@ -118,6 +130,25 @@
     });
 
     cargarTareas();
+  </script>
+
+  <script>
+    lucide.createIcons();
+
+    // Funcionalidad del menú hamburguesa
+    const btnMenu = document.getElementById('btnMenu');
+    const menuOpciones = document.getElementById('menuOpciones');
+
+    btnMenu.addEventListener('click', () => {
+      menuOpciones.classList.toggle('hidden');
+    });
+
+    // Cerrar menú al hacer clic fuera
+    document.addEventListener('click', (e) => {
+      if (!btnMenu.contains(e.target) && !menuOpciones.contains(e.target)) {
+        menuOpciones.classList.add('hidden');
+      }
+    });
   </script>
 </body>
 </html>

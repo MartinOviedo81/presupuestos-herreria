@@ -707,6 +707,8 @@ textarea {
   text-decoration: none;
   border: none;
   transition: background 0.3s ease;
+  margin: 20px auto;
+  width: fit-content;
 }
 .subir-imagen-label:hover {
   opacity: 0.9;
@@ -1115,6 +1117,19 @@ textarea {
     gap: 10px;
     padding: 10px;
   }
+}
+
+/* Estilos para el contenedor de la galería */
+.galeria-contenedor {
+  padding: 0 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+#nombreArchivo {
+  text-align: center;
+  margin: 10px auto;
+  max-width: 600px;
 }
 
 
