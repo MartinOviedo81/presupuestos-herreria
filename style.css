@@ -626,33 +626,98 @@ textarea {
 }
 .tabs-bar {
   display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  border-bottom: 2px solid #ccc;
-  background: #1e1e1e;
-  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 0 10px;
 }
 
 .tab-button {
-  background: none;
+  background: #2c3e50;
   border: none;
-  font-size: 1rem;
-  color: #ccc;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
   cursor: pointer;
-  padding: 0.5rem 1rem;
-  border-bottom: 2px solid transparent;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .tab-button.active {
-  color: #fff;
-  border-bottom: 2px solid #00bcd4;
-  font-weight: bold;
+  background: #3498db;
 }
 
-    /* Si querés mover esto a style.css podés copiarlo allá */
+.tab-button i {
+  width: 18px;
+  height: 18px;
+}
+
+.seccion-tab {
+  display: none;
+  padding: 20px;
+}
+
+.seccion-tab.visible {
+  display: block;
+}
+
+.estado-actual {
+  background: #2c3e50;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
+.estado-insumo {
+  background: #34495e;
+  padding: 15px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.info-estado {
+  margin-bottom: 15px;
+}
+
+.info-estado p {
+  margin: 5px 0;
+}
+
+.filtros-historial {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.filtros-historial .boton-vista {
+  background: #2c3e50;
+  border: none;
+  color: #fff;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.filtros-historial .boton-vista.activo {
+  background: #3498db;
+}
+
+#historial-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#historial-lista .item-presupuesto {
+  background: #2c3e50;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+/* Si querés mover esto a style.css podés copiarlo allá */
 .galeria-scroll {
   display: flex;
   flex-direction: row;

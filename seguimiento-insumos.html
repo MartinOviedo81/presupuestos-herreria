@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguimiento de Insumos - Linda Herrería</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="modo-oscuro">
+  <!-- Menú hamburguesa -->
+  <div class="menu-hamburguesa" id="btnMenu">
+    <i data-lucide="menu"></i>
+  </div>
+
+  <div class="opciones-menu hidden" id="menuOpciones">
+    <a href="index.html">
+      <i data-lucide="home"></i> Inicio
+    </a>
+  </div>
+
+  <h2>Seguimiento de Insumos</h2>
+
+  <nav class="tabs-bar">
+    <button class="tab-button active" data-tab="gas">
+      <i data-lucide="flame"></i> Gas
+    </button>
+    <button class="tab-button" data-tab="alambre">
+      <i data-lucide="cable"></i> Alambre
+    </button>
+    <button class="tab-button" data-tab="historial">
+      <i data-lucide="history"></i> Historial
+    </button>
+  </nav>
+
+  <!-- Sección Gas -->
+  <div id="seccion-gas" class="seccion-tab visible">
+    <div class="estado-actual">
+      <h3>Carga Actual de Gas</h3>
+      <div id="estado-gas" class="estado-insumo">
+        <!-- Se llenará con JavaScript -->
+      </div>
+    </div>
+
+    <h3>Nueva Carga de Gas</h3>
+    <form id="form-gas">
+      <label>Fecha de inicio:
+        <input type="date" id="gas-fecha-inicio" required>
+      </label>
+
+      <label>Kilos cargados:
+        <input type="number" id="gas-kilos" step="1" min="0" value="9" required>
+      </label>
+
+      <label>Precio total:
+        <input type="number" id="gas-precio" step="1" min="0" value="15000" required>
+      </label>
+
+      <button type="submit" class="boton-celeste">
+        <i data-lucide="plus-circle"></i> Registrar Carga
+      </button>
+    </form>
+  </div>
+
+  <!-- Sección Alambre -->
+  <div id="seccion-alambre" class="seccion-tab">
+    <div class="estado-actual">
+      <h3>Rollo de Alambre Actual</h3>
+      <div id="estado-alambre" class="estado-insumo">
+        <!-- Se llenará con JavaScript -->
+      </div>
+    </div>
+
+    <h3>Nuevo Rollo de Alambre</h3>
+    <form id="form-alambre">
+      <label>Fecha de inicio:
+        <input type="date" id="alambre-fecha-inicio" required>
+      </label>
+
+      <label>Precio:
+        <input type="number" id="alambre-precio" step="1" min="0" required>
+      </label>
+
+      <button type="submit" class="boton-celeste">
+        <i data-lucide="plus-circle"></i> Registrar Rollo
+      </button>
+    </form>
+  </div>
+
+  <!-- Sección Historial -->
+  <div id="seccion-historial" class="seccion-tab">
+    <div class="filtros-historial">
+      <button class="boton-vista" data-tipo="gas">
+        <i data-lucide="flame"></i> Gas
+      </button>
+      <button class="boton-vista" data-tipo="alambre">
+        <i data-lucide="cable"></i> Alambre
+      </button>
+    </div>
+
+    <div id="historial-lista"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js';
+    import {
+      getFirestore, collection, addDoc, getDocs, query, 
+      orderBy, where, doc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDirRKj8_-oleUdIhDl7LUud-Y9I_T7THQ",
+      authDomain: "presupuestos-herreria.firebaseapp.com",
+      projectId: "presupuestos-herreria",
+      appId: "1:824709991960:web:2993a2886f6aa4def3bd6d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Referencias a elementos del DOM
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const secciones = document.querySelectorAll('.seccion-tab');
+    const formGas = document.getElementById('form-gas');
+    const formAlambre = document.getElementById('form-alambre');
+    const estadoGas = document.getElementById('estado-gas');
+    const estadoAlambre = document.getElementById('estado-alambre');
+    const historialLista = document.getElementById('historial-lista');
+
+    // Cambio de tabs
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const tab = btn.dataset.tab;
+        secciones.forEach(s => s.classList.remove('visible'));
+        document.getElementById(`seccion-${tab}`).classList.add('visible');
+
+        if (tab === 'historial') {
+          cargarHistorial('gas');
+        }
+      });
+    });
+
+    // Establecer fecha actual por defecto al cargar la página
+    const fechaActual = new Date().toISOString().split('T')[0];
+    document.getElementById('gas-fecha-inicio').value = fechaActual;
+    document.getElementById('alambre-fecha-inicio').value = fechaActual;
+
+    // Event Listeners para los formularios
+    formGas.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const fechaInicio = new Date(document.getElementById('gas-fecha-inicio').value).toISOString();
+        
+        // Finalizar carga anterior
+        const qGasActual = query(
+          collection(db, 'insumos-gas'),
+          orderBy('fechaInicio', 'desc'),
+          where('fechaFin', '==', null)
+        );
+        const snapGasActual = await getDocs(qGasActual);
+        if (!snapGasActual.empty) {
+          await updateDoc(doc(db, 'insumos-gas', snapGasActual.docs[0].id), {
+            fechaFin: fechaInicio
+          });
+        }
+
+        const data = {
+          fechaInicio,
+          kilos: parseInt(document.getElementById('gas-kilos').value),
+          precio: parseInt(document.getElementById('gas-precio').value),
+          fechaFin: null
+        };
+
+        await addDoc(collection(db, 'insumos-gas'), data);
+        
+        // Restablecer valores por defecto
+        document.getElementById('gas-fecha-inicio').value = new Date().toISOString().split('T')[0];
+        document.getElementById('gas-kilos').value = "9";
+        document.getElementById('gas-precio').value = "15000";
+        
+        await cargarEstadoActual();
+        alert('Carga de gas registrada correctamente');
+      } catch (error) {
+        console.error('Error al registrar carga de gas:', error);
+        alert('Error al registrar la carga de gas');
+      }
+    });
+
+    formAlambre.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const fechaInicio = new Date(document.getElementById('alambre-fecha-inicio').value).toISOString();
+        
+        // Finalizar rollo anterior
+        const qAlambreActual = query(
+          collection(db, 'insumos-alambre'),
+          orderBy('fechaInicio', 'desc'),
+          where('fechaFin', '==', null)
+        );
+        const snapAlambreActual = await getDocs(qAlambreActual);
+        if (!snapAlambreActual.empty) {
+          await updateDoc(doc(db, 'insumos-alambre', snapAlambreActual.docs[0].id), {
+            fechaFin: fechaInicio
+          });
+        }
+
+        const data = {
+          fechaInicio,
+          precio: parseInt(document.getElementById('alambre-precio').value),
+          fechaFin: null
+        };
+
+        await addDoc(collection(db, 'insumos-alambre'), data);
+        
+        // Restablecer fecha por defecto
+        document.getElementById('alambre-fecha-inicio').value = new Date().toISOString().split('T')[0];
+        
+        await cargarEstadoActual();
+        alert('Rollo de alambre registrado correctamente');
+      } catch (error) {
+        console.error('Error al registrar rollo de alambre:', error);
+        alert('Error al registrar el rollo de alambre');
+      }
+    });
+
+    // Cargar estado actual
+    async function cargarEstadoActual() {
+      try {
+        // Cargar último gas
+        const qGas = query(
+          collection(db, 'insumos-gas'),
+          where('fechaFin', '==', null),
+          orderBy('fechaInicio', 'desc')
+        );
+        
+        try {
+          const snapGas = await getDocs(qGas);
+          if (!snapGas.empty) {
+            const gas = snapGas.docs[0].data();
+            const duracion = calcularDuracion(gas.fechaInicio);
+            estadoGas.innerHTML = `
+              <div class="info-estado">
+                <p><strong>Inicio:</strong> ${new Date(gas.fechaInicio).toLocaleDateString()}</p>
+                <p><strong>Kilos:</strong> ${gas.kilos} kg</p>
+                <p><strong>Precio:</strong> ${formatearMoneda(gas.precio)}</p>
+                <p><strong>Tiempo en uso:</strong> ${duracion} días</p>
+              </div>
+              <button class="boton-rojo" onclick="finalizarGas('${snapGas.docs[0].id}')">
+                <i data-lucide="x-circle"></i> Finalizar
+              </button>
+            `;
+          } else {
+            estadoGas.innerHTML = '<p>No hay carga de gas activa</p>';
+          }
+        } catch (error) {
+          if (error.code === 'failed-precondition') {
+            alert('Es necesario crear un índice para el gas. Por favor, haz clic en el enlace que aparece en la consola.');
+            console.error('Error al cargar gas:', error);
+          }
+          estadoGas.innerHTML = '<p>Error al cargar estado del gas</p>';
+        }
+
+        // Cargar último alambre
+        const qAlambre = query(
+          collection(db, 'insumos-alambre'),
+          where('fechaFin', '==', null),
+          orderBy('fechaInicio', 'desc')
+        );
+        
+        try {
+          const snapAlambre = await getDocs(qAlambre);
+          if (!snapAlambre.empty) {
+            const alambre = snapAlambre.docs[0].data();
+            const duracion = calcularDuracion(alambre.fechaInicio);
+            estadoAlambre.innerHTML = `
+              <div class="info-estado">
+                <p><strong>Inicio:</strong> ${new Date(alambre.fechaInicio).toLocaleDateString()}</p>
+                <p><strong>Precio:</strong> ${formatearMoneda(alambre.precio)}</p>
+                <p><strong>Tiempo en uso:</strong> ${duracion} días</p>
+              </div>
+              <button class="boton-rojo" onclick="finalizarAlambre('${snapAlambre.docs[0].id}')">
+                <i data-lucide="x-circle"></i> Finalizar
+              </button>
+            `;
+          } else {
+            estadoAlambre.innerHTML = '<p>No hay rollo de alambre activo</p>';
+          }
+        } catch (error) {
+          if (error.code === 'failed-precondition') {
+            alert('Es necesario crear un índice para el alambre. Por favor, haz clic en el enlace que aparece en la consola.');
+            console.error('Error al cargar alambre:', error);
+          }
+          estadoAlambre.innerHTML = '<p>Error al cargar estado del alambre</p>';
+        }
+
+        lucide.createIcons();
+      } catch (error) {
+        console.error('Error al cargar estado actual:', error);
+      }
+    }
+
+    // Función para calcular duración
+    function calcularDuracion(fechaInicio, fechaFin = null) {
+      const inicio = new Date(fechaInicio);
+      const fin = fechaFin ? new Date(fechaFin) : new Date();
+      const diferencia = fin - inicio;
+      const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+      return dias;
+    }
+
+    // Función para formatear moneda
+    function formatearMoneda(valor) {
+      return new Intl.NumberFormat('es-AR', {
+        style: 'currency',
+        currency: 'ARS',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(valor);
+    }
+
+    // Cargar historial
+    async function cargarHistorial(tipo) {
+      const collection_name = `insumos-${tipo}`;
+      const q = query(
+        collection(db, collection_name),
+        orderBy('fechaInicio', 'desc')
+      );
+      const snap = await getDocs(q);
+      
+      historialLista.innerHTML = `<h3>${tipo === 'gas' ? 'Historial de Gas' : 'Historial de Alambre'}</h3>`;
+      
+      snap.forEach(doc => {
+        const data = doc.data();
+        const duracion = calcularDuracion(data.fechaInicio, data.fechaFin);
+        
+        const elemento = document.createElement('div');
+        elemento.className = 'item-presupuesto';
+        elemento.innerHTML = `
+          <strong>${new Date(data.fechaInicio).toLocaleDateString()}</strong>
+          ${data.fechaFin ? ` - ${new Date(data.fechaFin).toLocaleDateString()}` : ' (Activo)'}
+          <br>
+          ${tipo === 'gas' ? `Kilos: ${data.kilos} kg<br>` : ''}
+          Precio: ${formatearMoneda(data.precio)}<br>
+          Duración: ${duracion} días
+        `;
+        historialLista.appendChild(elemento);
+      });
+    }
+
+    // Finalizar insumos
+    window.finalizarGas = async (id) => {
+      if (confirm('¿Confirmar finalización de la carga de gas?')) {
+        await updateDoc(doc(db, 'insumos-gas', id), {
+          fechaFin: new Date().toISOString()
+        });
+        await cargarEstadoActual();
+        cargarHistorial('gas');
+      }
+    };
+
+    window.finalizarAlambre = async (id) => {
+      if (confirm('¿Confirmar finalización del rollo de alambre?')) {
+        await updateDoc(doc(db, 'insumos-alambre', id), {
+          fechaFin: new Date().toISOString()
+        });
+        await cargarEstadoActual();
+        cargarHistorial('alambre');
+      }
+    };
+
+    // Filtros de historial
+    document.querySelectorAll('.filtros-historial .boton-vista').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filtros-historial .boton-vista').forEach(b => 
+          b.classList.remove('activo')
+        );
+        btn.classList.add('activo');
+        cargarHistorial(btn.dataset.tipo);
+      });
+    });
+
+    // Menú hamburguesa
+    const btnMenu = document.getElementById('btnMenu');
+    const menuOpciones = document.getElementById('menuOpciones');
+
+    btnMenu.addEventListener('click', () => {
+      menuOpciones.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!btnMenu.contains(e.target) && !menuOpciones.contains(e.target)) {
+        menuOpciones.classList.add('hidden');
+      }
+    });
+
+    // Inicialización
+    cargarEstadoActual();
+    lucide.createIcons();
+  </script>
+</body>
+</html> 
