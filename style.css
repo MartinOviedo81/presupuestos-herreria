@@ -166,11 +166,8 @@ button:hover {
   border-radius: 8px;
   padding: 0.8rem;
   margin-bottom: 0.8rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
   font-size: 0.9rem;
+  width: 100%;
 }
 
 /* PRESUPUESTOS GUARDADOS */
@@ -181,20 +178,24 @@ button:hover {
   padding-left: 0;
 }
 .item-presupuesto {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 15px;
   margin-bottom: 10px;
   background: var(--color-fondo-secundario);
   border-radius: 8px;
+  width: 100%;
 }
 .item-contenido {
-  flex-grow: 1;
+  margin-bottom: 10px;
 }
 .item-acciones {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+}
+.item-acciones button {
+  margin: 0;
+  width: auto;
+  white-space: nowrap;
 }
 .item-acciones .boton-rojo {
   padding: 8px;
@@ -208,6 +209,24 @@ button:hover {
 .item-presupuesto .total {
   color: #ccc;
   font-size: 0.85rem;
+}
+
+/* Nueva clase específica para el historial de gas y alambre */
+.item-historial {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.item-historial .item-contenido {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.item-historial .item-acciones {
+  flex-shrink: 0;
 }
 
 /* RESPONSIVE */

@@ -357,8 +357,8 @@
       items.forEach(data => {
         const duracion = calcularDuracion(data.fechaInicio, data.fechaFin);
         
-        const elemento = document.createElement('div');
-        elemento.className = 'item-presupuesto';
+        const elemento = document.createElement("div");
+        elemento.className = "item-presupuesto item-historial";
         elemento.innerHTML = `
           <div class="item-contenido">
             <strong>${new Date(data.fechaInicio).toLocaleDateString()}</strong>
