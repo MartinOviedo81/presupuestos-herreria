@@ -154,15 +154,20 @@
       try {
         const fechaInicio = new Date(document.getElementById('gas-fecha-inicio').value).toISOString();
         
-        // Finalizar carga anterior
-        const qGasActual = query(
-          collection(db, 'insumos-gas'),
-          orderBy('fechaInicio', 'desc'),
-          where('fechaFin', '==', null)
-        );
-        const snapGasActual = await getDocs(qGasActual);
-        if (!snapGasActual.empty) {
-          await updateDoc(doc(db, 'insumos-gas', snapGasActual.docs[0].id), {
+        // Buscar y finalizar carga anterior
+        const colGas = collection(db, 'insumos-gas');
+        const snapGas = await getDocs(colGas);
+        let cargaActiva = null;
+
+        snapGas.forEach(doc => {
+          const data = doc.data();
+          if (data.fechaFin === null) {
+            cargaActiva = doc;
+          }
+        });
+
+        if (cargaActiva) {
+          await updateDoc(doc(db, 'insumos-gas', cargaActiva.id), {
             fechaFin: fechaInicio
           });
         }
@@ -194,15 +199,20 @@
       try {
         const fechaInicio = new Date(document.getElementById('alambre-fecha-inicio').value).toISOString();
         
-        // Finalizar rollo anterior
-        const qAlambreActual = query(
-          collection(db, 'insumos-alambre'),
-          orderBy('fechaInicio', 'desc'),
-          where('fechaFin', '==', null)
-        );
-        const snapAlambreActual = await getDocs(qAlambreActual);
-        if (!snapAlambreActual.empty) {
-          await updateDoc(doc(db, 'insumos-alambre', snapAlambreActual.docs[0].id), {
+        // Buscar y finalizar rollo anterior
+        const colAlambre = collection(db, 'insumos-alambre');
+        const snapAlambre = await getDocs(colAlambre);
+        let rolloActivo = null;
+
+        snapAlambre.forEach(doc => {
+          const data = doc.data();
+          if (data.fechaFin === null) {
+            rolloActivo = doc;
+          }
+        });
+
+        if (rolloActivo) {
+          await updateDoc(doc(db, 'insumos-alambre', rolloActivo.id), {
             fechaFin: fechaInicio
           });
         }
@@ -217,6 +227,7 @@
         
         // Restablecer fecha por defecto
         document.getElementById('alambre-fecha-inicio').value = new Date().toISOString().split('T')[0];
+        document.getElementById('alambre-precio').value = "";
         
         await cargarEstadoActual();
         alert('Rollo de alambre registrado correctamente');
