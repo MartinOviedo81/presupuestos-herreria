@@ -230,70 +230,68 @@
     async function cargarEstadoActual() {
       try {
         // Cargar último gas
-        const qGas = query(
-          collection(db, 'insumos-gas'),
-          where('fechaFin', '==', null),
-          orderBy('fechaInicio', 'desc')
-        );
-        
-        try {
-          const snapGas = await getDocs(qGas);
-          if (!snapGas.empty) {
-            const gas = snapGas.docs[0].data();
-            const duracion = calcularDuracion(gas.fechaInicio);
-            estadoGas.innerHTML = `
-              <div class="info-estado">
-                <p><strong>Inicio:</strong> ${new Date(gas.fechaInicio).toLocaleDateString()}</p>
-                <p><strong>Kilos:</strong> ${gas.kilos} kg</p>
-                <p><strong>Precio:</strong> ${formatearMoneda(gas.precio)}</p>
-                <p><strong>Tiempo en uso:</strong> ${duracion} días</p>
-              </div>
-              <button class="boton-rojo" onclick="finalizarGas('${snapGas.docs[0].id}')">
-                <i data-lucide="x-circle"></i> Finalizar
-              </button>
-            `;
-          } else {
-            estadoGas.innerHTML = '<p>No hay carga de gas activa</p>';
+        const colGas = collection(db, 'insumos-gas');
+        const snapGas = await getDocs(colGas);
+        let ultimoGas = null;
+        let ultimaFechaGas = null;
+
+        // Buscar la última carga activa
+        snapGas.forEach(doc => {
+          const data = doc.data();
+          const fecha = new Date(data.fechaInicio);
+          if (data.fechaFin === null && (!ultimaFechaGas || fecha > ultimaFechaGas)) {
+            ultimoGas = { id: doc.id, ...data };
+            ultimaFechaGas = fecha;
           }
-        } catch (error) {
-          if (error.code === 'failed-precondition') {
-            alert('Es necesario crear un índice para el gas. Por favor, haz clic en el enlace que aparece en la consola.');
-            console.error('Error al cargar gas:', error);
-          }
-          estadoGas.innerHTML = '<p>Error al cargar estado del gas</p>';
+        });
+
+        if (ultimoGas) {
+          const duracion = calcularDuracion(ultimoGas.fechaInicio);
+          estadoGas.innerHTML = `
+            <div class="info-estado">
+              <p><strong>Inicio:</strong> ${new Date(ultimoGas.fechaInicio).toLocaleDateString()}</p>
+              <p><strong>Kilos:</strong> ${ultimoGas.kilos} kg</p>
+              <p><strong>Precio:</strong> ${formatearMoneda(ultimoGas.precio)}</p>
+              <p><strong>Tiempo en uso:</strong> ${duracion} días</p>
+            </div>
+            <button class="boton-rojo" onclick="finalizarGas('${ultimoGas.id}')">
+              <i data-lucide="x-circle"></i> Finalizar
+            </button>
+          `;
+        } else {
+          estadoGas.innerHTML = '<p>No hay carga de gas activa</p>';
         }
 
         // Cargar último alambre
-        const qAlambre = query(
-          collection(db, 'insumos-alambre'),
-          where('fechaFin', '==', null),
-          orderBy('fechaInicio', 'desc')
-        );
-        
-        try {
-          const snapAlambre = await getDocs(qAlambre);
-          if (!snapAlambre.empty) {
-            const alambre = snapAlambre.docs[0].data();
-            const duracion = calcularDuracion(alambre.fechaInicio);
-            estadoAlambre.innerHTML = `
-              <div class="info-estado">
-                <p><strong>Inicio:</strong> ${new Date(alambre.fechaInicio).toLocaleDateString()}</p>
-                <p><strong>Precio:</strong> ${formatearMoneda(alambre.precio)}</p>
-                <p><strong>Tiempo en uso:</strong> ${duracion} días</p>
-              </div>
-              <button class="boton-rojo" onclick="finalizarAlambre('${snapAlambre.docs[0].id}')">
-                <i data-lucide="x-circle"></i> Finalizar
-              </button>
-            `;
-          } else {
-            estadoAlambre.innerHTML = '<p>No hay rollo de alambre activo</p>';
+        const colAlambre = collection(db, 'insumos-alambre');
+        const snapAlambre = await getDocs(colAlambre);
+        let ultimoAlambre = null;
+        let ultimaFechaAlambre = null;
+
+        // Buscar el último rollo activo
+        snapAlambre.forEach(doc => {
+          const data = doc.data();
+          const fecha = new Date(data.fechaInicio);
+          if (data.fechaFin === null && (!ultimaFechaAlambre || fecha > ultimaFechaAlambre)) {
+            ultimoAlambre = { id: doc.id, ...data };
+            ultimaFechaAlambre = fecha;
           }
-        } catch (error) {
-          if (error.code === 'failed-precondition') {
-            alert('Es necesario crear un índice para el alambre. Por favor, haz clic en el enlace que aparece en la consola.');
-            console.error('Error al cargar alambre:', error);
-          }
-          estadoAlambre.innerHTML = '<p>Error al cargar estado del alambre</p>';
+        });
+
+        if (ultimoAlambre) {
+          const duracion = calcularDuracion(ultimoAlambre.fechaInicio);
+          estadoAlambre.innerHTML = `
+            <div class="info-estado">
+              <p><strong>Inicio:</strong> ${new Date(ultimoAlambre.fechaInicio).toLocaleDateString()}</p>
+              <p><strong>Precio:</strong> ${formatearMoneda(ultimoAlambre.precio)}</p>
+              <p><strong>Tiempo en uso:</strong> ${duracion} días</p>
+            </div>
+            <button class="boton-rojo" onclick="finalizarAlambre('${ultimoAlambre.id}')">
+              <i data-lucide="x-circle"></i> Finalizar
+            </button>
+          `;
+        } else {
+          estadoAlambre.innerHTML = '<p>No hay rollo de alambre activo</p>';
         }
 
         lucide.createIcons();
@@ -324,16 +322,20 @@
     // Cargar historial
     async function cargarHistorial(tipo) {
       const collection_name = `insumos-${tipo}`;
-      const q = query(
-        collection(db, collection_name),
-        orderBy('fechaInicio', 'desc')
-      );
-      const snap = await getDocs(q);
+      const snap = await getDocs(collection(db, collection_name));
       
       historialLista.innerHTML = `<h3>${tipo === 'gas' ? 'Historial de Gas' : 'Historial de Alambre'}</h3>`;
       
+      // Convertir a array para poder ordenar
+      const items = [];
       snap.forEach(doc => {
-        const data = doc.data();
+        items.push({ id: doc.id, ...doc.data() });
+      });
+
+      // Ordenar por fecha de inicio (más reciente primero)
+      items.sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio));
+      
+      items.forEach(data => {
         const duracion = calcularDuracion(data.fechaInicio, data.fechaFin);
         
         const elemento = document.createElement('div');
