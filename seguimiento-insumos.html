@@ -105,7 +105,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js';
     import {
       getFirestore, collection, addDoc, getDocs, query, 
-      orderBy, where, doc, updateDoc
+      orderBy, where, doc, updateDoc, deleteDoc
     } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -246,7 +246,6 @@
         let ultimoGas = null;
         let ultimaFechaGas = null;
 
-        // Buscar la última carga activa
         snapGas.forEach(doc => {
           const data = doc.data();
           const fecha = new Date(data.fechaInicio);
@@ -265,9 +264,14 @@
               <p><strong>Precio:</strong> ${formatearMoneda(ultimoGas.precio)}</p>
               <p><strong>Tiempo en uso:</strong> ${duracion} días</p>
             </div>
-            <button class="boton-rojo" onclick="finalizarGas('${ultimoGas.id}')">
-              <i data-lucide="x-circle"></i> Finalizar
-            </button>
+            <div class="botones-accion">
+              <button class="boton-rojo" onclick="finalizarGas('${ultimoGas.id}')">
+                <i data-lucide="x-circle"></i> Finalizar
+              </button>
+              <button class="boton-rojo" onclick="eliminarInsumo('${ultimoGas.id}', 'gas')">
+                <i data-lucide="trash-2"></i> Eliminar
+              </button>
+            </div>
           `;
         } else {
           estadoGas.innerHTML = '<p>No hay carga de gas activa</p>';
@@ -279,7 +283,6 @@
         let ultimoAlambre = null;
         let ultimaFechaAlambre = null;
 
-        // Buscar el último rollo activo
         snapAlambre.forEach(doc => {
           const data = doc.data();
           const fecha = new Date(data.fechaInicio);
@@ -297,9 +300,14 @@
               <p><strong>Precio:</strong> ${formatearMoneda(ultimoAlambre.precio)}</p>
               <p><strong>Tiempo en uso:</strong> ${duracion} días</p>
             </div>
-            <button class="boton-rojo" onclick="finalizarAlambre('${ultimoAlambre.id}')">
-              <i data-lucide="x-circle"></i> Finalizar
-            </button>
+            <div class="botones-accion">
+              <button class="boton-rojo" onclick="finalizarAlambre('${ultimoAlambre.id}')">
+                <i data-lucide="x-circle"></i> Finalizar
+              </button>
+              <button class="boton-rojo" onclick="eliminarInsumo('${ultimoAlambre.id}', 'alambre')">
+                <i data-lucide="trash-2"></i> Eliminar
+              </button>
+            </div>
           `;
         } else {
           estadoAlambre.innerHTML = '<p>No hay rollo de alambre activo</p>';
@@ -352,15 +360,24 @@
         const elemento = document.createElement('div');
         elemento.className = 'item-presupuesto';
         elemento.innerHTML = `
-          <strong>${new Date(data.fechaInicio).toLocaleDateString()}</strong>
-          ${data.fechaFin ? ` - ${new Date(data.fechaFin).toLocaleDateString()}` : ' (Activo)'}
-          <br>
-          ${tipo === 'gas' ? `Kilos: ${data.kilos} kg<br>` : ''}
-          Precio: ${formatearMoneda(data.precio)}<br>
-          Duración: ${duracion} días
+          <div class="item-contenido">
+            <strong>${new Date(data.fechaInicio).toLocaleDateString()}</strong>
+            ${data.fechaFin ? ` - ${new Date(data.fechaFin).toLocaleDateString()}` : ' (Activo)'}
+            <br>
+            ${tipo === 'gas' ? `Kilos: ${data.kilos} kg<br>` : ''}
+            Precio: ${formatearMoneda(data.precio)}<br>
+            Duración: ${duracion} días
+          </div>
+          <div class="item-acciones">
+            <button class="boton-rojo" onclick="eliminarInsumo('${data.id}', '${tipo}')">
+              <i data-lucide="trash-2"></i>
+            </button>
+          </div>
         `;
         historialLista.appendChild(elemento);
       });
+
+      lucide.createIcons();
     }
 
     // Finalizar insumos
@@ -408,6 +425,25 @@
         menuOpciones.classList.add('hidden');
       }
     });
+
+    // Función para eliminar insumo
+    window.eliminarInsumo = async (id, tipo) => {
+      const mensaje = tipo === 'gas' ? 
+        '¿Estás seguro que querés eliminar esta carga de gas?' : 
+        '¿Estás seguro que querés eliminar este rollo de alambre?';
+      
+      if (confirm(mensaje)) {
+        try {
+          await deleteDoc(doc(db, `insumos-${tipo}`, id));
+          await cargarEstadoActual();
+          cargarHistorial(tipo);
+          alert('Registro eliminado correctamente');
+        } catch (error) {
+          console.error('Error al eliminar:', error);
+          alert('Error al eliminar el registro');
+        }
+      }
+    };
 
     // Inicialización
     cargarEstadoActual();
