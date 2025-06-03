@@ -6,6 +6,53 @@
   <title>Seguimiento de Insumos - Linda Herrería</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .estado-actual {
+      margin: 0.5rem 0;
+    }
+
+    .estado-insumo {
+      background-color: #2c3e50;
+      border-radius: 6px;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .estado-insumo .item-contenido {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .estado-insumo .item-acciones {
+      display: flex;
+      gap: 0.25rem;
+      justify-content: flex-end;
+    }
+
+    .estado-insumo .item-acciones button {
+      padding: 2px 4px;
+      font-size: 0.85em;
+    }
+
+    .estado-insumo .item-acciones i {
+      width: 14px;
+      height: 14px;
+    }
+
+    .info-linea {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9em;
+    }
+
+    .info-linea strong {
+      color: #f39c12;
+      min-width: 70px;
+    }
+  </style>
 </head>
 <body class="modo-oscuro">
   <!-- Menú hamburguesa -->
@@ -258,23 +305,33 @@
         if (ultimoGas) {
           const duracion = calcularDuracion(ultimoGas.fechaInicio);
           estadoGas.innerHTML = `
-            <div class="info-estado">
-              <p><strong>Inicio:</strong> ${new Date(ultimoGas.fechaInicio).toLocaleDateString()}</p>
-              <p><strong>Kilos:</strong> ${ultimoGas.kilos} kg</p>
-              <p><strong>Precio:</strong> ${formatearMoneda(ultimoGas.precio)}</p>
-              <p><strong>Tiempo en uso:</strong> ${duracion} días</p>
-            </div>
-            <div class="botones-accion">
-              <button class="boton-rojo" onclick="finalizarGas('${ultimoGas.id}')">
-                <i data-lucide="x-circle"></i> Finalizar
-              </button>
-              <button class="boton-rojo" onclick="eliminarInsumo('${ultimoGas.id}', 'gas')">
-                <i data-lucide="trash-2"></i> Eliminar
-              </button>
+            <div class="estado-insumo activo">
+              <div class="item-contenido">
+                <div class="info-linea">
+                  <strong>Inicio:</strong> ${new Date(ultimoGas.fechaInicio).toLocaleDateString()}
+                </div>
+                <div class="info-linea">
+                  <strong>Kilos:</strong> ${ultimoGas.kilos} kg
+                </div>
+                <div class="info-linea">
+                  <strong>Precio:</strong> ${formatearMoneda(ultimoGas.precio)}
+                </div>
+                <div class="info-linea">
+                  <strong>En uso:</strong> ${duracion} días
+                </div>
+              </div>
+              <div class="item-acciones">
+                <button class="boton-rojo" onclick="finalizarGas('${ultimoGas.id}')">
+                  <i data-lucide="x-circle"></i>
+                </button>
+                <button class="boton-rojo" onclick="eliminarInsumo('${ultimoGas.id}', 'gas')">
+                  <i data-lucide="trash-2"></i>
+                </button>
+              </div>
             </div>
           `;
         } else {
-          estadoGas.innerHTML = '<p>No hay carga de gas activa</p>';
+          estadoGas.innerHTML = '<div class="estado-insumo"><p>No hay carga de gas activa</p></div>';
         }
 
         // Cargar último alambre
@@ -295,22 +352,30 @@
         if (ultimoAlambre) {
           const duracion = calcularDuracion(ultimoAlambre.fechaInicio);
           estadoAlambre.innerHTML = `
-            <div class="info-estado">
-              <p><strong>Inicio:</strong> ${new Date(ultimoAlambre.fechaInicio).toLocaleDateString()}</p>
-              <p><strong>Precio:</strong> ${formatearMoneda(ultimoAlambre.precio)}</p>
-              <p><strong>Tiempo en uso:</strong> ${duracion} días</p>
-            </div>
-            <div class="botones-accion">
-              <button class="boton-rojo" onclick="finalizarAlambre('${ultimoAlambre.id}')">
-                <i data-lucide="x-circle"></i> Finalizar
-              </button>
-              <button class="boton-rojo" onclick="eliminarInsumo('${ultimoAlambre.id}', 'alambre')">
-                <i data-lucide="trash-2"></i> Eliminar
-              </button>
+            <div class="estado-insumo activo">
+              <div class="item-contenido">
+                <div class="info-linea">
+                  <strong>Inicio:</strong> ${new Date(ultimoAlambre.fechaInicio).toLocaleDateString()}
+                </div>
+                <div class="info-linea">
+                  <strong>Precio:</strong> ${formatearMoneda(ultimoAlambre.precio)}
+                </div>
+                <div class="info-linea">
+                  <strong>En uso:</strong> ${duracion} días
+                </div>
+              </div>
+              <div class="item-acciones">
+                <button class="boton-rojo" onclick="finalizarAlambre('${ultimoAlambre.id}')">
+                  <i data-lucide="x-circle"></i>
+                </button>
+                <button class="boton-rojo" onclick="eliminarInsumo('${ultimoAlambre.id}', 'alambre')">
+                  <i data-lucide="trash-2"></i>
+                </button>
+              </div>
             </div>
           `;
         } else {
-          estadoAlambre.innerHTML = '<p>No hay rollo de alambre activo</p>';
+          estadoAlambre.innerHTML = '<div class="estado-insumo"><p>No hay rollo de alambre activo</p></div>';
         }
 
         lucide.createIcons();
