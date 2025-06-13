@@ -368,9 +368,10 @@ function renderSeleccion(mat) {
         <button class="boton-rapido" onclick="insertarEnInput(',')">,</button>
       </div>
       <div class="input-ayuda-container">
-        <input type="tel" 
+        <input type="text" 
                id="input-detalle" 
-               placeholder="Ingrese números y use los botones para operaciones" />
+               placeholder="Ingrese números y use los botones para operaciones" 
+               inputmode="decimal" />
         <button class="boton-ayuda" onclick="mostrarAyudaExpresiones()">
           <i data-lucide="help-circle"></i>
         </button>
