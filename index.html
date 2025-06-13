@@ -368,10 +368,9 @@ function renderSeleccion(mat) {
         <button class="boton-rapido" onclick="insertarEnInput(',')">,</button>
       </div>
       <div class="input-ayuda-container">
-        <input type="text" 
+        <input type="tel" 
                id="input-detalle" 
-               placeholder="Ingrese números y use los botones para operaciones" 
-               inputmode="numeric" />
+               placeholder="Ingrese números y use los botones para operaciones" />
         <button class="boton-ayuda" onclick="mostrarAyudaExpresiones()">
           <i data-lucide="help-circle"></i>
         </button>
@@ -397,11 +396,6 @@ lucide.createIcons();
     const toggleBtn = document.getElementById('toggle-trabajos');
     const trabajosLista = contenedorSeleccion.querySelector('.trabajos-lista');
     const inputDetalle = document.getElementById('input-detalle');
-
-    // Configurar el input para mostrar teclado numérico en móviles
-    if (inputDetalle) {
-      inputDetalle.setAttribute('inputmode', 'numeric');
-    }
 
     toggleBtn.addEventListener('click', () => {
       trabajosLista.classList.toggle('hidden');
