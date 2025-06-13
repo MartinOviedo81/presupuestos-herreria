@@ -371,8 +371,7 @@ function renderSeleccion(mat) {
         <input type="text" 
                id="input-detalle" 
                placeholder="Ingrese números y use los botones para operaciones" 
-               inputmode="decimal" 
-               pattern="[0-9.]*" />
+               inputmode="numeric" />
         <button class="boton-ayuda" onclick="mostrarAyudaExpresiones()">
           <i data-lucide="help-circle"></i>
         </button>
@@ -401,7 +400,7 @@ lucide.createIcons();
 
     // Configurar el input para mostrar teclado numérico en móviles
     if (inputDetalle) {
-      inputDetalle.setAttribute('inputmode', 'decimal');
+      inputDetalle.setAttribute('inputmode', 'numeric');
     }
 
     toggleBtn.addEventListener('click', () => {
