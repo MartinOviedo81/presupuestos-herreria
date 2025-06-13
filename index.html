@@ -368,7 +368,11 @@ function renderSeleccion(mat) {
         <button class="boton-rapido" onclick="insertarEnInput(',')">,</button>
       </div>
       <div class="input-ayuda-container">
-        <input type="text" id="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5..." />
+        <input type="text" 
+               id="input-detalle" 
+               placeholder="Ingrese números y use los botones para operaciones" 
+               inputmode="decimal" 
+               pattern="[0-9.]*" />
         <button class="boton-ayuda" onclick="mostrarAyudaExpresiones()">
           <i data-lucide="help-circle"></i>
         </button>
@@ -393,6 +397,12 @@ lucide.createIcons();
     const checkboxes = contenedorSeleccion.querySelectorAll('.check-trabajo');
     const toggleBtn = document.getElementById('toggle-trabajos');
     const trabajosLista = contenedorSeleccion.querySelector('.trabajos-lista');
+    const inputDetalle = document.getElementById('input-detalle');
+
+    // Configurar el input para mostrar teclado numérico en móviles
+    if (inputDetalle) {
+      inputDetalle.setAttribute('inputmode', 'decimal');
+    }
 
     toggleBtn.addEventListener('click', () => {
       trabajosLista.classList.toggle('hidden');
@@ -816,7 +826,7 @@ window.refrescarPresupuesto = async (id) => {
 function toggleMenu() {
   const menu = document.getElementById('menuOpciones');
   menu.classList.toggle('hidden');
-  lucide.createIcons(); // <<<<<< ACTIVAR ICONOS
+  lucide.createIcons();
 }
 
 // Cerrar menú si clickeás fuera
@@ -824,7 +834,6 @@ window.addEventListener('click', function(e) {
   const menu = document.getElementById('menuOpciones');
   const hamburguesa = document.querySelector('.menu-hamburguesa');
   
-  // Si el clic no fue sobre el menú ni sobre el botón hamburguesa
   if (!menu.contains(e.target) && !hamburguesa.contains(e.target)) {
     menu.classList.add('hidden');
   }
