@@ -357,6 +357,16 @@ function renderSeleccion(mat) {
           mat.unidad === 'metro' ? 'mt' : mat.unidad === 'superficie' ? 'm²' : 'u'
         }
       </p>
+      <div class="botones-rapidos">
+        <button class="boton-rapido" onclick="insertarEnInput('c')">c</button>
+        <button class="boton-rapido" onclick="insertarEnInput('a')">a</button>
+        <button class="boton-rapido" onclick="insertarEnInput('+')">+</button>
+        <button class="boton-rapido" onclick="insertarEnInput('x')">x</button>
+        <button class="boton-rapido" onclick="insertarEnInput('(')">(</button>
+        <button class="boton-rapido" onclick="insertarEnInput(')')">)</button>
+        <button class="boton-rapido" onclick="insertarEnInput('.')">.</button>
+        <button class="boton-rapido" onclick="insertarEnInput(',')">,</button>
+      </div>
       <div class="input-ayuda-container">
         <input type="text" id="input-detalle" placeholder="Uso: 1 x 2, 2 x 1.5..." />
         <button class="boton-ayuda" onclick="mostrarAyudaExpresiones()">
@@ -486,24 +496,37 @@ totalSpan.textContent = formatearMoneda(totalRedondeado);
       presupuesto.splice(i, 1);
       renderPresupuesto();
     };
-async function actualizarPreciosEnPresupuesto() {
-  const snap = await getDocs(collection(db, 'materiales'));
-  const preciosActuales = {};
-  snap.forEach(doc => {
-    const m = doc.data();
-    preciosActuales[m.nombre] = m.precio / m.fraccionamiento;
-  });
 
-  presupuesto = presupuesto.map(item => {
-    const nuevoPrecio = preciosActuales[item.nombre] || item.precioPorUnidad;
-    const nuevoSubtotal = nuevoPrecio * item.cantidad * item.multiplicadorTotal;
-    return {
-      ...item,
-      precioPorUnidad: nuevoPrecio,
-      subtotal: nuevoSubtotal
-    };
-  });
-}
+    function insertarEnInput(valor) {
+      const input = document.getElementById('input-detalle');
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const texto = input.value;
+      const nuevoTexto = texto.substring(0, start) + valor + texto.substring(end);
+      input.value = nuevoTexto;
+      input.focus();
+      input.setSelectionRange(start + valor.length, start + valor.length);
+    }
+
+    async function actualizarPreciosEnPresupuesto() {
+      const snap = await getDocs(collection(db, 'materiales'));
+      const preciosActuales = {};
+      snap.forEach(doc => {
+        const m = doc.data();
+        preciosActuales[m.nombre] = m.precio / m.fraccionamiento;
+      });
+
+      presupuesto = presupuesto.map(item => {
+        const nuevoPrecio = preciosActuales[item.nombre] || item.precioPorUnidad;
+        const nuevoSubtotal = nuevoPrecio * item.cantidad * item.multiplicadorTotal;
+        return {
+          ...item,
+          precioPorUnidad: nuevoPrecio,
+          subtotal: nuevoSubtotal
+        };
+      });
+    }
+
     btnGuardar.addEventListener('click', async () => {
   const nombre = nombrePresupuesto.value.trim(); // ✅ ahora está definida correctamente
   if (!nombre) return alert('Poné un nombre al presupuesto.');
@@ -945,6 +968,67 @@ window.addEventListener('click', function(e) {
   text-align: center;
   font-weight: bold;
 }
+
+.botones-rapidos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+  justify-content: flex-start;
+}
+
+.boton-rapido {
+  background-color: rgba(52, 73, 94, 0.3);
+  color: #ecf0f1;
+  border: 1px solid rgba(44, 62, 80, 0.3);
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-shadow: 0 1px 1px rgba(0,0,0,0.2);
+  backdrop-filter: blur(4px);
+}
+
+.boton-rapido:hover {
+  background-color: rgba(44, 62, 80, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+  border-color: rgba(52, 152, 219, 0.3);
+}
+
+.boton-rapido:active {
+  background-color: rgba(41, 128, 185, 0.5);
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Estilos específicos para cada tipo de botón */
+.boton-rapido:nth-child(1) { background-color: rgba(231, 76, 60, 0.3); border-color: rgba(192, 57, 43, 0.3); }
+.boton-rapido:nth-child(2) { background-color: rgba(52, 152, 219, 0.3); border-color: rgba(41, 128, 185, 0.3); }
+.boton-rapido:nth-child(3) { background-color: rgba(46, 204, 113, 0.3); border-color: rgba(39, 174, 96, 0.3); }
+.boton-rapido:nth-child(4) { background-color: rgba(241, 196, 15, 0.3); border-color: rgba(243, 156, 18, 0.3); color: #ecf0f1; }
+.boton-rapido:nth-child(5) { background-color: rgba(155, 89, 182, 0.3); border-color: rgba(142, 68, 173, 0.3); }
+.boton-rapido:nth-child(6) { background-color: rgba(155, 89, 182, 0.3); border-color: rgba(142, 68, 173, 0.3); }
+.boton-rapido:nth-child(7) { background-color: rgba(26, 188, 156, 0.3); border-color: rgba(22, 160, 133, 0.3); }
+.boton-rapido:nth-child(8) { background-color: rgba(230, 126, 34, 0.3); border-color: rgba(211, 84, 0, 0.3); }
+
+/* Efectos hover específicos */
+.boton-rapido:nth-child(1):hover { background-color: rgba(192, 57, 43, 0.5); }
+.boton-rapido:nth-child(2):hover { background-color: rgba(41, 128, 185, 0.5); }
+.boton-rapido:nth-child(3):hover { background-color: rgba(39, 174, 96, 0.5); }
+.boton-rapido:nth-child(4):hover { background-color: rgba(243, 156, 18, 0.5); }
+.boton-rapido:nth-child(5):hover { background-color: rgba(142, 68, 173, 0.5); }
+.boton-rapido:nth-child(6):hover { background-color: rgba(142, 68, 173, 0.5); }
+.boton-rapido:nth-child(7):hover { background-color: rgba(22, 160, 133, 0.5); }
+.boton-rapido:nth-child(8):hover { background-color: rgba(211, 84, 0, 0.5); }
 </style>
 
 <script>
@@ -997,6 +1081,17 @@ document.getElementById('ayuda-modal').onclick = function(e) {
   if (e.target === this) {
     this.style.display = "none";
   }
+}
+
+function insertarEnInput(valor) {
+  const input = document.getElementById('input-detalle');
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  const texto = input.value;
+  const nuevoTexto = texto.substring(0, start) + valor + texto.substring(end);
+  input.value = nuevoTexto;
+  input.focus();
+  input.setSelectionRange(start + valor.length, start + valor.length);
 }
 </script>
 </body>
