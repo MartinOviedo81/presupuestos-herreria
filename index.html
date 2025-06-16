@@ -7,7 +7,97 @@
   <link rel="icon" type="image/png" href="lindaherreriaColor.png" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="teclado.css" />
-  <script src="teclado.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    // Función para el menú hamburguesa
+    window.toggleMenu = function() {
+      const menu = document.getElementById('menuOpciones');
+      menu.classList.toggle('hidden');
+      lucide.createIcons();
+    };
+
+    // Funciones para el teclado numérico
+    window.insertarEnInput = function(valor) {
+        const input = document.getElementById('input-detalle');
+        if (input) {
+            input.value += valor;
+        }
+    };
+
+    window.borrarUltimoCaracter = function() {
+        const input = document.getElementById('input-detalle');
+        if (input) {
+            input.value = input.value.slice(0, -1);
+        }
+    };
+
+    window.limpiarInput = function() {
+        const input = document.getElementById('input-detalle');
+        if (input) {
+            input.value = '';
+        }
+    };
+
+    // Función para abrir el modal de imágenes
+    window.abrirModal = function(url) {
+        const modal = document.getElementById('imagen-modal');
+        const img = document.getElementById('img-ampliada');
+        if (modal && img) {
+            img.src = url;
+            modal.style.display = 'block';
+        }
+    };
+
+    // Configurar eventos cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function() {
+        // Delegación de eventos para todos los clics
+        document.addEventListener('click', function(event) {
+            // Manejar teclas del teclado numérico
+            const tecla = event.target.closest('.tecla');
+            if (tecla) {
+                const valor = tecla.dataset.valor;
+                if (valor === 'borrar') {
+                    borrarUltimoCaracter();
+                } else if (valor === 'limpiar') {
+                    limpiarInput();
+                } else {
+                    insertarEnInput(valor);
+                }
+                return;
+            }
+
+            // Manejar botón de ayuda
+            if (event.target.closest('.boton-ayuda')) {
+                const modal = document.getElementById('ayuda-modal');
+                if (modal) {
+                    modal.style.display = 'block';
+                }
+                return;
+            }
+
+            // Manejar cierre de modales
+            if (event.target.closest('[data-action="cerrar-modal"]')) {
+                const modal = event.target.closest('.modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+                return;
+            }
+
+            // Cerrar modales al hacer clic fuera
+            const modalAyuda = document.getElementById('ayuda-modal');
+            const modalImagen = document.getElementById('imagen-modal');
+            
+            if (modalAyuda && event.target === modalAyuda) {
+                modalAyuda.style.display = 'none';
+            }
+            
+            if (modalImagen && event.target === modalImagen) {
+                modalImagen.style.display = 'none';
+            }
+        });
+    });
+  </script>
 </head>
 <body class="modo-oscuro">
   <h2>Linda Herrería</h2>
@@ -83,14 +173,14 @@
   
   <!-- Modal para ver imágenes -->
   <div id="imagen-modal" class="modal">
-    <span class="cerrar-modal">&times;</span>
+    <span class="cerrar-modal" data-action="cerrar-modal">&times;</span>
     <img class="modal-contenido" id="img-ampliada">
   </div>
 
   <!-- Modal para ayuda de expresiones -->
   <div id="ayuda-modal" class="modal">
     <div class="modal-ayuda-contenido">
-      <span class="cerrar-modal" onclick="cerrarAyudaExpresiones()">&times;</span>
+      <span class="cerrar-modal" data-action="cerrar-modal">&times;</span>
       <h3>📝 Guía de Expresiones</h3>
       <div class="ejemplos-grid">
         <div class="ejemplo">
@@ -135,20 +225,12 @@
     </div>
   </div>
 
-<script src="https://unpkg.com/lucide@latest"></script>
-<script src="teclado.js"></script>
 <script type="module">
   lucide.createIcons();
   import { db } from './firebase-config.js';
   import {
     collection, getDocs, addDoc, deleteDoc, doc, updateDoc
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-
-  function toggleMenu() {
-    const menu = document.getElementById('menuOpciones');
-    menu.classList.toggle('hidden');
-    lucide.createIcons();
-  }
 
   // Cerrar menú si clickeás fuera
   window.addEventListener('click', function(e) {
@@ -387,38 +469,38 @@ function renderSeleccion(mat) {
       </div>
       <div class="teclado-numerico">
         <div class="fila-teclado">
-          <button class="tecla" onclick="insertarEnInput('7')">7</button>
-          <button class="tecla" onclick="insertarEnInput('8')">8</button>
-          <button class="tecla" onclick="insertarEnInput('9')">9</button>
-          <button class="tecla" onclick="insertarEnInput('/')">/</button>
+          <button class="tecla" data-valor="7">7</button>
+          <button class="tecla" data-valor="8">8</button>
+          <button class="tecla" data-valor="9">9</button>
+          <button class="tecla" data-valor="/">/</button>
         </div>
         <div class="fila-teclado">
-          <button class="tecla" onclick="insertarEnInput('4')">4</button>
-          <button class="tecla" onclick="insertarEnInput('5')">5</button>
-          <button class="tecla" onclick="insertarEnInput('6')">6</button>
-          <button class="tecla" onclick="insertarEnInput('x')">×</button>
+          <button class="tecla" data-valor="4">4</button>
+          <button class="tecla" data-valor="5">5</button>
+          <button class="tecla" data-valor="6">6</button>
+          <button class="tecla" data-valor="x">×</button>
         </div>
         <div class="fila-teclado">
-          <button class="tecla" onclick="insertarEnInput('1')">1</button>
-          <button class="tecla" onclick="insertarEnInput('2')">2</button>
-          <button class="tecla" onclick="insertarEnInput('3')">3</button>
-          <button class="tecla" onclick="insertarEnInput('-')">-</button>
+          <button class="tecla" data-valor="1">1</button>
+          <button class="tecla" data-valor="2">2</button>
+          <button class="tecla" data-valor="3">3</button>
+          <button class="tecla" data-valor="-">-</button>
         </div>
         <div class="fila-teclado">
-          <button class="tecla" onclick="insertarEnInput('0')">0</button>
-          <button class="tecla" onclick="insertarEnInput('.')">.</button>
-          <button class="tecla" onclick="insertarEnInput('c')">c</button>
-          <button class="tecla" onclick="insertarEnInput('a')">a</button>
+          <button class="tecla" data-valor="0">0</button>
+          <button class="tecla" data-valor=".">.</button>
+          <button class="tecla" data-valor="c">c</button>
+          <button class="tecla" data-valor="a">a</button>
         </div>
         <div class="fila-teclado">
-          <button class="tecla" onclick="insertarEnInput('(')">(</button>
-          <button class="tecla" onclick="insertarEnInput(')')">)</button>
-          <button class="tecla" onclick="insertarEnInput('+')">+</button>
-          <button class="tecla" onclick="insertarEnInput(',')">,</button>
+          <button class="tecla" data-valor="(">(</button>
+          <button class="tecla" data-valor=")">)</button>
+          <button class="tecla" data-valor="+">+</button>
+          <button class="tecla" data-valor=",">,</button>
         </div>
         <div class="fila-teclado">
-          <button class="tecla tecla-borrar" onclick="borrarUltimoCaracter()">⌫</button>
-          <button class="tecla tecla-limpiar" onclick="limpiarInput()">C</button>
+          <button class="tecla tecla-borrar" data-valor="borrar">⌫</button>
+          <button class="tecla tecla-limpiar" data-valor="limpiar">C</button>
         </div>
       </div>
       <div class="trabajos-contenedor">
