@@ -20,6 +20,14 @@
     window.insertarEnInput = function(valor) {
         const input = document.getElementById('input-detalle');
         if (input) {
+            if (valor === 'enter') {
+                // Ocultar el teclado
+                const teclado = document.querySelector('.teclado-numerico');
+                if (teclado) {
+                    teclado.style.display = 'none';
+                }
+                return;
+            }
             input.value += valor;
         }
     };
@@ -96,6 +104,17 @@
                 modalImagen.style.display = 'none';
             }
         });
+
+        // Agregar evento para mostrar el teclado cuando se selecciona el input
+        const input = document.getElementById('input-detalle');
+        if (input) {
+            input.addEventListener('focus', function() {
+                const teclado = document.querySelector('.teclado-numerico');
+                if (teclado) {
+                    teclado.style.display = 'grid';
+                }
+            });
+        }
     });
   </script>
 </head>
@@ -472,19 +491,19 @@ function renderSeleccion(mat) {
           <button class="tecla" data-valor="7">7</button>
           <button class="tecla" data-valor="8">8</button>
           <button class="tecla" data-valor="9">9</button>
-          <button class="tecla" data-valor="/">/</button>
+          <button class="tecla" data-valor="x">×</button>
         </div>
         <div class="fila-teclado">
           <button class="tecla" data-valor="4">4</button>
           <button class="tecla" data-valor="5">5</button>
           <button class="tecla" data-valor="6">6</button>
-          <button class="tecla" data-valor="x">×</button>
+          <button class="tecla" data-valor="(">(</button>
         </div>
         <div class="fila-teclado">
           <button class="tecla" data-valor="1">1</button>
           <button class="tecla" data-valor="2">2</button>
           <button class="tecla" data-valor="3">3</button>
-          <button class="tecla" data-valor="-">-</button>
+          <button class="tecla" data-valor=")">)</button>
         </div>
         <div class="fila-teclado">
           <button class="tecla" data-valor="0">0</button>
@@ -493,14 +512,16 @@ function renderSeleccion(mat) {
           <button class="tecla" data-valor="a">a</button>
         </div>
         <div class="fila-teclado">
-          <button class="tecla" data-valor="(">(</button>
-          <button class="tecla" data-valor=")">)</button>
-          <button class="tecla" data-valor="+">+</button>
           <button class="tecla" data-valor=",">,</button>
+          <button class="tecla" data-valor="+">+</button>
+          <button class="tecla" data-valor=" ">␣</button>
+          <button class="tecla" data-valor="enter" style="background-color: #2ecc71; color: white;">
+            <i data-lucide="check"></i>
+          </button>
         </div>
         <div class="fila-teclado">
-          <button class="tecla tecla-borrar" data-valor="borrar">⌫</button>
-          <button class="tecla tecla-limpiar" data-valor="limpiar">C</button>
+          <button class="tecla tecla-borrar" data-valor="borrar" style="width: 130px !important; max-width: 130px !important; min-width: 130px !important;">⌫</button>
+          <button class="tecla tecla-limpiar" data-valor="limpiar" style="width: 130px !important; max-width: 130px !important; min-width: 130px !important;">C</button>
         </div>
       </div>
       <div class="trabajos-contenedor">
@@ -517,19 +538,28 @@ function renderSeleccion(mat) {
   `;
 
   contenedorSeleccion.innerHTML = html;
-lucide.createIcons();
+  lucide.createIcons();
+  
   setTimeout(() => {
     const labelMultiplicador = document.getElementById('multiplicador-acumulado');
     const checkboxes = contenedorSeleccion.querySelectorAll('.check-trabajo');
     const toggleBtn = document.getElementById('toggle-trabajos');
     const trabajosLista = contenedorSeleccion.querySelector('.trabajos-lista');
     const inputDetalle = document.getElementById('input-detalle');
+    const teclado = contenedorSeleccion.querySelector('.teclado-numerico');
+
+    // Agregar evento para mostrar/ocultar teclado
+    inputDetalle.addEventListener('focus', () => {
+      if (teclado) {
+        teclado.style.display = 'grid';
+      }
+    });
 
     toggleBtn.addEventListener('click', () => {
       trabajosLista.classList.toggle('hidden');
     });
 
-    document.getElementById('input-detalle').addEventListener('focus', () => {
+    inputDetalle.addEventListener('focus', () => {
       trabajosLista.classList.add('hidden');
     });
 
