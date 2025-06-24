@@ -168,15 +168,15 @@
 
   <hr />
  <!-- <h2>Presupuesto Actual</h2> -->
-<div id="nombre-wrapper" style="display: flex; align-items: center; gap: 8px;">
+<div id="nombre-wrapper" style="display: flex; align-items: center; gap: 8px; display: none;" class="hidden">
   <input type="text" id="nombre-presupuesto" placeholder="Nombre presupuesto" />
 </div>
-  <button id="guardar-presupuesto" class="boton-naranja">
+  <button id="guardar-presupuesto" class="boton-naranja hidden" style="display: none;">
   <i data-lucide="save"></i> Guardar presupuesto
 </button>
 
   <ul id="presupuesto"></ul>
-  <p><strong>Total estimado: $<span id="total">0</span></strong></p>
+  <p id="total-wrapper" class="hidden" style="display: none;"><strong>Total estimado: $<span id="total">0</span></strong></p>
 <div id="menu-orden" class="trabajos-menu-custom">
   <button id="toggle-orden" class="boton-gris">Ordenar por</button>
   <div class="trabajos-lista hidden">
@@ -251,6 +251,17 @@
     collection, getDocs, addDoc, deleteDoc, doc, updateDoc
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
+  // Ocultar elementos inicialmente
+  document.addEventListener('DOMContentLoaded', function() {
+    const nombreWrapper = document.getElementById('nombre-wrapper');
+    const btnGuardar = document.getElementById('guardar-presupuesto');
+    const totalWrapper = document.getElementById('total-wrapper');
+    
+    if (nombreWrapper) nombreWrapper.classList.add('hidden');
+    if (btnGuardar) btnGuardar.classList.add('hidden');
+    if (totalWrapper) totalWrapper.classList.add('hidden');
+  });
+
   // Cerrar menú si clickeás fuera
   window.addEventListener('click', function(e) {
     const menu = document.getElementById('menuOpciones');
@@ -265,6 +276,27 @@
   let materiales = [];
   let presupuesto = [];
   let presupuestoIdActual = null;
+
+  // Función para calcular el desglose de materiales vs ganancia
+  function calcularDesglosePresupuesto(items) {
+    let costoMateriales = 0;
+    let ganancia = 0;
+    
+    items.forEach(item => {
+      const costoMaterial = item.precioPorUnidad * item.cantidad;
+      const subtotalConTrabajos = item.subtotal;
+      const gananciaItem = subtotalConTrabajos - costoMaterial;
+      
+      costoMateriales += costoMaterial;
+      ganancia += gananciaItem;
+    });
+    
+    return {
+      costoMateriales: Math.round(costoMateriales),
+      ganancia: Math.round(ganancia),
+      porcentajeGanancia: costoMateriales > 0 ? Math.round((ganancia / costoMateriales) * 100) : 0
+    };
+  }
 
   
   const carrusel = document.getElementById('carrusel-materiales');
@@ -650,12 +682,39 @@ function renderSeleccion(mat) {
       });
 
      const totalRedondeado = redondearADecena(total);
-totalSpan.textContent = formatearMoneda(totalRedondeado);
+     totalSpan.textContent = formatearMoneda(totalRedondeado);
+
+     // Mostrar/ocultar elementos según si hay materiales
+     const nombreWrapper = document.getElementById('nombre-wrapper');
+     const btnGuardar = document.getElementById('guardar-presupuesto');
+     const totalWrapper = document.getElementById('total-wrapper');
+
+     if (presupuesto.length > 0) {
+       nombreWrapper.classList.remove('hidden');
+       nombreWrapper.style.display = 'flex';
+       btnGuardar.classList.remove('hidden');
+       btnGuardar.style.display = 'block';
+       totalWrapper.classList.remove('hidden');
+       totalWrapper.style.display = 'block';
+     } else {
+       nombreWrapper.classList.add('hidden');
+       nombreWrapper.style.display = 'none';
+       btnGuardar.classList.add('hidden');
+       btnGuardar.style.display = 'none';
+       totalWrapper.classList.add('hidden');
+       totalWrapper.style.display = 'none';
+     }
     }
 
     window.eliminarItem = (i) => {
       presupuesto.splice(i, 1);
       renderPresupuesto();
+      
+      // Si no quedan materiales, limpiar el nombre del presupuesto
+      if (presupuesto.length === 0) {
+        nombrePresupuesto.value = '';
+        presupuestoIdActual = null;
+      }
     };
 
        
@@ -772,12 +831,25 @@ case 'fecha-desc': return new Date(b.fechaOrden) - new Date(a.fechaOrden);
             ).join('')}</div>`
           : '';
 
+        const desglose = calcularDesglosePresupuesto(p.items);
+
         return `
           <li class="item-presupuesto" id="presupuesto-${p.id}">
             <div class="datos-presu">
               <span class="nombre">${p.nombre}</span>
               <span class="fecha">${p.fecha}</span>
-              <span class="total">Total: $<span class="monto">${formatearMoneda(parseFloat(p.total))}</span></span>
+              <div class="total-line">
+                <span class="total clickeable" onclick="toggleDesglose('${p.id}')" title="Click para ver desglose">
+                  Total: $<span class="monto">${formatearMoneda(parseFloat(p.total))}</span>
+                </span>
+              </div>
+              <div class="desglose-presupuesto hidden" id="desglose-${p.id}">
+                <div class="desglose-detalle">
+                  <span class="costo-materiales">Materiales: $${formatearMoneda(desglose.costoMateriales)}</span>
+                  <span class="ganancia">Ganancia: $${formatearMoneda(desglose.ganancia)}</span>
+                  <span class="porcentaje">${desglose.porcentajeGanancia}% ganancia</span>
+                </div>
+              </div>
               ${htmlImagenes}
             </div>
             <div class="menu-wrapper">
@@ -788,6 +860,7 @@ case 'fecha-desc': return new Date(b.fechaOrden) - new Date(a.fechaOrden);
                 <button onclick="eliminarPresupuesto('${p.id}')">Eliminar</button>
                 <button onclick="refrescarPresupuesto('${p.id}')">🔄 Refrescar</button>
                 <button onclick="asignarImagenes('${p.id}')">📸 Asignar imágenes</button>
+                <button onclick="verDetalleDesglose('${p.id}')">Ver desglose detallado</button>
               </div>
             </div>
           </li>
@@ -917,10 +990,106 @@ _Gracias por tu consulta!!_
 const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
   window.open(url, '_blank');
 };
-    await cargarTareas();
-    await cargarMateriales();
-    await window.cargarPresupuestosGuardados();
-   
+
+window.verDetalleDesglose = async (id) => {
+  const snap = await getDocs(collection(db, 'presupuestos'));
+  let p = null;
+  snap.forEach(doc => {
+    if (doc.id === id) p = { id: doc.id, ...doc.data() };
+  });
+  if (!p) return alert('Presupuesto no encontrado');
+
+  const desglose = calcularDesglosePresupuesto(p.items);
+  
+  let detalleHTML = `
+    <h3>Desglose detallado: ${p.nombre}</h3>
+    <div class="resumen-desglose">
+      <div class="resumen-item">
+        <span class="label">Costo materiales:</span>
+        <span class="valor">$${formatearMoneda(desglose.costoMateriales)}</span>
+      </div>
+      <div class="resumen-item">
+        <span class="label">Ganancia:</span>
+        <span class="valor">$${formatearMoneda(desglose.ganancia)}</span>
+      </div>
+      <div class="resumen-item">
+        <span class="label">Porcentaje ganancia:</span>
+        <span class="valor">${desglose.porcentajeGanancia}%</span>
+      </div>
+      <div class="resumen-item total">
+        <span class="label">Total:</span>
+        <span class="valor">$${formatearMoneda(parseFloat(p.total))}</span>
+      </div>
+    </div>
+    <h4>Detalle por material:</h4>
+    <div class="detalle-materiales">
+  `;
+
+  p.items.forEach((item, index) => {
+    const costoMaterial = item.precioPorUnidad * item.cantidad;
+    const gananciaItem = item.subtotal - costoMaterial;
+    const porcentajeItem = costoMaterial > 0 ? Math.round((gananciaItem / costoMaterial) * 100) : 0;
+    
+    detalleHTML += `
+      <div class="material-item">
+        <div class="material-header">
+          <strong>${item.nombre}</strong>
+          <span class="cantidad">${item.cantidad.toFixed(2)} ${item.unidad === 'metro' ? 'mt' : item.unidad === 'superficie' ? 'm²' : 'ud.'}</span>
+        </div>
+        <div class="material-detalle">
+          <div class="detalle-line">
+            <span>Precio unitario: $${formatearMoneda(item.precioPorUnidad)}</span>
+            <span>Multiplicador: ×${item.multiplicadorTotal.toFixed(2)}</span>
+          </div>
+          <div class="detalle-line">
+            <span>Material: $${formatearMoneda(Math.round(costoMaterial))}</span>
+            <span>Ganancia: $${formatearMoneda(Math.round(gananciaItem))}</span>
+          </div>
+          <div class="detalle-line">
+            <span>Subtotal: $${formatearMoneda(item.subtotal)}</span>
+            <span>${porcentajeItem}% ganancia</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  detalleHTML += `
+    </div>
+    <button class="boton-cerrar" onclick="cerrarModalDesglose()">Cerrar</button>
+  `;
+
+  // Crear modal para mostrar el desglose
+  const modal = document.createElement('div');
+  modal.id = 'modal-desglose';
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <div class="modal-contenido-desglose">
+      ${detalleHTML}
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  modal.style.display = 'block';
+};
+
+window.cerrarModalDesglose = function() {
+  const modal = document.getElementById('modal-desglose');
+  if (modal) {
+    modal.remove();
+  }
+};
+
+window.toggleDesglose = function(id) {
+  const desglose = document.getElementById(`desglose-${id}`);
+  
+  if (desglose.classList.contains('hidden')) {
+    desglose.classList.remove('hidden');
+  } else {
+    desglose.classList.add('hidden');
+  }
+};
+
 window.refrescarPresupuesto = async (id) => {
   const presupuestoSnap = await getDocs(collection(db, 'presupuestos'));
   const materialesSnap = await getDocs(collection(db, 'materiales'));
@@ -961,8 +1130,16 @@ window.refrescarPresupuesto = async (id) => {
    window.asignarImagenes = (id) => {
   window.location.href = `galeria.html?presupuesto=${id}`;
 };
-  lucide.createIcons();
-  </script>
+
+await cargarTareas();
+await cargarMateriales();
+await window.cargarPresupuestosGuardados();
+
+// Asegurar que los elementos estén ocultos inicialmente
+renderPresupuesto();
+
+lucide.createIcons();
+</script>
 
 </body>
 </html>
